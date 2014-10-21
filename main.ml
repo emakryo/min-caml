@@ -2,10 +2,18 @@ let limit = ref 1000
 
 let rec iter n e = (* 最適化処理をくりかえす (caml2html: main_iter) *)
   Format.eprintf "iteration %d@." n;
-  if n = 0 then e else
-  let e' = Elim.f (ConstFold.f (Inline.f (Assoc.f (Beta.f e)))) in
-  if e = e' then e else
-  iter (n - 1) e'
+  if n = 0 then 
+    (print_string "Optimized =======================\n" ;
+     print_string (KNormal.pp_t e);
+     e)
+  else
+    let e' = Elim.f (ConstFold.f (Inline.f (Assoc.f (Beta.f e)))) in
+    if e = e' then 
+      (print_string "Optimized =======================\n" ;
+       print_string (KNormal.pp_t e);
+       e)
+    else
+      iter (n - 1) e'
 
 let lexbuf outchan l = (* バッファをコンパイルしてチャンネルへ出力する (caml2html: main_lexbuf) *)
   Id.counter := 0;

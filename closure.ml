@@ -48,7 +48,8 @@ let rec fv = function
 
 let toplevel : fundef list ref = ref []
 
-let rec g env known = function (* クロージャ変換ルーチン本体 (caml2html: closure_g) *)
+let rec g env known (r, e) = (* クロージャ変換ルーチン本体 (caml2html: closure_g) *)
+  match e with
   | KNormal.Unit -> Unit
   | KNormal.Int(i) -> Int(i)
   | KNormal.Float(d) -> Float(d)

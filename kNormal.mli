@@ -1,4 +1,5 @@
-type t =
+type t = Id.range * ast
+and ast =
   | Unit
   | Int of int
   | Float of float
@@ -27,6 +28,8 @@ type t =
   | ExtArray of Id.t
   | ExtFunApp of Id.t * Id.t list
 and fundef = { name : Id.t * Type.t; args : (Id.t * Type.t) list; body : t }
+
+val pp_t : t -> string
 
 val fv : t -> S.t
 val f : Syntax.t -> t
