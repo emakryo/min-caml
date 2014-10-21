@@ -6,8 +6,6 @@ and ast =
   | Neg of Id.t
   | Add of Id.t * Id.t
   | Sub of Id.t * Id.t
-  | Mul of Id.t * Id.t
-  | Div of Id.t * Id.t
   | Lsl of Id.t * Id.t
   | Lsr of Id.t * Id.t
   | FNeg of Id.t

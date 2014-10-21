@@ -19,15 +19,15 @@ let lexbuf outchan l = (* バッファをコンパイルしてチャンネルへ出力する (caml2htm
   Id.counter := 0;
   Typing.extenv := M.empty;
   Emit.f outchan
-    (RegAlloc.f
-       (Simm.f
-	  (Virtual.f
-	     (Closure.f
-		(iter !limit
-		   (Alpha.f
-		      (KNormal.f
-			 (Typing.f
-			    (Parser.program Lexer.token l)))))))))
+	 (RegAlloc.f
+	    (Simm.f
+	       (Virtual.f
+		  (Closure.f
+		     (iter !limit
+			   (Alpha.f
+			      (KNormal.f
+				 (Typing.f
+				    (Parser.program Lexer.token l)))))))))
     
 let string s = lexbuf stdout (Lexing.from_string s) (* 文字列をコンパイルして標準出力に表示する (caml2html: main_string) *)
 
@@ -47,7 +47,7 @@ let () = (* ここからコンパイラの実行が開始される (caml2html: main_entry) *)
      ("-iter", Arg.Int(fun i -> limit := i), "maximum number of optimizations iterated")]
     (fun s -> files := !files @ [s])
     ("Mitou Min-Caml Compiler (C) Eijiro Sumii\n" ^
-     Printf.sprintf "usage: %s [-inline m] [-iter n] ...filenames without \".ml\"..." Sys.argv.(0));
+       Printf.sprintf "usage: %s [-inline m] [-iter n] ...filenames without \".ml\"..." Sys.argv.(0));
   List.iter
     (fun f -> ignore (file f))
     !files

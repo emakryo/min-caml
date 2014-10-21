@@ -12,8 +12,6 @@ let ex_range head tail ast = ((fst head, snd tail), ast)
 %token <Id.range>NOT
 %token <Id.range>MINUS
 %token <Id.range>PLUS
-%token <Id.range>AST
-%token <Id.range>SLASH
 %token <Id.range>LSL
 %token <Id.range>LSR
 %token <Id.range>MINUS_DOT
@@ -65,8 +63,8 @@ let ex_range head tail ast = ((fst head, snd tail), ast)
 program: 
 | exp 
     { 
-      (* print_string "SyntaxTree =======================-\n"; *)
-      (* print_string (pp_t $1); *)
+      print_string "SyntaxTree =======================-\n";
+      print_string (pp_t $1);
       $1}
 
 simple_exp: /* 括弧をつけなくても関数の引数になれる式 (caml2html: parser_simple) */
@@ -100,10 +98,6 @@ exp: /* 一般の式 (caml2html: parser_exp) */
     { ex_range (get_range $1) (get_range $3) (Add ($1, $3)) }
 | exp MINUS exp
     { ex_range (get_range $1) (get_range $3) (Sub ($1, $3)) }
-| exp AST exp
-    { ex_range (get_range $1) (get_range $3) (Mul ($1, $3)) }
-| exp SLASH exp
-    { ex_range (get_range $1) (get_range $3) (Div ($1, $3)) }
 | exp LSL exp
     { ex_range (get_range $1) (get_range $3) (Lsl ($1, $3)) }
 | exp LSR exp

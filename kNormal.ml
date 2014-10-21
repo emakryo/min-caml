@@ -8,8 +8,6 @@ and ast =
   | Neg of Id.t
   | Add of Id.t * Id.t
   | Sub of Id.t * Id.t
-  | Mul of Id.t * Id.t
-  | Div of Id.t * Id.t
   | Lsl of Id.t * Id.t
   | Lsr of Id.t * Id.t
   | FNeg of Id.t
@@ -35,7 +33,7 @@ let rec fv (r, t) =  (* 式に出現する（自由な）変数 (caml2html: knormal_fv) *)
   match t with
   | Unit | Int(_) | Float(_) | ExtArray(_) -> S.empty
   | Neg(x) | FNeg(x) -> S.singleton x
-  | Add(x, y) | Sub(x, y) | Mul(x, y) | Div(x, y) | Lsl(x, y) | Lsr(x, y) | FAdd(x, y) | FSub(x, y) | FMul(x, y) | FDiv(x, y) | Get(x, y) -> S.of_list [x; y]
+  | Add(x, y) | Sub(x, y) | Lsl(x, y) | Lsr(x, y) | FAdd(x, y) | FSub(x, y) | FMul(x, y) | FDiv(x, y) | Get(x, y) -> S.of_list [x; y]
   | IfEq(x, y, e1, e2) | IfLE(x, y, e1, e2) -> S.add x (S.add y (S.union (fv e1) (fv e2)))
   | Let((x, t), e1, e2) -> S.union (fv e1) (S.remove x (fv e2))
   | Var(x) -> S.singleton x
@@ -74,14 +72,6 @@ let rec g env (r, e) = (* K正規化ルーチン本体 (caml2html: knormal_g) *)
      insert_let (g env e1)
 		(fun x -> insert_let (g env e2)
 				     (fun y -> (r, Sub(x, y)), Type.Int))
-  | Syntax.Mul(e1, e2) -> 
-     insert_let (g env e1)
-		(fun x -> insert_let (g env e2)
-				     (fun y -> (r, Mul(x, y)), Type.Int))
-  | Syntax.Div(e1, e2) ->
-     insert_let (g env e1)
-		(fun x -> insert_let (g env e2)
-				     (fun y -> (r, Div(x, y)), Type.Int))
   | Syntax.Lsl(e1, e2) -> 
      insert_let (g env e1)
 		(fun x -> insert_let (g env e2)
@@ -221,10 +211,6 @@ let rec pp_t t =
        Format.sprintf "%sAdd %s %s\t#%s\n" sps (Id.pp_t n1) (Id.pp_t n2) rng
     | Sub (n1, n2) ->
        Format.sprintf "%sSub %s %s\t#%s\n" sps (Id.pp_t n1) (Id.pp_t n2) rng
-    | Mul (n1, n2) ->
-       Format.sprintf "%sMul %s %s\t#%s\n" sps (Id.pp_t n1) (Id.pp_t n2) rng
-    | Div (n1, n2) ->
-       Format.sprintf "%sDiv %s %s\t#%s\n" sps (Id.pp_t n1) (Id.pp_t n2) rng
     | Lsl (n1, n2) ->
        Format.sprintf "%sLsl %s %s\t#%s\n" sps (Id.pp_t n1) (Id.pp_t n2) rng
     | Lsr (n1, n2) ->

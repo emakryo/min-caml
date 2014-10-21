@@ -43,10 +43,6 @@ rule token = parse
     { MINUS(get_range lexbuf) }
 | '+' (* +.より後回しにしなくても良い? 最長一致? *)
     { PLUS(get_range lexbuf) }
-| '*'
-    { AST(get_range lexbuf) }
-| '/'
-    { SLASH(get_range lexbuf) }
 | "lsl"
     { LSL(get_range lexbuf) }
 | "lsr"
