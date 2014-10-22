@@ -5,3 +5,13 @@
 *.s
 *.S
 test/*
+asm.ml*
+bytemark/Makefile
+emit.ml
+lexer.ml
+parser.ml
+parser.mli
+regAlloc.ml
+shootout/Makefile
+simm.ml
+virtual.ml
