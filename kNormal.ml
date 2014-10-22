@@ -29,6 +29,71 @@ and ast =
   | ExtFunApp of Id.t * Id.t list
 and fundef = { name : Id.t * Type.t; args : (Id.t * Type.t) list; body : t }
 
+let rec pp_t t =
+  let indent d = String.make (2 * d) ' ' in
+  let rec pp_t' d (r, t) =
+    let sps = indent d in
+    let rng = Id.pp_range r in
+    match t with
+    | Unit ->
+       Format.sprintf "%sUnit ()\t#%s\n" sps rng
+    | Int i ->
+       Format.sprintf "%sInt %d\t#%s\n" sps i rng
+    | Float f ->
+       Format.sprintf "%sFloat %f\t#%s\n" sps f rng
+    | Neg n ->
+       Format.sprintf "%sNeg %s\t#%s\n" sps (Id.pp_t n) rng
+    | Add (n1, n2) ->
+       Format.sprintf "%sAdd %s %s\t#%s\n" sps (Id.pp_t n1) (Id.pp_t n2) rng
+    | Sub (n1, n2) ->
+       Format.sprintf "%sSub %s %s\t#%s\n" sps (Id.pp_t n1) (Id.pp_t n2) rng
+    | Lsl (n1, n2) ->
+       Format.sprintf "%sLsl %s %s\t#%s\n" sps (Id.pp_t n1) (Id.pp_t n2) rng
+    | Lsr (n1, n2) ->
+       Format.sprintf "%sLsr %s %s\t#%s\n" sps (Id.pp_t n1) (Id.pp_t n2) rng
+    | FNeg n ->
+       Format.sprintf "%sFNeg %s\t#%s\n" sps (Id.pp_t n) rng
+    | FAdd (n1, n2) ->
+       Format.sprintf "%sFAdd %s %s\t#%s\n" sps (Id.pp_t n1) (Id.pp_t n2) rng
+    | FSub (n1, n2) ->
+       Format.sprintf "%sFSub %s %s\t#%s\n" sps (Id.pp_t n1) (Id.pp_t n2) rng
+    | FMul (n1, n2) ->
+       Format.sprintf "%sFMul %s %s\t#%s\n" sps (Id.pp_t n1) (Id.pp_t n2) rng
+    | FDiv (n1, n2) ->
+       Format.sprintf "%sFDiv %s %s\t#%s\n" sps (Id.pp_t n1) (Id.pp_t n2) rng
+    | IfEq (n1, n2, t1, t2) ->
+       Format.sprintf "%sIfEq %s %s\t#%s\n%s%sElse\n%s" sps (Id.pp_t n1) (Id.pp_t n2) rng (pp_t' (d + 1) t1) sps (pp_t' (d + 1) t2)
+    | IfLE (n1, n2, t1, t2) ->
+       Format.sprintf "%sIfLE %s %s\t#%s\n%s%sElse\n%s" sps (Id.pp_t n1) (Id.pp_t n2) rng (pp_t' (d + 1) t1) sps (pp_t' (d + 1) t2)
+    | Let ((name, _), t1, t2) ->
+       Format.sprintf "%sLet\t#%s\n%s%s\n%s%sIN\n%s" sps rng (indent (d + 1)) (Id.pp_t name) (pp_t' (d + 1) t1) sps (pp_t' d t2)
+    | Var n ->
+       Format.sprintf "%sVar %s\t#%s\n" sps (Id.pp_t n) rng
+    | LetRec (fdef, t) ->
+       Format.sprintf "%sLetRec\t#%s\n%s%sIN\n%s" sps rng (pp_fundef (d + 1) fdef) sps (pp_t' d t)
+    | App (n, ns) ->
+       Format.sprintf "%sApp %s (%s)\t#%s\n" sps (Id.pp_t n) (String.concat ", " (List.map (fun m -> Id.pp_t m) ns)) rng
+    | Tuple ns ->
+       Format.sprintf "%sTuple(%s)\t#%s\n" sps (String.concat ", " (List.map (fun m -> Id.pp_t m) ns)) rng
+    | LetTuple (xs, n, t) ->
+       let names = String.concat ", " (List.map (fun (name, _) -> Id.pp_t name) xs) in
+       Format.sprintf "%sLetTuple (%s) %s\t#%s\n%sIN\n%s" sps names (Id.pp_t n) rng sps (pp_t' d t)
+    | Get (n1, n2) ->
+       Format.sprintf "%sGet %s %s\t#%s\n" sps (Id.pp_t n1) (Id.pp_t n2) rng
+    | Put (n1, n2, n3) ->
+       Format.sprintf "%sGet %s %s %s\t#%s\n" sps (Id.pp_t n1) (Id.pp_t n2) (Id.pp_t n3) rng
+    | ExtArray n ->
+       Format.sprintf "%sExtArray %s\t#%s\n" sps (Id.pp_t n) rng
+    | ExtFunApp (n, ns) ->
+       Format.sprintf "%sExtFunApp %s (%s)\t#%s\n" sps (Id.pp_t n) (String.concat ", " (List.map (fun m -> Id.pp_t m) ns)) rng
+  and pp_fundef d fdef =
+    let sps = indent d in
+    let args = String.concat ", " (List.map (fun (name, _) -> Id.pp_t name) fdef.args) in
+    let (fname, _) = fdef.name in
+    Format.sprintf "%s%s (%s)\n%s" sps (Id.pp_t fname) args (pp_t' d fdef.body)
+  in
+  pp_t' 0 t
+
 let rec fv (r, t) =  (* 式に出現する（自由な）変数 (caml2html: knormal_fv) *)
   match t with
   | Unit | Int(_) | Float(_) | ExtArray(_) -> S.empty
@@ -192,71 +257,6 @@ let rec g env (r, e) = (* K正規化ルーチン本体 (caml2html: knormal_g) *)
 		(fun x -> insert_let (g env e2)
 				     (fun y -> insert_let (g env e3)
 							  (fun z -> (r, Put(x, y, z)), Type.Unit)))
-
-let rec pp_t t =
-  let indent d = String.make (2 * d) ' ' in
-  let rec pp_t' d (r, t) =
-    let sps = indent d in
-    let rng = Id.pp_range r in
-    match t with
-    | Unit ->
-       Format.sprintf "%sUnit ()\t#%s\n" sps rng
-    | Int i ->
-       Format.sprintf "%sInt %d\t#%s\n" sps i rng
-    | Float f ->
-       Format.sprintf "%sFloat %f\t#%s\n" sps f rng
-    | Neg n ->
-       Format.sprintf "%sNeg %s\t#%s\n" sps (Id.pp_t n) rng
-    | Add (n1, n2) ->
-       Format.sprintf "%sAdd %s %s\t#%s\n" sps (Id.pp_t n1) (Id.pp_t n2) rng
-    | Sub (n1, n2) ->
-       Format.sprintf "%sSub %s %s\t#%s\n" sps (Id.pp_t n1) (Id.pp_t n2) rng
-    | Lsl (n1, n2) ->
-       Format.sprintf "%sLsl %s %s\t#%s\n" sps (Id.pp_t n1) (Id.pp_t n2) rng
-    | Lsr (n1, n2) ->
-       Format.sprintf "%sLsr %s %s\t#%s\n" sps (Id.pp_t n1) (Id.pp_t n2) rng
-    | FNeg n ->
-       Format.sprintf "%sFNeg %s\t#%s\n" sps (Id.pp_t n) rng
-    | FAdd (n1, n2) ->
-       Format.sprintf "%sFAdd %s %s\t#%s\n" sps (Id.pp_t n1) (Id.pp_t n2) rng
-    | FSub (n1, n2) ->
-       Format.sprintf "%sFSub %s %s\t#%s\n" sps (Id.pp_t n1) (Id.pp_t n2) rng
-    | FMul (n1, n2) ->
-       Format.sprintf "%sFMul %s %s\t#%s\n" sps (Id.pp_t n1) (Id.pp_t n2) rng
-    | FDiv (n1, n2) ->
-       Format.sprintf "%sFDiv %s %s\t#%s\n" sps (Id.pp_t n1) (Id.pp_t n2) rng
-    | IfEq (n1, n2, t1, t2) ->
-       Format.sprintf "%sIfEq %s %s\t#%s\n%s%sElse\n%s" sps (Id.pp_t n1) (Id.pp_t n2) rng (pp_t' (d + 1) t1) sps (pp_t' (d + 1) t2)
-    | IfLE (n1, n2, t1, t2) ->
-       Format.sprintf "%sIfLE %s %s\t#%s\n%s%sElse\n%s" sps (Id.pp_t n1) (Id.pp_t n2) rng (pp_t' (d + 1) t1) sps (pp_t' (d + 1) t2)
-    | Let ((name, _), t1, t2) ->
-       Format.sprintf "%sLet\t#%s\n%s%s\n%s%sIN\n%s" sps rng (indent (d + 1)) (Id.pp_t name) (pp_t' (d + 1) t1) sps (pp_t' d t2)
-    | Var n ->
-       Format.sprintf "%sVar %s\t#%s\n" sps (Id.pp_t n) rng
-    | LetRec (fdef, t) ->
-       Format.sprintf "%sLetRec\t#%s\n%s%sIN\n%s" sps rng (pp_fundef (d + 1) fdef) sps (pp_t' d t)
-    | App (n, ns) ->
-       Format.sprintf "%sApp %s (%s)\t#%s\n" sps (Id.pp_t n) (String.concat ", " (List.map (fun m -> Id.pp_t m) ns)) rng
-    | Tuple ns ->
-       Format.sprintf "%sTuple(%s)\t#%s\n" sps (String.concat ", " (List.map (fun m -> Id.pp_t m) ns)) rng
-    | LetTuple (xs, n, t) ->
-       let names = String.concat ", " (List.map (fun (name, _) -> Id.pp_t name) xs) in
-       Format.sprintf "%sLetTuple (%s) %s\t#%s\n%sIN\n%s" sps names (Id.pp_t n) rng sps (pp_t' d t)
-    | Get (n1, n2) ->
-       Format.sprintf "%sGet %s %s\t#%s\n" sps (Id.pp_t n1) (Id.pp_t n2) rng
-    | Put (n1, n2, n3) ->
-       Format.sprintf "%sGet %s %s %s\t#%s\n" sps (Id.pp_t n1) (Id.pp_t n2) (Id.pp_t n3) rng
-    | ExtArray n ->
-       Format.sprintf "%sExtArray %s\t#%s\n" sps (Id.pp_t n) rng
-    | ExtFunApp (n, ns) ->
-       Format.sprintf "%sExtFunApp %s (%s)\t#%s\n" sps (Id.pp_t n) (String.concat ", " (List.map (fun m -> Id.pp_t m) ns)) rng
-  and pp_fundef d fdef =
-    let sps = indent d in
-    let args = String.concat ", " (List.map (fun (name, _) -> Id.pp_t name) fdef.args) in
-    let (fname, _) = fdef.name in
-    Format.sprintf "%s%s (%s)\n%s" sps (Id.pp_t fname) args (pp_t' d fdef.body)
-  in
-  pp_t' 0 t
 
 let f e = 
   let s = fst (g M.empty e) in
