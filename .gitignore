@@ -5,6 +5,7 @@
 *.s
 *.S
 test/*
+!test/*.ml
 asm.ml*
 bytemark/Makefile
 emit.ml
