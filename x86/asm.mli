@@ -1,5 +1,6 @@
 type id_or_imm = V of Id.t | C of int
-type t =
+type t = Id.range * inst
+and inst = 
   | Ans of exp
   | Let of (Id.t * Type.t) * exp * t
 and exp =
