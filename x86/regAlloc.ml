@@ -1,8 +1,8 @@
 open Asm
 
 (* for register coalescing *)
-(* [XXX] Call¤¬¤¢¤Ã¤¿¤é¡¢¤½¤³¤«¤éÀè¤ÏÌµ°ÕÌ£¤È¤¤¤¦¤«µÕ¸ú²Ì¤Ê¤Î¤ÇÄÉ¤ï¤Ê¤¤¡£
-         ¤½¤Î¤¿¤á¤Ë¡ÖCall¤¬¤¢¤Ã¤¿¤«¤É¤¦¤«¡×¤òÊÖ¤êÃÍ¤ÎÂè1Í×ÁÇ¤Ë´Ş¤á¤ë¡£ *)
+(* [XXX] CallãŒã‚ã£ãŸã‚‰ã€ãã“ã‹ã‚‰å…ˆã¯ç„¡æ„å‘³ã¨ã„ã†ã‹é€†åŠ¹æœãªã®ã§è¿½ã‚ãªã„ã€‚
+         ãã®ãŸã‚ã«ã€ŒCallãŒã‚ã£ãŸã‹ã©ã†ã‹ã€ã‚’è¿”ã‚Šå€¤ã®ç¬¬1è¦ç´ ã«å«ã‚ã‚‹ã€‚ *)
 let rec target' src (dest, t) = function
   | Mov(x) when x = src && is_reg dest ->
       assert (t <> Type.Unit);
@@ -38,7 +38,7 @@ and target_args src all n = function (* auxiliary function for Call *)
       all.(n) :: target_args src all (n + 1) ys
   | _ :: ys -> target_args src all (n + 1) ys
 (* "register sourcing" (?) as opposed to register targeting *)
-(* ¡Êx86¤Î2¥ª¥Ú¥é¥ó¥ÉÌ¿Îá¤Î¤¿¤á¤Îregister coalescing¡Ë *)
+(* ï¼ˆx86ã®2ã‚ªãƒšãƒ©ãƒ³ãƒ‰å‘½ä»¤ã®ãŸã‚ã®register coalescingï¼‰ *)
 let rec source t (r, e) = 
   match e with
   | Ans(exp) -> source' t exp
@@ -51,7 +51,7 @@ and source' t = function
   | CallCls _ | CallDir _ -> (match t with Type.Unit -> [] | Type.Float -> [fregs.(0)] | _ -> [regs.(0)])
   | _ -> []
 
-type alloc_result = (* alloc¤Ë¤ª¤¤¤Æspilling¤¬¤¢¤Ã¤¿¤«¤É¤¦¤«¤òÉ½¤¹¥Ç¡¼¥¿·¿ *)
+type alloc_result = (* allocã«ãŠã„ã¦spillingãŒã‚ã£ãŸã‹ã©ã†ã‹ã‚’è¡¨ã™ãƒ‡ãƒ¼ã‚¿å‹ *)
   | Alloc of Id.t (* allocated register *)
   | Spill of Id.t (* spilled variable *)
 let rec alloc cont regenv x t prefer =
@@ -66,7 +66,7 @@ let rec alloc cont regenv x t prefer =
   if is_reg x then Alloc(x) else
   let free = fv cont in
   try
-    let live = (* À¸¤­¤Æ¤¤¤ë¥ì¥¸¥¹¥¿ *)
+    let live = (* ç”Ÿãã¦ã„ã‚‹ãƒ¬ã‚¸ã‚¹ã‚¿ *)
       List.fold_left
         (fun live y ->
 	  if is_reg y then S.add y live else
@@ -74,7 +74,7 @@ let rec alloc cont regenv x t prefer =
           with Not_found -> live)
         S.empty
         free in
-    let r = (* ¤½¤¦¤Ç¤Ê¤¤¥ì¥¸¥¹¥¿¤òÃµ¤¹ *)
+    let r = (* ãã†ã§ãªã„ãƒ¬ã‚¸ã‚¹ã‚¿ã‚’æ¢ã™ *)
       List.find
         (fun r -> not (S.mem r live))
         (prefer @ all) in
@@ -82,7 +82,7 @@ let rec alloc cont regenv x t prefer =
     Alloc(r)
   with Not_found ->
     Format.eprintf "register allocation failed for %s@." x;
-    let y = (* ·¿¤Î¹ç¤¦¥ì¥¸¥¹¥¿ÊÑ¿ô¤òÃµ¤¹ *)
+    let y = (* å‹ã®åˆã†ãƒ¬ã‚¸ã‚¹ã‚¿å¤‰æ•°ã‚’æ¢ã™ *)
       List.find
         (fun y ->
 	  not (is_reg y) &&
@@ -108,7 +108,7 @@ let find' x' regenv =
   | V(x) -> V(find x Type.Int regenv)
   | c -> c
 
-let rec g dest cont regenv (r, e) = (* Ì¿ÎáÎó¤Î¥ì¥¸¥¹¥¿³ä¤êÅö¤Æ (caml2html: regalloc_g) *)
+let rec g dest cont regenv (r, e) = (* å‘½ä»¤åˆ—ã®ãƒ¬ã‚¸ã‚¹ã‚¿å‰²ã‚Šå½“ã¦ (caml2html: regalloc_g) *)
   match e with
   | Ans(exp) -> g'_and_restore dest cont regenv r exp
   | Let((x, t) as xt, exp, e) ->
@@ -117,7 +117,7 @@ let rec g dest cont regenv (r, e) = (* Ì¿ÎáÎó¤Î¥ì¥¸¥¹¥¿³ä¤êÅö¤Æ (caml2html: rega
      let (e1', regenv1) = g'_and_restore xt cont' regenv r exp in
      let (_call, targets) = target x dest cont' in
      let sources = source t e1' in
-     (* ¥ì¥¸¥¹¥¿´Ö¤Îmov¤è¤ê¥á¥â¥ê¤ò²ğ¤¹¤ëswap¤Î¤Û¤¦¤¬ÌäÂê¤Ê¤Î¤Ç¡¢sources¤è¤êtargets¤òÍ¥Àè *)
+     (* ãƒ¬ã‚¸ã‚¹ã‚¿é–“ã®movã‚ˆã‚Šãƒ¡ãƒ¢ãƒªã‚’ä»‹ã™ã‚‹swapã®ã»ã†ãŒå•é¡Œãªã®ã§ã€sourcesã‚ˆã‚Štargetsã‚’å„ªå…ˆ *)
      (match alloc cont' regenv1 x t (targets @ sources) with
       | Spill(y) ->
 	 let r = M.find y regenv1 in
@@ -129,12 +129,12 @@ let rec g dest cont regenv (r, e) = (* Ì¿ÎáÎó¤Î¥ì¥¸¥¹¥¿³ä¤êÅö¤Æ (caml2html: rega
       | Alloc(r) ->
 	 let (e2', regenv2) = g dest cont (add x r regenv1) e in
 	 (concat e1' (r, t) e2', regenv2))
-and g'_and_restore dest cont regenv r exp = (* »ÈÍÑ¤µ¤ì¤ëÊÑ¿ô¤ò¥¹¥¿¥Ã¥¯¤«¤é¥ì¥¸¥¹¥¿¤ØRestore (caml2html: regalloc_unspill) *)
+and g'_and_restore dest cont regenv r exp = (* ä½¿ç”¨ã•ã‚Œã‚‹å¤‰æ•°ã‚’ã‚¹ã‚¿ãƒƒã‚¯ã‹ã‚‰ãƒ¬ã‚¸ã‚¹ã‚¿ã¸Restore (caml2html: regalloc_unspill) *)
   try g' dest cont regenv r exp
   with NoReg(x, t) ->
     ((* Format.eprintf "restoring %s@." x; *)
       g dest cont regenv (r, Let((x, t), Restore(x), (r, Ans(exp)))))
-and g' dest cont regenv r exp = (* ³ÆÌ¿Îá¤Î¥ì¥¸¥¹¥¿³ä¤êÅö¤Æ (caml2html: regalloc_gprime) *)
+and g' dest cont regenv r exp = (* å„å‘½ä»¤ã®ãƒ¬ã‚¸ã‚¹ã‚¿å‰²ã‚Šå½“ã¦ (caml2html: regalloc_gprime) *)
   let (e', regenv') = match exp with
     | Nop | Set _ | SetL _ | Comment _ | Restore _ as exp -> (Ans(exp), regenv)
     | Mov(x) -> (Ans(Mov(find x Type.Int regenv)), regenv)
@@ -163,46 +163,44 @@ and g' dest cont regenv r exp = (* ³ÆÌ¿Îá¤Î¥ì¥¸¥¹¥¿³ä¤êÅö¤Æ (caml2html: regalloc
     | Save(x, y) -> assert false
   in
   ((r, e'), regenv')
-and g'_if dest cont regenv r exp constr e1 e2 = (* if¤Î¥ì¥¸¥¹¥¿³ä¤êÅö¤Æ (caml2html: regalloc_if) *)
+and g'_if dest cont regenv r exp constr e1 e2 = (* ifÂ¤ÃÂ¥Ã¬Â¥Â¸Â¥Â¹Â¥Â¿Â³Ã¤Â¤ÃªÃ…Ã¶Â¤Ã† (caml2html: regalloc_if) *)
   let (e1', regenv1) = g dest cont regenv e1 in
   let (e2', regenv2) = g dest cont regenv e2 in
-  let regenv' = (* Î¾Êı¤Ë¶¦ÄÌ¤Î¥ì¥¸¥¹¥¿ÊÑ¿ô¤À¤±ÍøÍÑ *)
+  let regenv' = (* ÃÂ¾ÃŠÃ½Â¤Ã‹Â¶Â¦Ã„ÃŒÂ¤ÃÂ¥Ã¬Â¥Â¸Â¥Â¹Â¥Â¿ÃŠÃ‘Â¿Ã´Â¤Ã€Â¤Â±ÃÃ¸ÃÃ‘ *)
     List.fold_left
       (fun regenv' x ->
-       try
-	 if is_reg x then regenv' else
-           let r1 = M.find x regenv1 in
-           let r2 = M.find x regenv2 in
-           if r1 <> r2 then regenv' else
-	     M.add x r1 regenv'
-       with Not_found -> regenv')
+        try
+	  if is_reg x then regenv' else
+          let r1 = M.find x regenv1 in
+          let r2 = M.find x regenv2 in
+          if r1 <> r2 then regenv' else
+	  M.add x r1 regenv'
+        with Not_found -> regenv')
       M.empty
       (fv cont) in
-  let (e'', regenv'') = 
-    (List.fold_left
-       (fun e x ->
-	if x = fst dest || not (M.mem x regenv) || M.mem x regenv' then e else
-	  seq(Save(M.find x regenv, x), e)) (* ¤½¤¦¤Ç¤Ê¤¤ÊÑ¿ô¤ÏÊ¬´ôÄ¾Á°¤Ë¥»¡¼¥Ö *)
-       (r, Ans(constr e1' e2'))
-       (fv cont),
-     regenv')
+  let (e'', regenv'') = (List.fold_left
+     (fun e x ->
+       if x = fst dest || not (M.mem x regenv) || M.mem x regenv' then e else
+       seq(Save(M.find x regenv, x), e)) (* Â¤Â½Â¤Â¦Â¤Ã‡Â¤ÃŠÂ¤Â¤ÃŠÃ‘Â¿Ã´Â¤ÃÃŠÂ¬Â´Ã´Ã„Â¾ÃÂ°Â¤Ã‹Â¥Â»Â¡Â¼Â¥Ã– *)
+     (r, Ans(constr e1' e2'))
+     (fv cont),
+   regenv')
   in
   (snd e'', regenv'')
-and g'_call dest cont regenv r exp constr ys zs = (* ´Ø¿ô¸Æ¤Ó½Ğ¤·¤Î¥ì¥¸¥¹¥¿³ä¤êÅö¤Æ (caml2html: regalloc_call) *)
-  let (e', regenv') = 
-    (List.fold_left
+and g'_call dest cont regenv r exp constr ys zs = (* Â´Ã˜Â¿Ã´Â¸Ã†Â¤Ã“Â½ÃÂ¤Â·Â¤ÃÂ¥Ã¬Â¥Â¸Â¥Â¹Â¥Â¿Â³Ã¤Â¤ÃªÃ…Ã¶Â¤Ã† (caml2html: regalloc_call) *)
+  let (e'', regenv'') = (List.fold_left
      (fun e x ->
-      if x = fst dest || not (M.mem x regenv) then e else
-	seq(Save(M.find x regenv, x), e))
+       if x = fst dest || not (M.mem x regenv) then e else
+       seq(Save(M.find x regenv, x), e))
      (r, Ans(constr
 	    (List.map (fun y -> find y Type.Int regenv) ys)
 	    (List.map (fun z -> find z Type.Float regenv) zs)))
      (fv cont),
    M.empty)
   in
-  (snd e', regenv)
+  (snd e'', regenv'')
 
-let h { name = Id.L(x); args = ys; fargs = zs; body = e; ret = t } = (* ´Ø¿ô¤Î¥ì¥¸¥¹¥¿³ä¤êÅö¤Æ (caml2html: regalloc_h) *)
+let h { name = Id.L(x); args = ys; fargs = zs; body = e; ret = t } = (* é–¢æ•°ã®ãƒ¬ã‚¸ã‚¹ã‚¿å‰²ã‚Šå½“ã¦ (caml2html: regalloc_h) *)
   let regenv = M.add x reg_cl M.empty in
   let (i, arg_regs, regenv) =
     List.fold_left
@@ -232,7 +230,7 @@ let h { name = Id.L(x); args = ys; fargs = zs; body = e; ret = t } = (* ´Ø¿ô¤Î¥ì
   let (e', regenv') = g (a, t) (fst e, Ans(Mov(a))) regenv e in
   { name = Id.L(x); args = arg_regs; fargs = farg_regs; body = e'; ret = t }
 
-let f (Prog(data, fundefs, e)) = (* ¥×¥í¥°¥é¥àÁ´ÂÎ¤Î¥ì¥¸¥¹¥¿³ä¤êÅö¤Æ (caml2html: regalloc_f) *)
+let f (Prog(data, fundefs, e)) = (* ãƒ—ãƒ­ã‚°ãƒ©ãƒ å…¨ä½“ã®ãƒ¬ã‚¸ã‚¹ã‚¿å‰²ã‚Šå½“ã¦ (caml2html: regalloc_f) *)
   Format.eprintf "register allocation: may take some time (up to a few minutes, depending on the size of functions)@.";
   let fundefs' = List.map h fundefs in
   let e', regenv' = g (Id.gentmp Type.Unit, Type.Unit) (fst e, Ans(Nop)) M.empty e in
