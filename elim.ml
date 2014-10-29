@@ -70,7 +70,7 @@ let rec elim_exp env (r, e) = (*共通部分式除去*)
   let e' = 
     try 
       let n = Em.find (sanitize (r, e)) env in
-      Format.eprintf "replacing follewing expression at %s to variable %s.\n%s" (Id.pp_range r) (Id.pp_t n) (pp_t (r, e));
+      Format.eprintf "replacing follewing expression at %s with variable \"%s\".\n%s" (Id.pp_range r) (Id.pp_t n) (pp_t (r, e));
       Var(n)
     with 
       Not_found -> 
