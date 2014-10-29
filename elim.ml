@@ -48,10 +48,45 @@ let rec sanitize (r, e) = (*kNormal.astのみを比較できるように、rangeを無効化*)
     | Unit | Int(_) | Float(_) | Neg(_) | Add(_) | Sub(_) | Lsl(_) | Lsr(_) | FNeg(_) | FAdd(_) | FSub(_) | FMul(_) | FDiv(_) | Var(_) | App(_) | Tuple(_) | Get(_) | Put(_) | ExtArray(_) | ExtFunApp(_) -> e
     | IfEq (n1, n2, t1, t2) -> IfEq (n1, n2, sanitize t1, sanitize t2)
     | IfLE (n1, n2, t1, t2) -> IfLE (n1, n2, sanitize t1, sanitize t2)
-    | Let ((n, t), t1, t2) -> Let ((n, t), sanitize t1, sanitize t2)
+    | Let ((n, ty), t1, t2) -> Let ((n, ty), sanitize t1, sanitize t2)
     | LetRec ({name = (n, ty); args = ags; body = b}, t) -> LetRec ({name = (n, ty); args = ags; body = sanitize b}, sanitize t)
     | LetTuple (xs, n, t) -> LetTuple (xs, n, sanitize t)
   in
   (((0,0),(0,0)), e')
 
-let f t = elim_let t
+let is_simple_exp (r, e) = 
+  match e with 
+  | Unit | Int(_) | Float(_) | Var(_) -> true
+  | _ -> false
+
+let rec elim_exp env (r, e) = (*共通部分式除去*)
+  let e' = 
+    try 
+      let n = Em.find (sanitize (r, e)) env in
+      (* Format.eprintf "replacing follewing expression at %s to variable %s.\n%s" (Id.pp_range r) (Id.pp_t n) (pp_t (r, e)); *)
+      Var(n)
+    with 
+      Not_found -> 
+      match e with
+      | Unit | Int(_) | Float(_) | Neg(_) | Add(_) | Sub(_) | Lsl(_) | Lsr(_) | FNeg(_) | FAdd(_) | FSub(_) | FMul(_) | FDiv(_) | Var(_) | App(_) | Tuple(_) | Get(_) | Put(_) | ExtArray(_) | ExtFunApp(_) -> e
+      | IfEq (n1, n2, t1, t2) -> IfEq (n1, n2, elim_exp env t1, elim_exp env t2)
+      | IfLE (n1, n2, t1, t2) -> IfLE (n1, n2, elim_exp env t1, elim_exp env t2)
+      | Let ((n, t), t1, t2) -> 
+	 let t1' = elim_exp env t1 in
+	 if effect t1' then 
+	   Let ((n, t), t1', elim_exp env t2)
+	 else if is_simple_exp t1' then
+	   Let ((n, t), t1', elim_exp env t2)
+	 else
+	   let env' = Em.add (sanitize t1') n env in
+	   Let ((n, t), t1', elim_exp env' t2)
+      | LetRec ({name = (n, ty); args = ags; body = b}, t) -> 
+	 LetRec ({name = (n, ty); args = ags; body = elim_exp env b}, elim_exp env t)
+      | LetTuple (xs, n, t) -> LetTuple (xs, n, elim_exp env t)
+  in
+  (r, e')
+
+let f t = 
+  let t' = elim_let t in
+  let t' = elim_exp (Em.empty) t' in
+  t'
