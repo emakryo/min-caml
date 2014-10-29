@@ -63,45 +63,46 @@ let rec pp_t t =
        Format.sprintf "(%s /. %s)"(Id.pp_t n1) (Id.pp_t n2)
     | IfEq (n1, n2, t1, t2) ->
        let s1 = (pp_t' (d + 1) t1) in
-       let s1 = if String.contains s1 '\n' then s1 else Format.sprintf "%s%s" (indent (d + 1)) s1 in
+       let s1 = if String.contains s1 '\n' then s1 else (indent (d + 1)) ^ s1 in
        let s2 = (pp_t' (d + 1) t2) in
-       let s2 = if String.contains s2 '\n' then s2 else Format.sprintf "%s%s" (indent (d + 1)) s2 in
+       let s2 = if String.contains s2 '\n' then s2 else (indent (d + 1)) ^ s2 in
        Format.sprintf "%sif %s = %s then\n%s\n%selse\n%s" sps (Id.pp_t n1) (Id.pp_t n2) s1 sps s2
     | IfLE (n1, n2, t1, t2) ->
        let s1 = (pp_t' (d + 1) t1) in
-       let s1 = if String.contains s1 '\n' then s1 else Format.sprintf "%s%s" (indent (d + 1)) s1 in
+       let s1 = if String.contains s1 '\n' then s1 else (indent (d + 1)) ^ s1 in
        let s2 = (pp_t' (d + 1) t2) in
-       let s2 = if String.contains s2 '\n' then s2 else Format.sprintf "%s%s" (indent (d + 1)) s2 in
+       let s2 = if String.contains s2 '\n' then s2 else (indent (d + 1)) ^ s2 in
        Format.sprintf "%sif %s <= %s then\n%s\n%selse\n%s" sps (Id.pp_t n1) (Id.pp_t n2) s1 sps s2
-    | Let ((name, _), t1, t2) ->
+    | Let ((name, ty), t1, t2) ->
        let s1 = (pp_t' (d + 1) t1) in
        let s2 = (pp_t' d t2) in
-       let s2 = if String.contains s2 '\n' then s2 else Format.sprintf "%s%s" (indent d) s2 in
+       let s2 = if String.contains s2 '\n' then s2 else (indent d) ^ s2 in
        if String.contains s1 '\n' then
-	 Format.sprintf "%slet %s = \n%s in\n%s" sps (Id.pp_t name) s1 s2
+	 Format.sprintf "%slet %s (*%s*) = \n%s in\n%s" sps (Id.pp_t name) (Type.pp_t ty) s1 s2
        else
-	 Format.sprintf "%slet %s = %s in\n%s" sps (Id.pp_t name) s1 s2
+	 Format.sprintf "%slet %s (*%s*) = %s in\n%s" sps (Id.pp_t name) (Type.pp_t ty) s1 s2
     | Var n ->
        Format.sprintf "%s" (Id.pp_t n)
     | LetRec (fdef, t) ->
-       let (fname, _) = fdef.name in
+       let (fname, ty) = fdef.name in
        let args = String.concat " " (List.map (fun (name, _) -> Id.pp_t name) fdef.args) in
        let s1 = (pp_t' (d + 1) fdef.body) in
        let s2 = (pp_t' d t) in
-       let s2 = if String.contains s2 '\n' then s2 else Format.sprintf "%s%s" (indent d) s2 in
+       let s2 = if String.contains s2 '\n' then s2 else (indent d) ^ s2 in
        if String.contains s1 '\n' then
-	 Format.sprintf "%slet rec %s %s =\n%s in\n%s" sps (Id.pp_t fname) args s1 s2
+	 Format.sprintf "%slet rec %s (*%s*) %s =\n%s in\n%s" sps (Id.pp_t fname) (Type.pp_t ty) args s1 s2
        else
-	 Format.sprintf "%slet rec %s %s = %s in\n%s" sps (Id.pp_t fname) args s1 s2
+	 Format.sprintf "%slet rec %s (*%s*) %s = %s in\n%s" sps (Id.pp_t fname) (Type.pp_t ty) args s1 s2
     | App (n, ns) ->
        Format.sprintf "(%s %s)" (Id.pp_t n) (String.concat " " (List.map (fun m -> Id.pp_t m) ns))
     | Tuple ns ->
        Format.sprintf "(%s)" (String.concat ", " (List.map (fun m -> Id.pp_t m) ns))
     | LetTuple (xs, n, t) ->
-       let names = String.concat ", " (List.map (fun (name, _) -> Id.pp_t name) xs) in
+       let names = String.concat ", " (List.map (fun (name, ty) -> Id.pp_t name) xs) in
+       let ty = Type.Tuple (List.map (fun (name, ty) -> ty) xs) in
        let s2 = (pp_t' d t) in
-       let s2 = if String.contains s2 '\n' then s2 else Format.sprintf "%s%s" (indent d) s2 in
-       Format.sprintf "%slet (%s) = %s in\n%s" sps names (Id.pp_t n) s2
+       let s2 = if String.contains s2 '\n' then s2 else (indent d) ^ s2 in
+       Format.sprintf "%slet (%s) (*%s*) = %s in\n%s" sps names (Type.pp_t ty) (Id.pp_t n) s2
     | Get (n1, n2) ->
        Format.sprintf "%s.(%s)" (Id.pp_t n1) (Id.pp_t n2)
     | Put (n1, n2, n3) ->
