@@ -16,7 +16,7 @@ let pp_t t = t
 let counter = ref 0
 let genid s =
   incr counter;
-  Format.sprintf "%s.%d" s !counter
+  Format.sprintf "%s_%d" s !counter
 
 let rec id_of_typ = function
   | Type.Unit -> "u"
@@ -29,4 +29,4 @@ let rec id_of_typ = function
   | Type.Var _ -> assert false
 let gentmp typ =
   incr counter;
-  Printf.sprintf "T%s%d" (id_of_typ typ) !counter
+  Printf.sprintf "_t%s%d" (id_of_typ typ) !counter

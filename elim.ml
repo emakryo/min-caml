@@ -54,11 +54,6 @@ let rec sanitize (r, e) = (*kNormal.astのみを比較できるように、rangeを無効化*)
   in
   (((0,0),(0,0)), e')
 
-let is_simple_exp (r, e) = 
-  match e with 
-  | Unit | Int(_) | Float(_) | Var(_) -> true
-  | _ -> false
-
 let rec elim_exp env (r, e) = (*共通部分式除去*)
   let e' = 
     try 
@@ -74,8 +69,6 @@ let rec elim_exp env (r, e) = (*共通部分式除去*)
       | Let ((n, t), t1, t2) -> 
 	 let t1' = elim_exp env t1 in
 	 if effect t1' then 
-	   Let ((n, t), t1', elim_exp env t2)
-	 else if is_simple_exp t1' then
 	   Let ((n, t), t1', elim_exp env t2)
 	 else
 	   let env' = Em.add (sanitize t1') n env in
