@@ -54,11 +54,23 @@ let rec sanitize (r, e) = (*kNormal.astのみを比較できるように、rangeを無効化*)
   in
   (((0,0),(0,0)), e')
 
+let rec isnt_eliminatable (r, e) = 
+  match e with
+  | Let(_, e1, e2) | IfEq(_, _, e1, e2) | IfLE(_, _, e1, e2) -> effect e1 || effect e2
+  | LetRec(_, e) | LetTuple(_, _, e) -> effect e
+  | App _ | Get _ | Put _ | ExtFunApp _ -> true
+  | _ -> false
+
+let is_simple_var (r, e) = 
+  match e with
+  | Var(_) -> true
+  | _ -> false
+
 let rec elim_exp env (r, e) = (*共通部分式除去*)
   let e' = 
     try 
       let n = Em.find (sanitize (r, e)) env in
-      (* Format.eprintf "replacing follewing expression at %s to variable %s.\n%s" (Id.pp_range r) (Id.pp_t n) (pp_t (r, e)); *)
+      Format.eprintf "replacing follewing expression at %s to variable %s.\n%s" (Id.pp_range r) (Id.pp_t n) (pp_t (r, e));
       Var(n)
     with 
       Not_found -> 
@@ -68,7 +80,7 @@ let rec elim_exp env (r, e) = (*共通部分式除去*)
       | IfLE (n1, n2, t1, t2) -> IfLE (n1, n2, elim_exp env t1, elim_exp env t2)
       | Let ((n, t), t1, t2) -> 
 	 let t1' = elim_exp env t1 in
-	 if effect t1' then 
+	 if isnt_eliminatable t1' || is_simple_var t1' then 
 	   Let ((n, t), t1', elim_exp env t2)
 	 else
 	   let env' = Em.add (sanitize t1') n env in
