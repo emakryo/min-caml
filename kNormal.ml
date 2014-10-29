@@ -62,9 +62,17 @@ let rec pp_t t =
     | FDiv (n1, n2) ->
        Format.sprintf "(%s /. %s)"(Id.pp_t n1) (Id.pp_t n2)
     | IfEq (n1, n2, t1, t2) ->
-       Format.sprintf "%sif %s = %s then\n%s\n%selse\n%s" sps (Id.pp_t n1) (Id.pp_t n2) (pp_t' (d + 1) t1) sps (pp_t' (d + 1) t2)
+       let s1 = (pp_t' (d + 1) t1) in
+       let s1 = if String.contains s1 '\n' then s1 else Format.sprintf "%s%s" (indent (d + 1)) s1 in
+       let s2 = (pp_t' (d + 1) t2) in
+       let s2 = if String.contains s2 '\n' then s2 else Format.sprintf "%s%s" (indent (d + 1)) s2 in
+       Format.sprintf "%sif %s = %s then\n%s\n%selse\n%s" sps (Id.pp_t n1) (Id.pp_t n2) s1 sps s2
     | IfLE (n1, n2, t1, t2) ->
-       Format.sprintf "%sif %s <= %s then\n%s\n%selse\n%s" sps (Id.pp_t n1) (Id.pp_t n2) (pp_t' (d + 1) t1) sps (pp_t' (d + 1) t2)
+       let s1 = (pp_t' (d + 1) t1) in
+       let s1 = if String.contains s1 '\n' then s1 else Format.sprintf "%s%s" (indent (d + 1)) s1 in
+       let s2 = (pp_t' (d + 1) t2) in
+       let s2 = if String.contains s2 '\n' then s2 else Format.sprintf "%s%s" (indent (d + 1)) s2 in
+       Format.sprintf "%sif %s <= %s then\n%s\n%selse\n%s" sps (Id.pp_t n1) (Id.pp_t n2) s1 sps s2
     | Let ((name, _), t1, t2) ->
        let s1 = (pp_t' (d + 1) t1) in
        let s2 = (pp_t' d t2) in
