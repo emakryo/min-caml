@@ -61,9 +61,9 @@ let rec isnt_eliminatable (r, e) =
   | App _ | Get _ | Put _ | ExtFunApp _ -> true
   | _ -> false
 
-let is_simple_var (r, e) = 
+let is_simple_exp (r, e) = 
   match e with
-  | Var(_) -> true
+  | Unit | Int(_) | Float(_) | Var(_) -> true (*リテラルを変数に置き換えるとクロージャになる?*)
   | _ -> false
 
 let rec elim_exp env (r, e) = (*共通部分式除去*)
@@ -80,7 +80,7 @@ let rec elim_exp env (r, e) = (*共通部分式除去*)
       | IfLE (n1, n2, t1, t2) -> IfLE (n1, n2, elim_exp env t1, elim_exp env t2)
       | Let ((n, t), t1, t2) -> 
 	 let t1' = elim_exp env t1 in
-	 if isnt_eliminatable t1' || is_simple_var t1' then 
+	 if isnt_eliminatable t1' || is_simple_exp t1' then 
 	   Let ((n, t), t1', elim_exp env t2)
 	 else
 	   let env' = Em.add (sanitize t1') n env in
