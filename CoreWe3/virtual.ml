@@ -32,7 +32,7 @@ let rec g env (r, e) = (* 式の仮想マシンコード生成 *)
      letbigimm (getsgl d)
   | Closure.Neg (x) -> Ans (Neg (x))
   | Closure.Add (x, y) -> Ans (Add (x, V (y)))
-  | Closure.Sub (x, y) -> Ans (Sub (x, V (y)))
+  | Closure.Sub (x, y) -> Ans (Sub (x, y))
   | Closure.Lsl (x, y) -> Ans (Slw (x, y))
   | Closure.Lsr (x, y) -> Ans (Srw (x, y))
   (* | Closure.FNeg (x) -> Ans (FNeg (x)) *)
@@ -63,12 +63,12 @@ let rec g env (r, e) = (* 式の仮想マシンコード生成 *)
        expand
 	 (List.map (fun y -> (y, M.find y env)) ys)
 	 (1, e2')
-	 (fun y _ offset store_fv -> seq (Stw (y, x, C (offset)), store_fv)) in
+	 (fun y _ offset store_fv -> seq (Stw (y, x, offset), store_fv)) in
      Let ((x, t), Mr (reg_hp), 
 	  Let ((reg_hp, Type.Int), Add (reg_hp, C (offset)), 
 	       let z = Id.genid "l" in  
 	       Let ((z, Type.Int), SetL(l), 
-		    seq (Stw (z, x, C (0)), store_fv))))
+		    seq (Stw (z, x, 0), store_fv))))
   | Closure.AppCls (x, ys) ->
      Ans (CallCls (x, ys))
   | Closure.AppDir (Id.L(x), ys) ->
@@ -79,7 +79,7 @@ let rec g env (r, e) = (* 式の仮想マシンコード生成 *)
        expand
 	 (List.map (fun x -> (x, M.find x env)) xs)
 	 (0, Ans (Mr (y)))
-	 (fun x _ offset store -> seq (Stw (x, y, C (offset)), store))  in
+	 (fun x _ offset store -> seq (Stw (x, y, offset), store))  in
      Let ((y, Type.Tuple (List.map (fun x -> M.find x env) xs)), Mr (reg_hp),
 	  Let ((reg_hp, Type.Int), Add (reg_hp, C (offset)), store))
   | Closure.LetTuple (xts, y, e2) ->
@@ -90,23 +90,23 @@ let rec g env (r, e) = (* 式の仮想マシンコード生成 *)
 	 (0, g (M.add_list xts env) e2)
 	 (fun x t offset load ->
 	  if not (S.mem x s) then load 
-	  else Let ((x, t), Lwz (y, C (offset)), load)) in
+	  else Let ((x, t), Lwz (y, offset), load)) in
      load
   | Closure.Get (x, y) -> (* 配列の読み出し *)
-     let pos = Id.genid "o" in  
+     let addr = Id.genid "o" in  
      (match M.find x env with
       | Type.Array (Type.Unit) -> Ans (Nop)
       | Type.Array (_) ->
-	 Let ((pos, Type.Int), Add (x, V(y)),
-	      Ans (Lwz (pos, C(0))))
+	 Let ((addr, Type.Int), Add (x, V(y)),
+	      Ans (Lwz (addr, 0)))
       | _ -> assert false)
   | Closure.Put (x, y, z) ->
-     let pos = Id.genid "o" in 
+     let addr = Id.genid "o" in 
      (match M.find x env with
       | Type.Array (Type.Unit) -> Ans (Nop)
       | Type.Array (_) ->
-	 Let ((pos, Type.Int), Add (x, V(y)), 
-	      Ans (Stw (z, pos, C (0)))) 
+	 Let ((addr, Type.Int), Add (x, V(y)), 
+	      Ans (Stw (z, addr, 0))) 
       | _ -> assert false)
   | Closure.ExtArray (Id.L(x)) -> Ans(SetL(Id.L("min_caml_" ^ x)))
   | Closure.FNeg _| Closure.FAdd (_, _)| Closure.FSub (_, _)|Closure.FMul (_, _)| Closure.FDiv (_, _) ->
@@ -120,7 +120,7 @@ let h { Closure.name = (Id.L(x), t); Closure.args = yts;
     expand
       zts
       (4, g (M.add x t (M.add_list yts (M.add_list zts M.empty))) e)
-      (fun z t offset load -> Let ((z, t), Lwz (reg_cl, C (offset)), load)) in
+      (fun z t offset load -> Let ((z, t), Lwz (reg_cl, offset), load)) in
   match t with
   | Type.Fun (_, t2) ->
      { name = Id.L(x); args = ys; body = load; ret = t2 }

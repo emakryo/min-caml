@@ -12,13 +12,13 @@ and exp = (* 一つ一つの命令に対応する式 *)
   | Mr of Id.t
   | Neg of Id.t
   | Add of Id.t * id_or_imm
-  | Sub of Id.t * id_or_imm
+  | Sub of Id.t * Id.t
   | And of Id.t * Id.t
   | Or of Id.t * Id.t
   | Slw of Id.t * Id.t
   | Srw of Id.t * Id.t
-  | Lwz of Id.t * id_or_imm
-  | Stw of Id.t * Id.t * id_or_imm
+  | Lwz of Id.t * int
+  | Stw of Id.t * Id.t * int
   (* | FMr of Id.t  *)
   (* | FNeg of Id.t *)
   (* | FAdd of Id.t * Id.t *)
@@ -79,13 +79,14 @@ let fv_id_or_imm = function V (x) -> [x] | _ -> []
 let rec fv_exp = function
   | Nop | Li (_) (* | FLi (_) *) | SetL (_) | Comment (_) | Restore (_) -> []
   | Mr (x) | Neg (x) (* | FMr (x) | FNeg (x) *) | Save (x, _) -> [x]
-  | Add (x, y') | Sub (x, y') (* | Lfd (x, y')  *)| Lwz (x, y') -> 
-      x :: fv_id_or_imm y'
-  | And (x, y) | Or (x, y) | Slw (x, y) | Srw (x, y) ->
+  | Add (x, y') ->
+	x :: fv_id_or_imm y'
+  (* | Lfd (x, y')  *)| Lwz (x, y') -> [x]
+  | Sub (x, y) | And (x, y) | Or (x, y) | Slw (x, y) | Srw (x, y) ->
       [x; y]
   (* | FAdd (x, y) | FSub (x, y) | FMul (x, y) | FDiv (x, y) -> *)
   (*     [x; y] *)
-  | Stw (x, y, z') (* | Stfd (x, y, z')  *)-> x :: y :: fv_id_or_imm z'
+  | Stw (x, y, z') (* | Stfd (x, y, z')  *)-> [x; y]
   | IfEq (x, y', e1, e2) | IfLE (x, y', e1, e2) (* | IfGE (x, y', e1, e2) *) -> 
     [x; y'] @ remove_and_uniq S.empty (fv e1 @ fv e2)
   (* | IfFEq (x, y, e1, e2) | IfFLE (x, y, e1, e2) -> *)
@@ -115,12 +116,15 @@ let letbigimm i =
   let n = Int32.shift_right_logical i 16 in
   let m = Int32.logxor i (Int32.shift_left n 16) in
   let sft = Id.genid "sft" in
-  let lo = Id.genid "lo" in
-  let hi = Id.genid "hi" in
+  let hi1 = Id.genid "hi" in
+  let hi2 = Id.genid "hi" in
+  let lo1 = Id.genid "lo" in
+  let lo2 = Id.genid "lo" in
+  let lo3 = Id.genid "lo" in
   Let ((sft, Type.Int), Li (Int32.of_int 16), 
-       Let ((hi, Type.Int), Li n, 
-	    Let ((hi, Type.Int), Slw (hi, sft), 
-		 Let ((lo, Type.Int), Li m, 
-		      Let ((lo, Type.Int), Slw (lo, sft), 
-			   Let ((lo, Type.Int), Srw (lo, sft), 
-				Ans (Or (hi, lo))))))))
+       Let ((hi1, Type.Int), Li n, 
+	    Let ((hi2, Type.Int), Slw (hi1, sft), 
+		 Let ((lo1, Type.Int), Li m, 
+		      Let ((lo2, Type.Int), Slw (lo1, sft), 
+			   Let ((lo3, Type.Int), Srw (lo2, sft), 
+				Ans (Or (hi2, lo3))))))))

@@ -10,13 +10,13 @@ and exp =
   | Mr of Id.t
   | Neg of Id.t
   | Add of Id.t * id_or_imm
-  | Sub of Id.t * id_or_imm
+  | Sub of Id.t * Id.t
   | And of Id.t * Id.t
   | Or of Id.t * Id.t
   | Slw of Id.t * Id.t
   | Srw of Id.t * Id.t
-  | Lwz of Id.t * id_or_imm
-  | Stw of Id.t * Id.t * id_or_imm
+  | Lwz of Id.t * int
+  | Stw of Id.t * Id.t * int
   (* | FMr of Id.t  *)
   (* | FNeg of Id.t *)
   (* | FAdd of Id.t * Id.t *)
