@@ -9,7 +9,7 @@ typedef union {
 
 typedef union {
   int32 i;
-  flt f;
+  float f;
 } flt;
 
 value gethi(value v) {
