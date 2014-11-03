@@ -11,6 +11,8 @@ and exp =
   | Neg of Id.t
   | Add of Id.t * id_or_imm
   | Sub of Id.t * id_or_imm
+  | And of Id.t * Id.t
+  | Or of Id.t * Id.t
   | Slw of Id.t * Id.t
   | Srw of Id.t * Id.t
   | Lwz of Id.t * id_or_imm
@@ -25,18 +27,18 @@ and exp =
   (* | Stfd of Id.t * Id.t * id_or_imm *)
   | Comment of string
   (* virtual instructions *)
-  | IfEq of Id.t * id_or_imm * t * t
-  | IfLE of Id.t * id_or_imm * t * t
+  | IfEq of Id.t * Id.t * t * t
+  | IfLE of Id.t * Id.t * t * t
   (* | IfGE of Id.t * id_or_imm * t * t (\* for simm *\) *)
   (* | IfFEq of Id.t * Id.t * t * t *)
   (* | IfFLE of Id.t * Id.t * t * t *)
   (* closure address, integer arguments, and float arguments *)
-  | CallCls of Id.t * Id.t list * Id.t list
-  | CallDir of Id.l * Id.t list * Id.t list
+  | CallCls of Id.t * Id.t list
+  | CallDir of Id.l * Id.t list
   | Save of Id.t * Id.t (* レジスタ変数の値をスタック変数へ保存 *)
   | Restore of Id.t (* スタック変数から値を復元 *)
 type fundef =
-    { name : Id.l; args : Id.t list; fargs : Id.t list; body : t; ret : Type.t }
+    { name : Id.l; args : Id.t list; body : t; ret : Type.t }
 type prog = Prog of (Id.l * float) list * fundef list * t
 
 val fletd : Id.t * exp * t -> t (* shorthand of Let for float *)
@@ -61,3 +63,5 @@ val align : int -> int
 
 val imm_max : int32
 val imm_min : int32
+
+val letbigimm : int32 -> t
