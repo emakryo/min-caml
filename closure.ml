@@ -48,6 +48,8 @@ let rec fv (r, e) =
 
 let toplevel : fundef list ref = ref []
 
+let floatop2app op args = KNormal.ExtFunApp(op, args)
+
 let rec g env known (r, e) = (* クロージャ変換ルーチン本体 (caml2html: closure_g) *)
   let e' = match e with
     | KNormal.Unit -> Unit
@@ -58,11 +60,11 @@ let rec g env known (r, e) = (* クロージャ変換ルーチン本体 (caml2html: closure_g
     | KNormal.Sub(x, y) -> Sub(x, y)
     | KNormal.Lsl(x, y) -> Lsl(x, y)
     | KNormal.Lsr(x, y) -> Lsr(x, y)
-    | KNormal.FNeg(x) -> FNeg(x)
-    | KNormal.FAdd(x, y) -> FAdd(x, y)
-    | KNormal.FSub(x, y) -> FSub(x, y)
-    | KNormal.FMul(x, y) -> FMul(x, y)
-    | KNormal.FDiv(x, y) -> FDiv(x, y)
+    | KNormal.FNeg(x) -> snd (g env known (r, floatop2app "fneg" [x]))
+    | KNormal.FAdd(x, y) -> snd (g env known (r, floatop2app "fadd" [x; y]))
+    | KNormal.FSub(x, y) -> snd (g env known (r, floatop2app "fsub" [x; y]))
+    | KNormal.FMul(x, y) -> snd (g env known (r, floatop2app "fmul" [x; y]))
+    | KNormal.FDiv(x, y) -> snd (g env known (r, floatop2app "fdiv" [x; y]))
     | KNormal.IfEq(x, y, e1, e2) -> IfEq(x, y, g env known e1, g env known e2)
     | KNormal.IfLE(x, y, e1, e2) -> IfLE(x, y, g env known e1, g env known e2)
     | KNormal.Let((x, t), e1, e2) -> Let((x, t), g env known e1, g (M.add x t env) known e2)
