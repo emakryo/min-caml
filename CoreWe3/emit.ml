@@ -123,8 +123,8 @@ and g' oc = function (* 各命令のアセンブリ生成 *)
      Printf.fprintf oc "\tmtctr\t%s\n\tbctr\n" (reg reg_sw);
   | (Tail, CallDir(Id.L(x), ys)) -> (* 末尾呼び出し *)
      g'_args oc [] ys;
-     Printf.fprintf oc "\tJSUB\t:%s\n" x;
-     Printf.fprintf oc "\tRET\n";
+     Printf.fprintf oc "\tBEQ\tr0\tr0\t:%s\n" x;
+     (* Printf.fprintf oc "\tRET\n"; *)
   | (NonTail(a), CallCls(x, ys)) ->
      g'_args oc [(x, reg_cl)] ys;
      let ss = stacksize () in
