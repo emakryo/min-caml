@@ -6,6 +6,9 @@
 test/*
 !test/*.ml
 bytemark/Makefile
+float.o
+min-caml
+min-caml.top
 lexer.ml
 parser.ml
 parser.mli
