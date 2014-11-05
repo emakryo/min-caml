@@ -125,6 +125,10 @@ let letbigimm i =
        Let ((hi1, Type.Int), Li n, 
 	    Let ((hi2, Type.Int), Slw (hi1, sft), 
 		 Let ((lo1, Type.Int), Li m, 
-		      Let ((lo2, Type.Int), Slw (lo1, sft), 
-			   Let ((lo3, Type.Int), Srw (lo2, sft), 
-				Ans (Or (hi2, lo3))))))))
+		      if Int32.logand m (Int32.of_int 0x7fff) = m then
+			Ans (Or (hi2, lo1))
+		      else
+			Let ((lo2, Type.Int), Slw (lo1, sft), 
+			     Let ((lo3, Type.Int), Srw (lo2, sft), 
+				  Ans (Or (hi2, lo3))))))))
+      
