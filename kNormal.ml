@@ -35,32 +35,19 @@ let rec pp_t t =
     let sps = indent d in
     let rng = Id.pp_range r in
     match t with
-    | Unit ->
-       Format.sprintf "()"
-    | Int i ->
-       Format.sprintf "%d" i
-    | Float f ->
-       Format.sprintf "%f" f
-    | Neg n ->
-       Format.sprintf "-(%s)" (Id.pp_t n)
-    | Add (n1, n2) ->
-       Format.sprintf "(%s + %s)"(Id.pp_t n1) (Id.pp_t n2)
-    | Sub (n1, n2) ->
-       Format.sprintf "(%s - %s)"(Id.pp_t n1) (Id.pp_t n2)
-    | Lsl (n1, n2) ->
-       Format.sprintf "(%s lsl %s)"(Id.pp_t n1) (Id.pp_t n2)
-    | Lsr (n1, n2) ->
-       Format.sprintf "(%s lsr %s)"(Id.pp_t n1) (Id.pp_t n2)
-    | FNeg n ->
-       Format.sprintf "-.(%s)" (Id.pp_t n)
-    | FAdd (n1, n2) ->
-       Format.sprintf "(%s +. %s)"(Id.pp_t n1) (Id.pp_t n2)
-    | FSub (n1, n2) ->
-       Format.sprintf "(%s -. %s)"(Id.pp_t n1) (Id.pp_t n2)
-    | FMul (n1, n2) ->
-       Format.sprintf "(%s *. %s)"(Id.pp_t n1) (Id.pp_t n2)
-    | FDiv (n1, n2) ->
-       Format.sprintf "(%s /. %s)"(Id.pp_t n1) (Id.pp_t n2)
+    | Unit -> Format.sprintf "()"
+    | Int i -> Format.sprintf "%d" i
+    | Float f -> Format.sprintf "%f" f
+    | Neg n -> Format.sprintf "-(%s)" (Id.pp_t n)
+    | Add (n1, n2) -> Format.sprintf "(%s + %s)"(Id.pp_t n1) (Id.pp_t n2)
+    | Sub (n1, n2) -> Format.sprintf "(%s - %s)"(Id.pp_t n1) (Id.pp_t n2)
+    | Lsl (n1, n2) -> Format.sprintf "(%s lsl %s)"(Id.pp_t n1) (Id.pp_t n2)
+    | Lsr (n1, n2) -> Format.sprintf "(%s lsr %s)"(Id.pp_t n1) (Id.pp_t n2)
+    | FNeg n -> Format.sprintf "-.(%s)" (Id.pp_t n)
+    | FAdd (n1, n2) -> Format.sprintf "(%s +. %s)"(Id.pp_t n1) (Id.pp_t n2)
+    | FSub (n1, n2) -> Format.sprintf "(%s -. %s)"(Id.pp_t n1) (Id.pp_t n2)
+    | FMul (n1, n2) -> Format.sprintf "(%s *. %s)"(Id.pp_t n1) (Id.pp_t n2)
+    | FDiv (n1, n2) -> Format.sprintf "(%s /. %s)"(Id.pp_t n1) (Id.pp_t n2)
     | IfEq (n1, n2, t1, t2) ->
        let s1 = (pp_t' (d + 1) t1) in
        let s1 = if String.contains s1 '\n' then s1 else (indent (d + 1)) ^ s1 in
@@ -81,8 +68,7 @@ let rec pp_t t =
 	 Format.sprintf "%slet %s (*%s*) = \n%s in\n%s" sps (Id.pp_t name) (Type.pp_t ty) s1 s2
        else
 	 Format.sprintf "%slet %s (*%s*) = %s in\n%s" sps (Id.pp_t name) (Type.pp_t ty) s1 s2
-    | Var n ->
-       Format.sprintf "%s" (Id.pp_t n)
+    | Var n -> Format.sprintf "%s" (Id.pp_t n)
     | LetRec (fdef, t) ->
        let (fname, ty) = fdef.name in
        let args = String.concat " " (List.map (fun (name, _) -> Id.pp_t name) fdef.args) in
@@ -93,24 +79,18 @@ let rec pp_t t =
 	 Format.sprintf "%slet rec %s (*%s*) %s =\n%s in\n%s" sps (Id.pp_t fname) (Type.pp_t ty) args s1 s2
        else
 	 Format.sprintf "%slet rec %s (*%s*) %s = %s in\n%s" sps (Id.pp_t fname) (Type.pp_t ty) args s1 s2
-    | App (n, ns) ->
-       Format.sprintf "(%s %s)" (Id.pp_t n) (String.concat " " (List.map (fun m -> Id.pp_t m) ns))
-    | Tuple ns ->
-       Format.sprintf "(%s)" (String.concat ", " (List.map (fun m -> Id.pp_t m) ns))
+    | App (n, ns) -> Format.sprintf "(%s %s)" (Id.pp_t n) (String.concat " " (List.map (fun m -> Id.pp_t m) ns))
+    | Tuple ns -> Format.sprintf "(%s)" (String.concat ", " (List.map (fun m -> Id.pp_t m) ns))
     | LetTuple (xs, n, t) ->
        let names = String.concat ", " (List.map (fun (name, ty) -> Id.pp_t name) xs) in
        let ty = Type.Tuple (List.map (fun (name, ty) -> ty) xs) in
        let s2 = (pp_t' d t) in
        let s2 = if String.contains s2 '\n' then s2 else (indent d) ^ s2 in
        Format.sprintf "%slet (%s) (*%s*) = %s in\n%s" sps names (Type.pp_t ty) (Id.pp_t n) s2
-    | Get (n1, n2) ->
-       Format.sprintf "%s.(%s)" (Id.pp_t n1) (Id.pp_t n2)
-    | Put (n1, n2, n3) ->
-       Format.sprintf "(%s.(%s) <- %s)" (Id.pp_t n1) (Id.pp_t n2) (Id.pp_t n3)
-    | ExtArray n ->
-       Format.sprintf "%s" (Id.pp_t n)
-    | ExtFunApp (n, ns) ->
-       Format.sprintf "(%s %s)" (Id.pp_t n) (String.concat " " (List.map (fun m -> Id.pp_t m) ns))
+    | Get (n1, n2) -> Format.sprintf "%s.(%s)" (Id.pp_t n1) (Id.pp_t n2)
+    | Put (n1, n2, n3) -> Format.sprintf "(%s.(%s) <- %s)" (Id.pp_t n1) (Id.pp_t n2) (Id.pp_t n3)
+    | ExtArray n -> Format.sprintf "%s" (Id.pp_t n)
+    | ExtFunApp (n, ns) -> Format.sprintf "(%s %s)" (Id.pp_t n) (String.concat " " (List.map (fun m -> Id.pp_t m) ns))
   in
   Format.sprintf "%s\n" (pp_t' 0 t)
 

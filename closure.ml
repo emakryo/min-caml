@@ -32,6 +32,74 @@ type fundef = { name : Id.l * Type.t;
 		body : t }
 type prog = Prog of fundef list * t
 
+let rec pp_t t d =
+  let indent d = String.make (2 * d) ' ' in
+  let rec pp_t' d (r, t) =
+    let sps = indent d in
+    let rng = Id.pp_range r in
+    match t with
+    | Unit -> Format.sprintf "()"
+    | Int i -> Format.sprintf "%d" i
+    | Float f -> Format.sprintf "%f" f
+    | Neg n -> Format.sprintf "-(%s)" (Id.pp_t n)
+    | Add (n1, n2) -> Format.sprintf "(%s + %s)"(Id.pp_t n1) (Id.pp_t n2)
+    | Sub (n1, n2) -> Format.sprintf "(%s - %s)"(Id.pp_t n1) (Id.pp_t n2)
+    | Lsl (n1, n2) -> Format.sprintf "(%s lsl %s)"(Id.pp_t n1) (Id.pp_t n2)
+    | Lsr (n1, n2) -> Format.sprintf "(%s lsr %s)"(Id.pp_t n1) (Id.pp_t n2)
+    | FNeg n -> Format.sprintf "-.(%s)" (Id.pp_t n)
+    | FAdd (n1, n2) -> Format.sprintf "(%s +. %s)"(Id.pp_t n1) (Id.pp_t n2)
+    | FSub (n1, n2) -> Format.sprintf "(%s -. %s)"(Id.pp_t n1) (Id.pp_t n2)
+    | FMul (n1, n2) -> Format.sprintf "(%s *. %s)"(Id.pp_t n1) (Id.pp_t n2)
+    | FDiv (n1, n2) -> Format.sprintf "(%s /. %s)"(Id.pp_t n1) (Id.pp_t n2)
+    | IfEq (n1, n2, t1, t2) ->
+       let s1 = (pp_t' (d + 1) t1) in
+       let s1 = if String.contains s1 '\n' then s1 else (indent (d + 1)) ^ s1 in
+       let s2 = (pp_t' (d + 1) t2) in
+       let s2 = if String.contains s2 '\n' then s2 else (indent (d + 1)) ^ s2 in
+       Format.sprintf "%sif %s = %s then\n%s\n%selse\n%s" sps (Id.pp_t n1) (Id.pp_t n2) s1 sps s2
+    | IfLE (n1, n2, t1, t2) ->
+       let s1 = (pp_t' (d + 1) t1) in
+       let s1 = if String.contains s1 '\n' then s1 else (indent (d + 1)) ^ s1 in
+       let s2 = (pp_t' (d + 1) t2) in
+       let s2 = if String.contains s2 '\n' then s2 else (indent (d + 1)) ^ s2 in
+       Format.sprintf "%sif %s <= %s then\n%s\n%selse\n%s" sps (Id.pp_t n1) (Id.pp_t n2) s1 sps s2
+    | Let ((name, ty), t1, t2) ->
+       let s1 = (pp_t' (d + 1) t1) in
+       let s2 = (pp_t' d t2) in
+       let s2 = if String.contains s2 '\n' then s2 else (indent d) ^ s2 in
+       if String.contains s1 '\n' then
+	 Format.sprintf "%slet %s (*%s*) = \n%s in\n%s" sps (Id.pp_t name) (Type.pp_t ty) s1 s2
+       else
+	 Format.sprintf "%slet %s (*%s*) = %s in\n%s" sps (Id.pp_t name) (Type.pp_t ty) s1 s2
+    | Var n -> Format.sprintf "%s" (Id.pp_t n)
+    | MakeCls((x, t), { entry = Id.L(l); actual_fv = zs }, e2') ->
+       let fvs = String.concat " "  zs in
+       let s2 = (pp_t' d e2') in
+       let s2 = if String.contains s2 '\n' then s2 else (indent d) ^ s2 in
+       Format.sprintf "%slet %s (*%s*) = <closure_%s{%s}> in\n%s" sps (Id.pp_t x) (Type.pp_t t) l fvs s2
+    | AppCls (n, args) -> Format.sprintf "(closure_%s %s)" (Id.pp_t n) (String.concat " " (List.map (fun m -> Id.pp_t m) args))
+    | AppDir (Id.L l, args) ->Format.sprintf "(%s %s)" (Id.pp_t l) (String.concat " " (List.map (fun m -> Id.pp_t m) args))
+    | Tuple ns -> Format.sprintf "(%s)" (String.concat ", " (List.map (fun m -> Id.pp_t m) ns))
+    | LetTuple (xs, n, t) ->
+       let names = String.concat ", " (List.map (fun (name, ty) -> Id.pp_t name) xs) in
+       let ty = Type.Tuple (List.map (fun (name, ty) -> ty) xs) in
+       let s2 = (pp_t' d t) in
+       let s2 = if String.contains s2 '\n' then s2 else (indent d) ^ s2 in
+       Format.sprintf "%slet (%s) (*%s*) = %s in\n%s" sps names (Type.pp_t ty) (Id.pp_t n) s2
+    | Get (n1, n2) -> Format.sprintf "%s.(%s)" (Id.pp_t n1) (Id.pp_t n2)
+    | Put (n1, n2, n3) -> Format.sprintf "(%s.(%s) <- %s)" (Id.pp_t n1) (Id.pp_t n2) (Id.pp_t n3)
+    | ExtArray n -> Format.sprintf "%s" (Id.pp_l n)
+  in
+  Format.sprintf "%s\n" (pp_t' d t)
+
+let rec pp_fundef { name = (Id.L(x), t); args = yts; formal_fv = zts; body = b } =
+  let indent d = String.make (2 * d) ' ' in
+  let args = String.concat " " (List.map (fun (name, _) -> Id.pp_t name) yts) in
+  let fvs = String.concat " " (List.map (fun (name, _) -> Id.pp_t name) zts) in
+  let s = (pp_t b 1) in
+  let s = if String.contains s '\n' then s else (indent 1) ^ s in
+    Format.sprintf "let rec %s %s {%s} (*%s*) = \n%s\n" x args fvs (Type.pp_t t) s
+
 let rec fv (r, e) =
   match e with
   | Unit | Int(_) | Float(_) | ExtArray(_) -> S.empty
@@ -114,4 +182,7 @@ let rec g env known (r, e) = (* クロージャ変換ルーチン本体 (caml2html: closure_g
 let f e =
   toplevel := [];
   let e' = g M.empty S.empty e in
+  print_string "Closure =======================\n";
+  List.iter (fun fdef -> print_string (pp_fundef fdef)) !toplevel;
+  print_string (pp_t e' 0);
   Prog(List.rev !toplevel, e')

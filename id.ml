@@ -13,6 +13,8 @@ let rec pp_list = function
 
 let pp_t t = t
 
+let pp_l (L l) = l
+
 let counter = ref 0
 let genid s =
   incr counter;
