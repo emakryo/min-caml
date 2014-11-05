@@ -42,7 +42,7 @@ let rec g env (r, e) = (* 式の仮想マシンコード生成 *)
   (* | Closure.FDiv (x, y) -> Ans (FDiv (x, y)) *)
   | Closure.IfEq (x, y, e1, e2) -> 
      (match M.find x env with
-      | Type.Bool | Type.Int -> Ans (IfEq (x, y, g env e1, g env e2))
+      | Type.Bool | Type.Int | Type.Float -> Ans (IfEq (x, y, g env e1, g env e2))
       | _ -> failwith "equality supported only for bool, int.")
   | Closure.IfLE (x, y, e1, e2) ->
      (match M.find x env with

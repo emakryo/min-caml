@@ -2,11 +2,9 @@ open Asm
 
 let rec g env = function (* 命令列の 16 bit 即値最適化 *)
   | Ans(exp) -> Ans(g' env exp)
-  | Let((x, t), Li(i), e) when (imm_min <= i) && (i < imm_max) ->
+  | Let((x, t), Li(i), e) ->
      let e' = g (M.add x (Int32.to_int i) env) e in
      if List.mem x (fv e') then Let((x, t), Li(i), e') else e'
-  | Let((x, t), Li(i), e) ->
-     failwith "The immediate is too large. It must be within 16bits."
   | Let(xt, exp, e) -> Let(xt, g' env exp, g env e)
 and g' env = function (* 各命令の 16 bit 即値最適化 *)
   | Add(x, V(y)) when M.mem y env -> Add(x, C(M.find y env))

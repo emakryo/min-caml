@@ -54,10 +54,8 @@ let rec g oc = function (* 命令列のアセンブリ生成 *)
 and g' oc = function (* 各命令のアセンブリ生成 *)
   (* 末尾でなかったら計算結果を dest にセット *)
   | (NonTail(_), Nop) -> ()
-  | (NonTail(x), Li(i)) when (imm_min <= i) && (i < imm_max) -> 
+  | (NonTail(x), Li(i)) -> 
      Printf.fprintf oc "\tADDI\t%s\tr0\t%ld\n" (reg x) i
-  | (NonTail(x), Li(i)) ->
-     failwith "The immediate is too large. It must be within 16bits."
   | (NonTail(x), SetL(Id.L(y))) -> 
      let s = load_label x y in
      Printf.fprintf oc "%s" s
@@ -93,19 +91,19 @@ and g' oc = function (* 各命令のアセンブリ生成 *)
   (* 復帰の仮想命令の実装 *)
   | (NonTail(x), Restore(y)) when List.mem x allregs ->
       Printf.fprintf oc "\tLD\t%s\t%s\t%d\n" (reg x) (reg reg_sp) (offset y)
-     (* Printf.fprintf oc "\tPOP\t%s\n" (reg x) *)
+  | (NonTail(x), Restore(y))->
+     failwith "Only registers can be resutored.."
   (* 末尾だったら計算結果を第一レジスタにセット *)
   | (Tail, (Nop | Stw _ | Comment _ | Save _ as exp)) ->
      g' oc (NonTail(Id.gentmp Type.Unit), exp);
      Printf.fprintf oc "\tRET\n";
-  | (Tail, (Li _ | SetL _ | Mr _ | Neg _ | Add _ | Sub _ | Slw _ |
-            Lwz _ as exp)) -> 
+  | (Tail, (Li _ | SetL _ | Mr _ | Neg _ | Add _ | Sub _ | And _ | Or _ | Slw _ | Srw _ |Lwz _ as exp)) -> 
      g' oc (NonTail(regs.(0)), exp);
      Printf.fprintf oc "\tRET\n";
   | (Tail, (Restore(x) as exp)) ->
      (match locate x with
       | [i] -> g' oc (NonTail(regs.(0)), exp)
-      (* | [i; j] when (i + 1 = j) -> g' oc (NonTail(fregs.(0)), exp) *)
+      | [i; j] when (i + 1 = j) -> g' oc (NonTail(regs.(0)), exp)
       | _ -> assert false);
      Printf.fprintf oc "\tRET\n";
   | (Tail, IfEq(x, y, e1, e2)) ->
@@ -124,7 +122,6 @@ and g' oc = function (* 各命令のアセンブリ生成 *)
   | (Tail, CallDir(Id.L(x), ys)) -> (* 末尾呼び出し *)
      g'_args oc [] ys;
      Printf.fprintf oc "\tBEQ\tr0\tr0\t:%s\n" x;
-     (* Printf.fprintf oc "\tRET\n"; *)
   | (NonTail(a), CallCls(x, ys)) ->
      g'_args oc [(x, reg_cl)] ys;
      let ss = stacksize () in
