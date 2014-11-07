@@ -26,6 +26,7 @@ and ast = (* クロージャ変換後の式 (caml2html: closure_t) *)
   | Get of Id.t * Id.t
   | Put of Id.t * Id.t * Id.t
   | ExtArray of Id.l
+  | ExtTuple of Id.l
 type fundef = { name : Id.l * Type.t;
 		args : (Id.t * Type.t) list;
 		formal_fv : (Id.t * Type.t) list;
@@ -88,7 +89,8 @@ let rec pp_t t d =
        Format.sprintf "%slet (%s) (*%s*) = %s in\n%s" sps names (Type.pp_t ty) (Id.pp_t n) s2
     | Get (n1, n2) -> Format.sprintf "%s.(%s)" (Id.pp_t n1) (Id.pp_t n2)
     | Put (n1, n2, n3) -> Format.sprintf "(%s.(%s) <- %s)" (Id.pp_t n1) (Id.pp_t n2) (Id.pp_t n3)
-    | ExtArray n -> Format.sprintf "%s" (Id.pp_l n)
+    | ExtArray n -> Format.sprintf "ext_array_%s" (Id.pp_l n)
+    | ExtTuple n -> Format.sprintf "ext_tuple_%s" (Id.pp_l n)
   in
   Format.sprintf "%s\n" (pp_t' d t)
 
@@ -98,11 +100,11 @@ let rec pp_fundef { name = (Id.L(x), t); args = yts; formal_fv = zts; body = b }
   let fvs = String.concat " " (List.map (fun (name, _) -> Id.pp_t name) zts) in
   let s = (pp_t b 1) in
   let s = if String.contains s '\n' then s else (indent 1) ^ s in
-    Format.sprintf "let rec %s %s {%s} (*%s*) = \n%s\n" x args fvs (Type.pp_t t) s
+  Format.sprintf "let rec %s %s {%s} (*%s*) = \n%s\n" x args fvs (Type.pp_t t) s
 
 let rec fv (r, e) =
   match e with
-  | Unit | Int(_) | Float(_) | ExtArray(_) -> S.empty
+  | Unit | Int(_) | Float(_) | ExtArray(_) | ExtTuple(_) -> S.empty
   | Neg(x) | FNeg(x) -> S.singleton x
   | Add(x, y) | Sub(x, y) | Lsl(x, y) | Lsr(x, y) | FAdd(x, y) | FSub(x, y) | FMul(x, y) | FDiv(x, y) | Get(x, y) -> S.of_list [x; y]
   | IfEq(x, y, e1, e2)| IfLE(x, y, e1, e2) -> S.add x (S.add y (S.union (fv e1) (fv e2)))
@@ -175,6 +177,7 @@ let rec g env known (r, e) = (* クロージャ変換ルーチン本体 (caml2html: closure_g
     | KNormal.Get(x, y) -> Get(x, y)
     | KNormal.Put(x, y, z) -> Put(x, y, z)
     | KNormal.ExtArray(x) -> ExtArray(Id.L(x))
+    | KNormal.ExtTuple(x) -> ExtTuple(Id.L(x))
     | KNormal.ExtFunApp(x, ys) -> AppDir(Id.L("min_caml_" ^ x), ys)
   in
   (r, e')

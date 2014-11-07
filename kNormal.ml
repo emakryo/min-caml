@@ -26,6 +26,7 @@ and ast =
   | Get of Id.t * Id.t
   | Put of Id.t * Id.t * Id.t
   | ExtArray of Id.t
+  | ExtTuple of Id.t
   | ExtFunApp of Id.t * Id.t list
 and fundef = { name : Id.t * Type.t; args : (Id.t * Type.t) list; body : t }
 
@@ -89,7 +90,8 @@ let rec pp_t t =
        Format.sprintf "%slet (%s) (*%s*) = %s in\n%s" sps names (Type.pp_t ty) (Id.pp_t n) s2
     | Get (n1, n2) -> Format.sprintf "%s.(%s)" (Id.pp_t n1) (Id.pp_t n2)
     | Put (n1, n2, n3) -> Format.sprintf "(%s.(%s) <- %s)" (Id.pp_t n1) (Id.pp_t n2) (Id.pp_t n3)
-    | ExtArray n -> Format.sprintf "%s" (Id.pp_t n)
+    | ExtArray n -> Format.sprintf "ext_array_%s" (Id.pp_t n)
+    | ExtTuple n -> Format.sprintf "ext_tuple_%s" (Id.pp_t n)
     | ExtFunApp (n, ns) -> Format.sprintf "(%s %s)" (Id.pp_t n) (String.concat " " (List.map (fun m -> Id.pp_t m) ns))
   in
   Format.sprintf "%s\n" (pp_t' 0 t)
@@ -161,7 +163,7 @@ let rec pp_t t =
 
 let rec fv (r, t) =  (* 式に出現する（自由な）変数 (caml2html: knormal_fv) *)
   match t with
-  | Unit | Int(_) | Float(_) | ExtArray(_) -> S.empty
+  | Unit | Int(_) | Float(_) | ExtArray(_) | ExtTuple(_) -> S.empty
   | Neg(x) | FNeg(x) -> S.singleton x
   | Add(x, y) | Sub(x, y) | Lsl(x, y) | Lsr(x, y) | FAdd(x, y) | FSub(x, y) | FMul(x, y) | FDiv(x, y) | Get(x, y) -> S.of_list [x; y]
   | IfEq(x, y, e1, e2) | IfLE(x, y, e1, e2) -> S.add x (S.add y (S.union (fv e1) (fv e2)))
@@ -258,7 +260,8 @@ let rec g env (r, e) = (* K正規化ルーチン本体 (caml2html: knormal_g) *)
   | Syntax.Var(x) -> (* 外部配列の参照 (caml2html: knormal_extarray) *)
      (match M.find x !Typing.extenv with
       | Type.Array(_) as t -> (r, ExtArray x), t
-      | _ -> failwith (Printf.sprintf "external variable %s at %s does not have an array type" x (Id.pp_range r)))
+      | Type.Tuple(_) as t -> (r, ExtTuple x), t
+      | _ -> failwith (Printf.sprintf "external variable %s at %s does not have an array or tuple type" x (Id.pp_range r)))
   | Syntax.LetRec({ Syntax.name = (x, t); Syntax.args = yts; Syntax.body = e1 }, e2) ->
      let env' = M.add x t env in
      let e2', t2 = g env' e2 in

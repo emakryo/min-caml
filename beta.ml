@@ -36,6 +36,7 @@ let rec g env (r, e) = (* β簡約ルーチン本体 (caml2html: beta_g) *)
     | Put(x, y, z) -> Put(find x env, find y env, find z env)
     | App(g, xs) -> App(find g env, List.map (fun x -> find x env) xs)
     | ExtArray(x) -> ExtArray(x)
+    | ExtTuple(x) -> ExtTuple(x)
     | ExtFunApp(x, ys) -> ExtFunApp(x, List.map (fun y -> find y env) ys)
   in
   (r, e')

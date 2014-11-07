@@ -105,7 +105,11 @@ let rec g env (r, e) = (* 式の仮想マシンコード生成 *)
 	 Let ((addr, Type.Int), Add (x, V(y)), 
 	      Ans (Stw (z, addr, 0))) 
       | _ -> assert false)
-  | Closure.ExtArray (Id.L(x)) -> Ans(SetL(Id.L("min_caml_" ^ x)))
+  (* | Closure.ExtArray (Id.L(x)) -> Ans(SetL(Id.L("min_caml_" ^ x))) *)
+  | Closure.ExtArray (Id.L(x)) -> 
+     failwith "Sorry, external array is not supported yet..."
+  | Closure.ExtTuple (Id.L(x)) -> 
+     failwith "Sorry, external tuple is not supported yet..."
   | Closure.FNeg _| Closure.FAdd (_, _)| Closure.FSub (_, _)|Closure.FMul (_, _)| Closure.FDiv (_, _) ->
      failwith "Sorry, native floating-point operations are not supported yet..."
 

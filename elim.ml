@@ -45,7 +45,7 @@ let rec elim_let (r, e) =  (* 不要定義削除ルーチン本体 (caml2html: elim_f) *)
 
 let rec sanitize (r, e) = (*kNormal.astのみを比較できるように、rangeを無効化*)
   let e' = match e with
-    | Unit | Int(_) | Float(_) | Neg(_) | Add(_) | Sub(_) | Lsl(_) | Lsr(_) | FNeg(_) | FAdd(_) | FSub(_) | FMul(_) | FDiv(_) | Var(_) | App(_) | Tuple(_) | Get(_) | Put(_) | ExtArray(_) | ExtFunApp(_) -> e
+    | Unit | Int(_) | Float(_) | Neg(_) | Add(_) | Sub(_) | Lsl(_) | Lsr(_) | FNeg(_) | FAdd(_) | FSub(_) | FMul(_) | FDiv(_) | Var(_) | App(_) | Tuple(_) | Get(_) | Put(_) | ExtArray(_) | ExtTuple(_) | ExtFunApp(_) -> e
     | IfEq (n1, n2, t1, t2) -> IfEq (n1, n2, sanitize t1, sanitize t2)
     | IfLE (n1, n2, t1, t2) -> IfLE (n1, n2, sanitize t1, sanitize t2)
     | Let ((n, ty), t1, t2) -> Let ((n, ty), sanitize t1, sanitize t2)
@@ -63,7 +63,7 @@ let rec isnt_eliminatable (r, e) =
 
 let is_simple_exp (r, e) = 
   match e with
-  | Unit | Int(_) | Float(_) | Var(_) -> true (*リテラルを変数に置き換えるとクロージャになる?*)
+  | Unit | Int(_) | Float(_) | Var(_) | ExtArray(_) | ExtTuple(_) -> true (*リテラルを変数に置き換えるとクロージャになる?*)
   | _ -> false
 
 let rec elim_exp env (r, e) = (*共通部分式除去*)
@@ -75,7 +75,7 @@ let rec elim_exp env (r, e) = (*共通部分式除去*)
     with 
       Not_found -> 
       match e with
-      | Unit | Int(_) | Float(_) | Neg(_) | Add(_) | Sub(_) | Lsl(_) | Lsr(_) | FNeg(_) | FAdd(_) | FSub(_) | FMul(_) | FDiv(_) | Var(_) | App(_) | Tuple(_) | Get(_) | Put(_) | ExtArray(_) | ExtFunApp(_) -> e
+      | Unit | Int(_) | Float(_) | Neg(_) | Add(_) | Sub(_) | Lsl(_) | Lsr(_) | FNeg(_) | FAdd(_) | FSub(_) | FMul(_) | FDiv(_) | Var(_) | App(_) | Tuple(_) | Get(_) | Put(_) | ExtArray(_) | ExtTuple(_) | ExtFunApp(_) -> e
       | IfEq (n1, n2, t1, t2) -> IfEq (n1, n2, elim_exp env t1, elim_exp env t2)
       | IfLE (n1, n2, t1, t2) -> IfLE (n1, n2, elim_exp env t1, elim_exp env t2)
       | Let ((n, t), t1, t2) -> 
