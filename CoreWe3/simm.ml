@@ -2,7 +2,8 @@ open Asm
 
 let rec g env = function (* 命令列の 16 bit 即値最適化 *)
   | Ans(exp) -> Ans(g' env exp)
-  | Let((x, t), Li(i), e) ->
+  | Let((x, t), Li(i), e) when ((t = Type. Int) || (t = Type.Bool)) && (imm_min <= i) && (i < imm_max) -> 
+     (*浮動小数点数に対して間違って最適化をかけるとバグるが、多分そんなことはおこらない(と思う)*)
      let e' = g (M.add x (Int32.to_int i) env) e in
      if List.mem x (fv e') then Let((x, t), Li(i), e') else e'
   | Let(xt, exp, e) -> Let(xt, g' env exp, g env e)

@@ -54,8 +54,13 @@ let rec g oc = function (* 命令列のアセンブリ生成 *)
 and g' oc = function (* 各命令のアセンブリ生成 *)
   (* 末尾でなかったら計算結果を dest にセット *)
   | (NonTail(_), Nop) -> ()
-  | (NonTail(x), Li(i)) -> 
+  | (NonTail(x), Li(i)) when (imm_min <= i) && (i < imm_max) -> 
      Printf.fprintf oc "\tADDI\t%s\tr0\t%ld\n" (reg x) i
+  | (NonTail(x), Li(i)) -> 
+     let n = Int32.shift_right_logical i 16 in
+     let m = Int32.logxor i (Int32.shift_left n 16) in     
+     Printf.fprintf oc "\tLDIH\t%s\t%ld\n" (reg x) n;
+     Printf.fprintf oc "\tLDIL\t%s\t%ld\n" (reg x) m
   | (NonTail(x), SetL(Id.L(y))) -> 
      let s = load_label x y in
      Printf.fprintf oc "%s" s

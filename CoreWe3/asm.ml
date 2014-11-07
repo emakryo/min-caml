@@ -111,24 +111,4 @@ let align i = if i mod 8 = 0 then i else i + 4
 
 let imm_max = Int32.of_int 0x8000
 let imm_min = Int32.of_int (-0x8000)
-
-let letbigimm i = 
-  let n = Int32.shift_right_logical i 16 in
-  let m = Int32.logxor i (Int32.shift_left n 16) in
-  let sft = Id.genid "sft" in
-  let hi1 = Id.genid "hi" in
-  let hi2 = Id.genid "hi" in
-  let lo1 = Id.genid "lo" in
-  let lo2 = Id.genid "lo" in
-  let lo3 = Id.genid "lo" in
-  Let ((sft, Type.Int), Li (Int32.of_int 16), 
-       Let ((hi1, Type.Int), Li n, 
-	    Let ((hi2, Type.Int), Slw (hi1, sft), 
-		 Let ((lo1, Type.Int), Li m, 
-		      if Int32.logand m (Int32.of_int 0x7fff) = m then
-			Ans (Or (hi2, lo1))
-		      else
-			Let ((lo2, Type.Int), Slw (lo1, sft), 
-			     Let ((lo3, Type.Int), Srw (lo2, sft), 
-				  Ans (Or (hi2, lo3))))))))
       

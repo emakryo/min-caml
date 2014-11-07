@@ -24,12 +24,9 @@ let rec g env (r, e) = (* 式の仮想マシンコード生成 *)
   | Closure.Unit -> Ans (Nop)
   | Closure.Int (i) ->
      let i32 = Int32.of_int i in
-     if (imm_min <= i32) && (i32 < imm_max) then
-       Ans (Li (i32))
-     else
-       letbigimm i32
+     Ans (Li (i32))
   | Closure.Float (d) -> 
-     letbigimm (getsgl d)
+     Ans (Li (getsgl d))
   | Closure.Neg (x) -> Ans (Neg (x))
   | Closure.Add (x, y) -> Ans (Add (x, V (y)))
   | Closure.Sub (x, y) -> Ans (Sub (x, y))
@@ -43,7 +40,7 @@ let rec g env (r, e) = (* 式の仮想マシンコード生成 *)
   | Closure.IfEq (x, y, e1, e2) -> 
      (match M.find x env with
       | Type.Bool | Type.Int | Type.Float -> Ans (IfEq (x, y, g env e1, g env e2))
-      | _ -> failwith "equality supported only for bool, int.")
+      | _ -> failwith "equality supported only for bool, int and float.")
   | Closure.IfLE (x, y, e1, e2) ->
      (match M.find x env with
       | Type.Bool | Type.Int -> Ans (IfLE (x, y, g env e1, g env e2))
