@@ -65,3 +65,5 @@ val align : int -> int
 
 val imm_max : int32
 val imm_min : int32
+
+val load_ext_var : string -> t
