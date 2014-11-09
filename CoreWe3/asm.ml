@@ -59,8 +59,10 @@ let allregs = Array.to_list regs
 let reg_cl = regs.(Array.length regs - 1) (* closure address *)
 let reg_sw = regs.(Array.length regs - 2) (* temporary for swap *)
 (* let reg_fsw = fregs.(Array.length fregs - 1) (\* temporary for swap *\) *)
-let reg_hp = "%r2"
-let reg_sp = "%r1"
+let reg_hp = "%r1"
+let reg_sp = "%r2"
+let hp_default = Int32.of_int 0x28000
+let sp_default = Int32.of_int 0x0
 let reg_tmp = "%r15"
 
 (* is_reg : Id.t -> bool *)

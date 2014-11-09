@@ -53,6 +53,8 @@ val reg_sw : Id.t
 (* val reg_fsw : Id.t *)
 val reg_hp : Id.t
 val reg_sp : Id.t
+val hp_default : int32
+val sp_default : int32
 val reg_tmp : Id.t
 val is_reg : Id.t -> bool
 
