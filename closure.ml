@@ -130,7 +130,7 @@ let rec g env known (r, e) = (* クロージャ変換ルーチン本体 (caml2html: closure_g
     | KNormal.Sub(x, y) -> Sub(x, y)
     | KNormal.Lsl(x, y) -> Lsl(x, y)
     | KNormal.Lsr(x, y) -> Lsr(x, y)
-    | KNormal.FNeg(x) -> snd (g env known (r, floatop2app "fneg" [x]))
+    | KNormal.FNeg(x) -> FNeg(x)
     | KNormal.FAdd(x, y) -> snd (g env known (r, floatop2app "fadd" [x; y]))
     | KNormal.FSub(x, y) -> snd (g env known (r, floatop2app "fsub" [x; y]))
     | KNormal.FMul(x, y) -> snd (g env known (r, floatop2app "fmul" [x; y]))

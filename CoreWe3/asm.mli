@@ -13,12 +13,12 @@ and exp =
   | Sub of Id.t * Id.t
   | And of Id.t * Id.t
   | Or of Id.t * Id.t
-  | Slw of Id.t * Id.t
-  | Srw of Id.t * Id.t
+  | Slw of Id.t * id_or_imm
+  | Srw of Id.t * id_or_imm
   | Lwz of Id.t * int
   | Stw of Id.t * Id.t * int
   (* | FMr of Id.t  *)
-  (* | FNeg of Id.t *)
+  | FNeg of Id.t
   (* | FAdd of Id.t * Id.t *)
   (* | FSub of Id.t * Id.t *)
   (* | FMul of Id.t * Id.t *)

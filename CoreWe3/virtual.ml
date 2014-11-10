@@ -30,9 +30,9 @@ let rec g env (r, e) = (* 式の仮想マシンコード生成 *)
   | Closure.Neg (x) -> Ans (Neg (x))
   | Closure.Add (x, y) -> Ans (Add (x, V (y)))
   | Closure.Sub (x, y) -> Ans (Sub (x, y))
-  | Closure.Lsl (x, y) -> Ans (Slw (x, y))
-  | Closure.Lsr (x, y) -> Ans (Srw (x, y))
-  (* | Closure.FNeg (x) -> Ans (FNeg (x)) *)
+  | Closure.Lsl (x, y) -> Ans (Slw (x, V(y)))
+  | Closure.Lsr (x, y) -> Ans (Srw (x, V(y)))
+  | Closure.FNeg (x) -> Ans (FNeg (x))
   (* | Closure.FAdd (x, y) -> Ans (FAdd (x, y)) *)
   (* | Closure.FSub (x, y) -> Ans (FSub (x, y)) *)
   (* | Closure.FMul (x, y) -> Ans (FMul (x, y)) *)
@@ -54,20 +54,22 @@ let rec g env (r, e) = (* 式の仮想マシンコード生成 *)
       | Type.Unit -> Ans (Nop)
       | _ -> Ans (Mr (x)))
   | Closure.MakeCls ((x, t), {Closure.entry = l; Closure.actual_fv = ys}, e2) ->
-     (* closure のアドレスをセットしてからストア *)
-     let e2' = g (M.add x t env) e2 in
-     let (offset, store_fv) = 
-       expand
-	 (List.map (fun y -> (y, M.find y env)) ys)
-	 (1, e2')
-	 (fun y _ offset store_fv -> seq (Stw (y, x, offset), store_fv)) in
-     Let ((x, t), Mr (reg_hp), 
-	  Let ((reg_hp, Type.Int), Add (reg_hp, C (offset)), 
-	       let z = Id.genid "l" in  
-	       Let ((z, Type.Int), SetL(l), 
-		    seq (Stw (z, x, 0), store_fv))))
+     failwith "Sorry, closure is not supported yet..."
+     (* (\* closure のアドレスをセットしてからストア *\) *)
+     (* let e2' = g (M.add x t env) e2 in *)
+     (* let (offset, store_fv) =  *)
+     (*   expand *)
+     (* 	 (List.map (fun y -> (y, M.find y env)) ys) *)
+     (* 	 (1, e2') *)
+     (* 	 (fun y _ offset store_fv -> seq (Stw (y, x, offset), store_fv)) in *)
+     (* Let ((x, t), Mr (reg_hp),  *)
+     (* 	  Let ((reg_hp, Type.Int), Add (reg_hp, C (offset)),  *)
+     (* 	       let z = Id.genid "l" in   *)
+     (* 	       Let ((z, Type.Int), SetL(l),  *)
+     (* 		    seq (Stw (z, x, 0), store_fv)))) *)
   | Closure.AppCls (x, ys) ->
-     Ans (CallCls (x, ys))
+     failwith "Sorry, closure is not supported yet..."
+     (* Ans (CallCls (x, ys)) *)
   | Closure.AppDir (Id.L(x), ys) ->
      Ans (CallDir (Id.L(x), ys))
   | Closure.Tuple (xs) -> (* 組の生成 *)
@@ -110,7 +112,7 @@ let rec g env (r, e) = (* 式の仮想マシンコード生成 *)
      load_ext_var x
   | Closure.ExtTuple (Id.L(x)) -> 
      load_ext_var x
-  | Closure.FNeg _| Closure.FAdd (_, _)| Closure.FSub (_, _)|Closure.FMul (_, _)| Closure.FDiv (_, _) ->
+  | Closure.FAdd (_, _)| Closure.FSub (_, _)|Closure.FMul (_, _)| Closure.FDiv (_, _) ->
      failwith "Sorry, native floating-point operations are not supported yet..."
 
 (* 関数の仮想マシンコード生成 *)

@@ -116,10 +116,11 @@ and g' dest cont regenv = function (* 各命令のレジスタ割り当て (caml2html: regal
   | Sub(x, y') -> (Ans(Sub(find x Type.Int regenv, find y' Type.Int regenv)), regenv)
   | And(x, y') -> (Ans(And(find x Type.Int regenv, find y' Type.Int regenv)), regenv)
   | Or(x, y') -> (Ans(Or(find x Type.Int regenv, find y' Type.Int regenv)), regenv)
-  | Slw(x, y') -> (Ans(Slw(find x Type.Int regenv, find y' Type.Int regenv)), regenv)
-  | Srw(x, y') -> (Ans(Srw(find x Type.Int regenv, find y' Type.Int regenv)), regenv)
+  | Slw(x, y') -> (Ans(Slw(find x Type.Int regenv, find' y' regenv)), regenv)
+  | Srw(x, y') -> (Ans(Srw(find x Type.Int regenv, find' y' regenv)), regenv)
   | Lwz(x, y') -> (Ans(Lwz(find x Type.Int regenv, y')), regenv)
   | Stw(x, y, z') -> (Ans(Stw(find x Type.Int regenv, find y Type.Int regenv, z')), regenv)
+  | FNeg(x) -> (Ans(FNeg(find x Type.Float regenv)), regenv)
   | IfEq(x, y', e1, e2) as exp -> g'_if dest cont regenv exp (fun e1' e2' -> IfEq(find x Type.Int regenv, find y' Type.Int regenv, e1', e2')) e1 e2
   | IfLE(x, y', e1, e2) as exp -> g'_if dest cont regenv exp (fun e1' e2' -> IfLE(find x Type.Int regenv, find y' Type.Int regenv, e1', e2')) e1 e2
   | CallCls(x, ys) as exp -> g'_call dest cont regenv exp (fun ys -> CallCls(find x Type.Int regenv, ys)) ys

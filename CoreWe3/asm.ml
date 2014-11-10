@@ -15,12 +15,12 @@ and exp = (* 一つ一つの命令に対応する式 *)
   | Sub of Id.t * Id.t
   | And of Id.t * Id.t
   | Or of Id.t * Id.t
-  | Slw of Id.t * Id.t
-  | Srw of Id.t * Id.t
+  | Slw of Id.t * id_or_imm
+  | Srw of Id.t * id_or_imm
   | Lwz of Id.t * int
   | Stw of Id.t * Id.t * int
   (* | FMr of Id.t  *)
-  (* | FNeg of Id.t *)
+  | FNeg of Id.t
   (* | FAdd of Id.t * Id.t *)
   (* | FSub of Id.t * Id.t *)
   (* | FMul of Id.t * Id.t *)
@@ -80,11 +80,11 @@ let fv_id_or_imm = function V (x) -> [x] | _ -> []
 (* fv_exp : Id.t list -> t -> S.t list *)
 let rec fv_exp = function
   | Nop | Li (_) (* | FLi (_) *) | SetL (_) | Comment (_) | Restore (_) -> []
-  | Mr (x) | Neg (x) (* | FMr (x) | FNeg (x) *) | Save (x, _) -> [x]
-  | Add (x, y') ->
+  | Mr (x) | Neg (x) (* | FMr (x) *)| FNeg (x) | Save (x, _) -> [x]
+  | Add (x, y') | Slw (x, y') | Srw (x, y') ->
 	x :: fv_id_or_imm y'
   (* | Lfd (x, y')  *)| Lwz (x, y') -> [x]
-  | Sub (x, y) | And (x, y) | Or (x, y) | Slw (x, y) | Srw (x, y) ->
+  | Sub (x, y) | And (x, y) | Or (x, y) ->
       [x; y]
   (* | FAdd (x, y) | FSub (x, y) | FMul (x, y) | FDiv (x, y) -> *)
   (*     [x; y] *)
