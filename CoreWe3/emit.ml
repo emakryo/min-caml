@@ -198,14 +198,8 @@ let f oc (Prog(data, fundefs, e)) =
   (* Printf.fprintf oc "\tBEQ\tr0\tr0\t:_min_caml_start\n"; *)
   List.iter (fun fundef -> h oc fundef) fundefs;
   Printf.fprintf oc ":_min_caml_start # main entry point\n";
-  let n = Int32.shift_right_logical sp_default 16 in
-  let m = Int32.logxor sp_default (Int32.shift_left n 16) in
-  Printf.fprintf oc "\tLDIH\t%s\t%ld\t#init sp\n" (reg reg_sp) n;
-  Printf.fprintf oc "\tLDIL\t%s\t%ld\n" (reg reg_sp) m;
-  let n = Int32.shift_right_logical hp_default 16 in
-  let m = Int32.logxor hp_default (Int32.shift_left n 16) in
-  Printf.fprintf oc "\tLDIH\t%s\t%ld\t#init hp\n" (reg reg_hp) n;
-  Printf.fprintf oc "\tLDIL\t%s\t%ld\n" (reg reg_hp) m;
+  Printf.fprintf oc "\tLDI\t%s\t%ld\t#init sp\n" (reg reg_sp) sp_default;
+  Printf.fprintf oc "\tLDI\t%s\t%ld\t#init hp\n" (reg reg_hp) hp_default;
   let rec readlines ic = 
     try
       let line = input_line ic in

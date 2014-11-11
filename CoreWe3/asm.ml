@@ -61,8 +61,8 @@ let reg_sw = regs.(Array.length regs - 2) (* temporary for swap *)
 (* let reg_fsw = fregs.(Array.length fregs - 1) (\* temporary for swap *\) *)
 let reg_hp = "%r1"
 let reg_sp = "%r2"
-let hp_default = Int32.of_int 0x28000
-let sp_default = Int32.of_int 0x0
+let hp_default = Int32.of_int 0x00000
+let sp_default = Int32.of_int 0x777ff
 let reg_tmp = "%r15"
 
 (* is_reg : Id.t -> bool *)
@@ -111,8 +111,8 @@ let rec concat e1 xt e2 = match e1 with
 (* align : int -> int *)
 let align i = if i mod 8 = 0 then i else i + 4
 
-let imm_max = Int32.of_int 0x8000
-let imm_min = Int32.of_int (-0x8000)
+let imm_max = Int32.of_int 0x4000
+let imm_min = Int32.of_int (-0x4000)
 
 let ext_vars = ["n_objects";"objects";"screen";"viewpoint";"light";"beam";"and_net";"or_net";"solver_dist";"intsec_rectside";"tmin";"intersection_point";"intersected_object_id";"nvector";"texture_color";"diffuse_ray";"rgb";"image_size";"image_center";"scan_pitch";"startp";"startp_fast";"screenx_dir";"screeny_dir";"screenz_dir";"ptrace_dirvec";"dirvecs";"light_dirvec";"reflections";"n_reflections"]
 
