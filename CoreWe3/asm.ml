@@ -114,20 +114,6 @@ let align i = if i mod 8 = 0 then i else i + 4
 let imm_max = Int32.of_int 0x4000
 let imm_min = Int32.of_int (-0x4000)
 
-let ext_vars = ["n_objects";"objects";"screen";"viewpoint";"light";"beam";"and_net";"or_net";"solver_dist";"intsec_rectside";"tmin";"intersection_point";"intersected_object_id";"nvector";"texture_color";"diffuse_ray";"rgb";"image_size";"image_center";"scan_pitch";"startp";"startp_fast";"screenx_dir";"screeny_dir";"screenz_dir";"ptrace_dirvec";"dirvecs";"light_dirvec";"reflections";"n_reflections"]
-
-let ext_var_addr name = 
-  let rec ext_var_addr' names i =
-    match names with
-    | [] -> failwith (Format.sprintf "The extern varible %s not found." name)
-    | n::names -> 
-       if n = name then 
-	 Int32.of_int i
-       else
-	 ext_var_addr' names (i + 1) in
-  Int32.add (ext_var_addr' ext_vars 0) hp_default
-
-let load_ext_var name =
-  let i = ext_var_addr name in
-  let addr = Id.genid "addr" in
-  Let((addr, Type.Int), Li(i), Ans(Lwz(addr, 0)))
+let load_ext_var l =
+  let addr = Id.genid (Id.pp_l(l)) in
+  Let((addr, Type.Int), SetL (l), Ans(Lwz(addr, 0)))

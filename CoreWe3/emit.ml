@@ -1,5 +1,7 @@
 open Asm
 
+let init_file = ref ""
+
 external gethi : float -> int32 = "gethi"
 external getlo : float -> int32 = "getlo"
 
@@ -29,10 +31,6 @@ let reg r =
   then String.sub r 1 (String.length r - 1)
   else r 
 
-let load_label r label =
-  "\tlis\t" ^ (reg r) ^ ", ha16(" ^ label ^ ")\n" ^
-    "\taddi\t" ^ (reg r) ^ ", " ^ (reg r) ^ ", lo16(" ^ label ^ ")\n"
-
 (* 関数呼び出しのために引数を並べ替える (register shuffling) *)
 let rec shuffle sw xys = 
   (* remove identical moves *)
@@ -54,16 +52,10 @@ let rec g oc = function (* 命令列のアセンブリ生成 *)
 and g' oc = function (* 各命令のアセンブリ生成 *)
   (* 末尾でなかったら計算結果を dest にセット *)
   | (NonTail(_), Nop) -> ()
-  | (NonTail(x), Li(i)) when (imm_min <= i) && (i < imm_max) -> 
-     Printf.fprintf oc "\tADDI\t%s\tr0\t%ld\n" (reg x) i
   | (NonTail(x), Li(i)) -> 
-     let n = Int32.shift_right_logical i 16 in
-     let m = Int32.logxor i (Int32.shift_left n 16) in     
-     Printf.fprintf oc "\tLDIH\t%s\t%ld\n" (reg x) n;
-     Printf.fprintf oc "\tLDIL\t%s\t%ld\n" (reg x) m
+     Printf.fprintf oc "\tLDI\t%s\tr0\t%ld\n" (reg x) i
   | (NonTail(x), SetL(Id.L(y))) -> 
-     let s = load_label x y in
-     Printf.fprintf oc "%s" s
+     Printf.fprintf oc "\tLDI\t%s\tr0\t:%s\n" (reg x) y     
   | (NonTail(x), Mr(y)) when x = y -> ()
   | (NonTail(x), Mr(y)) -> Printf.fprintf oc "\tADDI\t%s\t%s\t0\n" (reg x) (reg y)
   | (NonTail(x), Neg(y)) -> Printf.fprintf oc "\tSUB\t%s\tr0\t%s\n" (reg x) (reg y)
@@ -193,21 +185,23 @@ let h oc { name = Id.L(x); args = _; body = e; ret = _ } =
   stackmap := [];
   g oc (Tail, e)
 
-let f oc (Prog(data, fundefs, e)) =
+let f oc (Prog(data, fundefs, e))  =
   Format.eprintf "generating assembly...@.";
   (* Printf.fprintf oc "\tBEQ\tr0\tr0\t:_min_caml_start\n"; *)
   List.iter (fun fundef -> h oc fundef) fundefs;
+  Format.eprintf "generating assembly...@.";  
   Printf.fprintf oc ":_min_caml_start # main entry point\n";
   Printf.fprintf oc "\tLDI\t%s\t%ld\t#init sp\n" (reg reg_sp) sp_default;
   Printf.fprintf oc "\tLDI\t%s\t%ld\t#init hp\n" (reg reg_hp) hp_default;
-  let rec readlines ic = 
-    try
-      let line = input_line ic in
-      Printf.fprintf oc "%s\n" line;
-      readlines ic
-    with e -> 
-      close_in_noerr ic in
-  readlines (open_in "./CoreWe3/init_globals.s");
+  if String.length !init_file > 0 then
+    (Printf.fprintf oc ":_min_caml_initialize_start\n";
+     let ic = open_in !init_file in
+     let n = in_channel_length ic in
+     let s = String.create n in
+     really_input ic s 0 n;
+     close_in ic;
+     Printf.fprintf oc "%s" s;
+     Printf.fprintf oc ":_min_caml_initialize_end\n");
   stackset := S.empty;
   stackmap := [];
   g oc (NonTail("r0"), e);
