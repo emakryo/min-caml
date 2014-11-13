@@ -107,8 +107,7 @@ let rec g env (r, e) = (* 式の仮想マシンコード生成 *)
 	 Let ((addr, Type.Int), Add (x, V(y)), 
 	      Ans (Stw (z, addr, 0))) 
       | _ -> assert false)
-  (* | Closure.ExtArray (Id.L(x)) -> Ans(SetL(Id.L("min_caml_" ^ x))) *)
-  | Closure.ExtArray (l) -> 
+  | Closure.ExtArray l -> 
      load_ext_var l
   | Closure.ExtTuple l -> 
      load_ext_var l

@@ -176,8 +176,8 @@ let rec g env known (r, e) = (* クロージャ変換ルーチン本体 (caml2html: closure_g
     | KNormal.LetTuple(xts, y, e) -> LetTuple(xts, y, g (M.add_list xts env) known e)
     | KNormal.Get(x, y) -> Get(x, y)
     | KNormal.Put(x, y, z) -> Put(x, y, z)
-    | KNormal.ExtArray(x) -> ExtArray(Id.L(x))
-    | KNormal.ExtTuple(x) -> ExtTuple(Id.L(x))
+    | KNormal.ExtArray(x) -> ExtArray(Id.L("min_caml_" ^ x))
+    | KNormal.ExtTuple(x) -> ExtTuple(Id.L("min_caml_" ^ x))
     | KNormal.ExtFunApp(x, ys) -> AppDir(Id.L("min_caml_" ^ x), ys)
   in
   (r, e')

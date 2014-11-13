@@ -90,8 +90,8 @@ let rec pp_t t =
        Format.sprintf "%slet (%s) (*%s*) = %s in\n%s" sps names (Type.pp_t ty) (Id.pp_t n) s2
     | Get (n1, n2) -> Format.sprintf "%s.(%s)" (Id.pp_t n1) (Id.pp_t n2)
     | Put (n1, n2, n3) -> Format.sprintf "(%s.(%s) <- %s)" (Id.pp_t n1) (Id.pp_t n2) (Id.pp_t n3)
-    | ExtArray n -> Format.sprintf "ext_array_%s" (Id.pp_t n)
-    | ExtTuple n -> Format.sprintf "ext_tuple_%s" (Id.pp_t n)
+    | ExtArray n -> Format.sprintf "%s" (Id.pp_t n)
+    | ExtTuple n -> Format.sprintf "%s" (Id.pp_t n)
     | ExtFunApp (n, ns) -> Format.sprintf "(%s %s)" (Id.pp_t n) (String.concat " " (List.map (fun m -> Id.pp_t m) ns))
   in
   Format.sprintf "%s\n" (pp_t' 0 t)

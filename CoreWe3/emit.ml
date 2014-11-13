@@ -1,7 +1,5 @@
 open Asm
 
-let init_file = ref ""
-
 external gethi : float -> int32 = "gethi"
 external getlo : float -> int32 = "getlo"
 
@@ -191,17 +189,8 @@ let f oc (Prog(data, fundefs, e))  =
   List.iter (fun fundef -> h oc fundef) fundefs;
   Format.eprintf "generating assembly...@.";  
   Printf.fprintf oc ":_min_caml_start # main entry point\n";
-  Printf.fprintf oc "\tLDI\t%s\t%ld\t#init sp\n" (reg reg_sp) sp_default;
-  Printf.fprintf oc "\tLDI\t%s\t%ld\t#init hp\n" (reg reg_hp) hp_default;
-  if String.length !init_file > 0 then
-    (Printf.fprintf oc ":_min_caml_initialize_start\n";
-     let ic = open_in !init_file in
-     let n = in_channel_length ic in
-     let s = String.create n in
-     really_input ic s 0 n;
-     close_in ic;
-     Printf.fprintf oc "%s" s;
-     Printf.fprintf oc ":_min_caml_initialize_end\n");
+  (* Printf.fprintf oc "\tLDI\t%s\t%ld\t#init sp\n" (reg reg_sp) sp_default; *)
+  (* Printf.fprintf oc "\tLDI\t%s\t%ld\t#init hp\n" (reg reg_hp) hp_default; *)
   stackset := S.empty;
   stackmap := [];
   g oc (NonTail("r0"), e);

@@ -51,7 +51,7 @@ let fletd (x, e1, e2) = Let ((x, Type.Float), e1, e2)
 (* seq : exp * t -> t *)
 let seq (e1, e2) = Let ((Id.gentmp Type.Unit, Type.Unit), e1, e2)
 
-let regs = [| "%r3";  "%r4"; "%r5"; "%r6"; "%r7"; "%r8"; "%r9"; "%r10"; "%r11"; "%r12"; "%r13"; "%r14"|]
+let regs = Array.init 60 (fun i -> "%r" ^ (string_of_int (i+3)))
 (* let regs = Array.init 27 (fun i -> Printf.sprintf "_R_%d" i) *)
 (* let fregs = Array.init 32 (fun i -> Printf.sprintf "%%f%d" i) *)
 let allregs = Array.to_list regs
@@ -63,7 +63,7 @@ let reg_hp = "%r1"
 let reg_sp = "%r2"
 let hp_default = Int32.of_int 0x00000
 let sp_default = Int32.of_int 0x777ff
-let reg_tmp = "%r15"
+let reg_tmp = "%r63"
 
 (* is_reg : Id.t -> bool *)
 let is_reg x = x.[0] = '%'
