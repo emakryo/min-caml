@@ -51,9 +51,9 @@ and g' oc = function (* 各命令のアセンブリ生成 *)
   (* 末尾でなかったら計算結果を dest にセット *)
   | (NonTail(_), Nop) -> ()
   | (NonTail(x), Li(i)) -> 
-     Printf.fprintf oc "\tLDI\t%s\tr0\t%ld\n" (reg x) i
+     Printf.fprintf oc "\tLDI\t%s\t%ld\n" (reg x) i
   | (NonTail(x), SetL(Id.L(y))) -> 
-     Printf.fprintf oc "\tLDI\t%s\tr0\t:%s\n" (reg x) y     
+     Printf.fprintf oc "\tLDI\t%s\t.%s\n" (reg x) y     
   | (NonTail(x), Mr(y)) when x = y -> ()
   | (NonTail(x), Mr(y)) -> Printf.fprintf oc "\tADDI\t%s\t%s\t0\n" (reg x) (reg y)
   | (NonTail(x), Neg(y)) -> Printf.fprintf oc "\tSUB\t%s\tr0\t%s\n" (reg x) (reg y)
