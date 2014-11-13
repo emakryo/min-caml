@@ -1,636 +1,510 @@
-	.cstring
-	.align 	2
-LC0:
-	.ascii	"%d\0"
-	.align	2
-LC1:
-	.ascii 	"%lf\0"
-	.literal8
-	.align 	3
-LC2:
-	.long	1127219200
-	.long	-2147483648
-	.text
-	.align	2
-	.globl 	min_caml_print_newline
-min_caml_print_newline:
-	mflr 	r0
-	stmw 	r30, -8(r1)
-	stw 	r0, 8(r1)
-	stw	r3, 12(r1)
-	stw	r4, 16(r1)
-	stwu  	r1, -80(r1)
-	mr 	r30, r1
-	li	r3, 10
-	bl 	putchar
-	lwz 	r1, 0(r1)
-	lwz 	r0, 8(r1)
-	lwz	r3, 12(r1)
-	lwz	r4, 16(r1)
-	mtlr 	r0
-	lmw 	r30, -8(r1)
-	blr
-	.section __TEXT, __picsymbolstub1, symbol_stubs, pure_instructions, 32
-	.align 	5
-putchar:
-	.indirect_symbol _putchar
-	mflr 	r0
-	bcl 	20, 31, L1spb
-L1spb:
-	mflr 	r11
-	addis 	r11, r11, ha16(putchar_lazy-L1spb)
-	mtlr 	r0
-	lwzu 	r12, lo16(putchar_lazy-L1spb)(r11)
-	mtctr 	r12
-	bctr
-	.lazy_symbol_pointer
-putchar_lazy:
-	.indirect_symbol _putchar
-	.long	dyld_stub_binding_helper
-	.subsections_via_symbols
-#	print_int
-	.text
-	.align 	2
-	.globl	min_caml_print_int
-min_caml_print_int:
-	mflr 	r0
-	stmw 	r30, -8(r1)
-	stw 	r0, 8(r1)
-	stw	r3, 12(r1)
-	stw	r4, 16(r1)
-	stwu 	r1, -80(r1)
-	mr 	r30, r1
-	bcl 	20, 31, L2pb
-L2pb:
-	mflr 	r31
-	mr	r4, r2
-	addis 	r2, r31, ha16(LC0 - L2pb)
-	la 	r3, lo16(LC0 - L2pb)(r2)
-	bl	printf
-	lwz 	r1, 0(r1)
-	lwz 	r0, 8(r1)
-	lwz	r3, 12(r1)
-	lwz	r4, 16(r1)
-	mtlr 	r0
-	lmw 	r30, -8(r1)
-	blr
-	.section __TEXT, __picsymbolstub1, symbol_stubs, pure_instructions, 32
-	.align 	5
-printf:
-	.indirect_symbol _printf$LDBLStub
-	mflr 	r0
-	bcl 	20, 31, L2spb
-L2spb:
-	mflr 	r11
-	addis 	r11, r11, ha16(printf_lazy-L2spb)
-	mtlr 	r0
-	lwzu 	r12, lo16(printf_lazy-L2spb)(r11)
-	mtctr 	r12
-	bctr
-	.lazy_symbol_pointer
-printf_lazy:
-	.indirect_symbol _printf$LDBLStub
-	.long	dyld_stub_binding_helper
-	.subsections_via_symbols
-#	print_byte
-	.text
-	.align 	2
-	.globl	min_caml_print_byte
-min_caml_print_byte:
-	mflr 	r0
-	stmw 	r30, -8(r1)
-	stw 	r0, 8(r1)
-	stw	r3, 12(r1)
-	stw	r4, 16(r1)
-	stwu  	r1, -80(r1)
-	mr 	r30, r1
-	stw	r3, 104(r30)
-	mr	r3, r2
-	bl 	putchar
-	lwz 	r1, 0(r1)
-	lwz 	r0, 8(r1)
-	lwz	r3, 12(r1)
-	lwz	r4, 16(r1)
-	mtlr 	r0
-	lmw 	r30, -8(r1)
-	blr	
-#	prerr_int
-	.text
-	.align 	2
-	.globl 	min_caml_prerr_int
-min_caml_prerr_int:
-	mflr 	r0
-	stmw 	r30, -8(r1)
-	stw 	r0, 8(r1)
-	stw	r3, 12(r1)
-	stw	r4, 16(r1)
-	stwu 	r1, -80(r1)
-	mr 	r30, r1
-	bcl 	20, 31, L3pb
-L3pb:
-	mflr 	r31
-	mr	r6, r2
-	mr	r2, r5
-	mr	r5, r6
-	addis 	r2, r31, ha16(L - L3pb)
-	lwz 	r2, lo16(L - L3pb)(r2)
-	addi 	r0, r2, 176
-	mr 	r3, r0
-	addis 	r2, r31, ha16(LC0 - L3pb)
-	la 	r4, lo16(LC0 - L3pb)(r2)
-	bl 	fprintf
-	lwz 	r1, 0(r1)
-	lwz 	r0, 8(r1)
-	lwz	r3, 12(r1)
-	lwz	r4, 16(r1)
-	mtlr 	r0
-	lmw 	r30, -8(r1)
-	blr
-	.non_lazy_symbol_pointer
-L:
-	.indirect_symbol ___sF
-	.long	0
-	.section __TEXT, __picsymbolstub1, symbol_stubs, pure_instructions, 32
-	.align 	5
-fprintf:	
-	.indirect_symbol _fprintf$LDBLStub
-	mflr 	r0
-	bcl 	20, 31, L3spb
-L3spb:
-	mflr 	r11
-	addis 	r11, r11, ha16(fprintf_lazy - L3spb)
-	mtlr 	r0
-	lwzu 	r12, lo16(fprintf_lazy - L3spb)(r11)
-	mtctr 	r12
-	bctr
-	.lazy_symbol_pointer
-fprintf_lazy:
-	.indirect_symbol _fprintf$LDBLStub
-	.long	dyld_stub_binding_helper
-	.subsections_via_symbols
-#	prerr_byte
-	.text
-	.align 	2
-	.globl	min_caml_prerr_byte
-min_caml_prerr_byte:
-	mflr	r0
-	stmw	r30, -8(r1)
-	stw	r0, 8(r1)
-	stw	r3, 12(r1)
-	stw	r4, 16(r1)
-	stwu	r1, -80(r1)
-	mr	r30, r1
-	bcl	20, 31, L4pb
-L4pb:
-	mflr	r31
-	mr	r3, r2
-	addis 	r2, r31, ha16(L - L4pb)
-	lwz	r2, lo16(L - L4pb)(r2)
-	addi	r0, r2, 176
-	mr	r4, r0
-	bl	fputc
-	lwz	r1, 0(r1)
-	lwz	r0, 8(r1)
-	lwz	r3, 12(r1)
-	lwz	r4, 16(r1)
-	mtlr	r0
-	lmw	r30, -8(r1)
-	blr
-	.section __TEXT, __picsymbolstub1, symbol_stubs, pure_instructions, 32
-	.align 	5
-fputc:
-	.indirect_symbol _fputc
-	mflr	r0
-	bcl	20, 31, L4spb
-L4spb:
-	mflr	r11
-	addis	r11, r11, ha16(fputc_lazy - L4spb)
-	mtlr	r0
-	lwzu	r12, lo16(fputc_lazy - L4spb)(r11)
-	mtctr	r12
-	bctr
-	.lazy_symbol_pointer
-fputc_lazy:
-	.indirect_symbol _fputc
-	.long	dyld_stub_binding_helper
-	.subsections_via_symbols	
-#	prerr_float
-	.text
-	.align 	2
-	.globl 	min_caml_prerr_float
-min_caml_prerr_float:
-	mflr 	r0
-	stmw 	r29, -12(r1)
-	stw 	r0, 8(r1)
-	stw	r3, 12(r1)
-	stw	r4, 16(r1)
-	stwu 	r1, -96(r1)
-	mr 	r30, r1
-	bcl 	20, 31, L5pb
-L5pb:
-	mflr 	r31
-	addis 	r2, r31, ha16(L - L5pb)
-	lwz 	r2, lo16(L - L5pb)(r2)
-	addi 	r29, r2, 176
-	stfd 	f0, 64(r30)
-	lwz 	r2, 64(r30)
-	lwz 	r3, 68(r30)
-	mr 	r10, r3
-	mr 	r9, r2
-	stw 	r2, 64(r30)
-	stw 	r3, 68(r30)
-	lfd 	f13, 64(r30)
-#	fmr 	f0, f13
-	mr 	r3, r29
-	addis 	r2, r31, ha16(LC1 - L5pb)
-	la 	r4, lo16(LC1 - L5pb)(r2)
-	mr 	r5, r9
-	mr 	r6, r10
-	fmr 	f1, f0
-	bl 	fprintf
-	lwz 	r1, 0(r1)
-	lwz 	r0, 8(r1)
-	lwz	r3, 12(r1)
-	lwz	r4, 16(r1)
-	mtlr 	r0
-	lmw 	r29, -12(r1)
-	blr	
-#	read_int
-	.text
-	.align 	2
-	.globl	min_caml_read_int
-min_caml_read_int:
-	mflr 	r0
-	stmw 	r30, -8(r1)
-	stw 	r0, 8(r1)
-	stw	r3, 12(r1)
-	stw	r4, 16(r1)
-	stwu 	r1, -96(r1)
-	mr 	r30, r1
-	bcl 	20, 31, L6pb
-L6pb:
-	mflr 	r31
-	addis 	r2, r31, ha16(LC0 - L6pb)
-	la 	r3, lo16(LC0 - L6pb)(r2)
-	addi 	r4, r30, 56
-	bl 	scanf
-	lwz 	r2, 56(r30)
-	lwz 	r1, 0(r1)
-	lwz 	r0, 8(r1)
-	lwz	r3, 12(r1)
-	lwz	r4, 16(r1)
-	mtlr	r0
-	lmw 	r30, -8(r1)
-	blr
-	.section __TEXT, __picsymbolstub1, symbol_stubs, pure_instructions, 32
-	.align 	5
-scanf:	
-	.indirect_symbol _scanf$LDBLStub
-	mflr 	r0
-	bcl 	20, 31, L6spb
-L6spb:
-	mflr 	r11
-	addis 	r11, r11, ha16(scanf_lazy - L6spb)
-	mtlr 	r0
-	lwzu 	r12, lo16(scanf_lazy - L6spb)(r11)
-	mtctr 	r12
-	bctr
-	.lazy_symbol_pointer
-scanf_lazy:	
-	.indirect_symbol _scanf$LDBLStub
-	.long	dyld_stub_binding_helper
-	.subsections_via_symbols
-# 	read_float
-	.text
-	.align	2
-	.globl	min_caml_read_float
-min_caml_read_float:	
-	mflr 	r0
-	stmw 	r30, -8(r1)
-	stw 	r0, 8(r1)
-	stw	r3, 12(r1)
-	stw	r4, 16(r1)
-	stwu 	r1, -112(r1)
-	mr 	r30, r1
-	bcl 	20, 31, L7pb
-L7pb:
-	mflr	r31
-	addis	r2, r31, ha16(LC1 - L7pb)
-	la	r3, lo16(LC1 - L7pb)(r2)
-	addi	r4, r30, 56
-	bl	scanf
-	lfd	f0, 56(r30)
-	lwz	r1, 0(r1)
-	lwz	r0, 8(r1)
-	lwz	r3, 12(r1)
-	lwz	r4, 16(r1)
-	mtlr	r0
-	lmw	r30, -8(r1)
-	blr
-#	create_array
-	.text
-	.align	2
-	.globl	min_caml_create_array
-min_caml_create_array:	
-	mr	r6, r2
-	mr	r2, r4
-create_array_loop:
-	cmpwi	cr7, r6, 0
-	bne	cr7, create_array_cont
-	b	create_array_exit
-create_array_exit:
-	blr
-create_array_cont:
-	stw	r5, 0(r4)
-	subi  	r6, r6, 1
-	addi	r4, r4, 4
-	b	create_array_loop
-#	create_float_array
-	.globl	min_caml_create_float_array
-min_caml_create_float_array:
-	mr	r5, r2
-	mr	r2, r4
-create_float_array_loop:
-	cmpwi	cr7, r5, 0
-	bne	cr7, create_float_array_cont
-	blr
-create_float_array_cont:
-	stfd	f0, 0(r4)
-	subi	r5, r5, 1
-	addi	r4, r4, 8
-	b	create_float_array_loop
-	.globl	min_caml_abs_float
-min_caml_abs_float:
-	fabs	f0, f0
-	blr
-#	sqrt
-	.text
-	.align 	2
-	.globl min_caml_sqrt
-min_caml_sqrt:
-	mflr 	r0
-	stmw 	r30, -8(r1)
-	stw 	r0, 8(r1)
-	stw	r3, 12(r1)
-	stw	r4, 16(r1)
-	stwu 	r1, -96(r1)
-	mr 	r30, r1
-	bcl 	20, 31, L8pb
-L8pb:
-	mflr	r31
-	fmr	f1, f0
-	bl 	sqrt
-	fmr	f0, f1
-	lwz 	r1, 0(r1)
-	lwz 	r0, 8(r1)
-	lwz	r3, 12(r1)
-	lwz	r4, 16(r1)
-	mtlr 	r0
-	lmw 	r30, -8(r1)
-	blr
-	.section __TEXT, __picsymbolstub1, symbol_stubs, pure_instructions, 32
-	.align 	5
-sqrt:
-	.indirect_symbol _sqrt
-	mflr 	r0
-	bcl 	20, 31, L8spb
-L8spb:
-	mflr 	r11
-	addis 	r11, r11, ha16(sqrt_lazy - L8spb)
-	mtlr 	r0
-	lwzu 	r12, lo16(sqrt_lazy - L8spb)(r11)
-	mtctr 	r12
-	bctr
-	.lazy_symbol_pointer
-sqrt_lazy:
-	.indirect_symbol _sqrt
-	.long	dyld_stub_binding_helper
-	.subsections_via_symbols
-# 	floor
-	.text
-	.align 	2
-	.globl 	min_caml_floor
-min_caml_floor:
-	mflr 	r0
-	stmw 	r30, -8(r1)
-	stw 	r0, 8(r1)
-	stw	r3, 12(r1)
-	stw	r4, 16(r1)
-	stwu 	r1, -80(r1)
-	mr 	r30, r1
-	fmr	f1, f0
-	stfd 	f1, 56(r30)
-	lfd 	f1, 56(r30)
-	bl 	floor
-	fmr 	f0, f1
-	lwz 	r1, 0(r1)
-	lwz 	r0, 8(r1)
-	lwz	r3, 12(r1)
-	lwz	r4, 16(r1)
-	mtlr 	r0
-	lmw 	r30,  -8(r1)
-	blr	
-	.section __TEXT, __picsymbolstub1, symbol_stubs, pure_instructions, 32
-	.align 	5
-floor:
-	.indirect_symbol _floor
-	mflr 	r0
-	bcl 	20, 31, L9spb
-L9spb:
-	mflr 	r11
-	addis 	r11, r11, ha16(floor_lazy - L9spb)
-	mtlr 	r0
-	lwzu 	r12, lo16(floor_lazy - L9spb)(r11)
-	mtctr 	r12
-	bctr
-	.lazy_symbol_pointer
-floor_lazy:
-	.indirect_symbol _floor
-	.long	dyld_stub_binding_helper
-	.subsections_via_symbols
-# 	int_of_float, truncate
-	.text
-	.align	2
-	.globl	min_caml_int_of_float
-min_caml_int_of_float:
-	.globl	min_caml_truncate
-min_caml_truncate:
-	stmw 	r30, -8(r1)
-	stwu 	r1, -64(r1)
-	mr 	r30, r1
-	stfd 	f0, 24(r30)
-	lfd 	f1, 24(r30)
-	fctiwz 	f1, f1
-	stfd 	f1, 32(r30)
-	lwz 	r31, 36(r30)
-	mr 	r2, r31
-	lwz 	r1, 0(r1)
-	lmw 	r30, -8(r1)
-	blr
-#	float_of_int
-	.globl	min_caml_float_of_int
-min_caml_float_of_int:
-	stmw 	r30, -8(r1)
-	stw	r3, 8(r1)
-	stw	r4, 12(r1)
-	stwu 	r1, -48(r1)
-	mr 	r30, r1
-	mflr 	r0
-	bcl 	20, 31, Lapb
-Lapb:
-	mflr 	r10
-	mtlr 	r0
-	stw 	r2, 72(r30)
-	lwz 	r0, 72(r30)
-	lis 	r2, 0x4330
-	addis 	r9, r10, ha16(LC2 - Lapb)
-	lfd 	f13, lo16(LC2 - Lapb)(r9)
-	xoris 	r0, r0, 0x8000
-	stw 	r0, 28(r30)
-	stw 	r2, 24(r30)
-	lfd 	f0, 24(r30)
-	fsub 	f0, f0, f13
-	lwz 	r1, 0(r1)
-	lwz	r3, 8(r1)
-	lwz	r4, 12(r1)
-	lmw 	r30, -8(r1)
-	blr
-#	cos
-	.text
-	.align 	2
-	.globl min_caml_cos
-min_caml_cos:
-	mflr 	r0
-	stmw 	r30, -8(r1)
-	stw 	r0, 8(r1)
-	stw	r3, 12(r1)
-	stw	r4, 16(r1)
-	stwu 	r1, -96(r1)
-	mr 	r30, r1
-	bcl 	20, 31, Lbpb
-Lbpb:
-	mflr 	r31
-	fmr	f1, f0
-	bl 	cos
-	fmr 	f0, f1
-	lwz 	r1, 0(r1)
-	lwz 	r0, 8(r1)
-	lwz	r3, 12(r1)
-	lwz	r4, 16(r1)
-	mtlr 	r0
-	lmw 	r30, -8(r1)
-	blr
-	.section __TEXT, __picsymbolstub1, symbol_stubs, pure_instructions, 32
-	.align 	5
-cos:
-	.indirect_symbol _cos
-	mflr 	r0
-	bcl 	20, 31, Lbspb
-Lbspb:
-	mflr 	r11
-	addis 	r11, r11, ha16(cos_lazy - Lbspb)
-	mtlr 	r0
-	lwzu 	r12,lo16(cos_lazy - Lbspb)(r11)
-	mtctr 	r12
-	bctr
-	.lazy_symbol_pointer
-cos_lazy:
-	.indirect_symbol _cos
-	.long	dyld_stub_binding_helper
-	.subsections_via_symbols
-#	sin
-	.text
-	.align 	2
-	.globl 	min_caml_sin
-min_caml_sin:
-	mflr 	r0
-	stmw 	r30, -8(r1)
-	stw 	r0, 8(r1)
-	stw	r3, 12(r1)
-	stw	r4, 16(r1)
-	stwu 	r1, -96(r1)
-	mr 	r30, r1
-	bcl 	20, 31, Lcpb
-Lcpb:	
-	mflr 	r31
-	fmr	f1, f0
-	bl 	sin
-	fmr 	f0, f1
-	lwz 	r1, 0(r1)
-	lwz 	r0, 8(r1)
-	lwz	r3, 12(r1)
-	lwz	r4, 16(r1)
-	mtlr 	r0
-	lmw 	r30, -8(r1)
-	blr
-	.section __TEXT, __picsymbolstub1, symbol_stubs, pure_instructions, 32
-	.align 	5
-sin:	
-	.indirect_symbol _sin
-	mflr 	r0
-	bcl 	20, 31, Lcspb
-Lcspb:	
-	mflr 	r11
-	addis 	r11, r11, ha16(sin_lazy - Lcspb)
-	mtlr 	r0
-	lwzu 	r12, lo16(sin_lazy - Lcspb)(r11)
-	mtctr 	r12
-	bctr
-	.lazy_symbol_pointer
-sin_lazy:	
-	.indirect_symbol _sin
-	.long	dyld_stub_binding_helper
-	.subsections_via_symbols
-#	atan
-	.text
-	.align 	2
-	.globl min_caml_atan
-min_caml_atan:
-	mflr 	r0
-	stmw 	r30, -8(r1)
-	stw 	r0, 8(r1)
-	stw	r3, 12(r1)
-	stw	r4, 16(r1)
-	stwu 	r1, -96(r1)
-	mr 	r30, r1
-	bcl 	20, 31, Ldpb
-Ldpb:
-	mflr 	r31
-	fmr	f1, f0
-	bl 	atan
-	fmr 	f0, f1
-	lwz 	r1, 0(r1)
-	lwz 	r0, 8(r1)
-	lwz	r3, 12(r1)
-	lwz	r4, 16(r1)
-	mtlr 	r0
-	lmw 	r30, -8(r1)
-	blr
-	.section __TEXT, __picsymbolstub1, symbol_stubs, pure_instructions, 32
-	.align 	5
-atan:
-	.indirect_symbol _atan
-	mflr 	r0
-	bcl 	20, 31, Ldspb
-Ldspb:
-	mflr 	r11
-	addis 	r11, r11, ha16(atan_lazy - Ldspb)
-	mtlr 	r0
-	lwzu 	r12, lo16(atan_lazy - Ldspb)(r11)
-	mtctr 	r12
-	bctr
-	.lazy_symbol_pointer
-atan_lazy:
-	.indirect_symbol _atan
-	.long	dyld_stub_binding_helper
-	.subsections_via_symbols
-	.const
-	.align	8
-float_0:
-	.long	0x0
-	.long	0x0
-float_1:
-	.long	0x3ff00000
-	.long	0x0
-	
-	
+:min_caml_create_array	#Array construct functions
+	ADDI	r5	r3	0	#size
+	ADDI	r6	r0	0	#index
+	BEQ	r3	r0	:min_caml_create_array_L1
+:min_caml_create_array_L2
+	ADD	r7	r1	r6	#addr
+	ST	r4	r7	0
+	ADDI	r6	r6	1
+	BLT	r6	r5	:min_caml_create_array_L2
+:min_caml_create_array_L1
+	ADDI	r3	r1	0
+	ADD	r1	r1	r5
+	RET
+
+:min_caml_create_float_array
+	JSUB	:min_caml_create_array
+	RET
+
+
+:min_caml_read_char	#I/O Functions
+	LDA	r3	0xfffff
+	RET
+:min_caml_print_char
+	STA	r3	0xfffff
+	RET
+
+:min_caml_print_int
+	JSUB	:min_caml_print_char
+	RET
+
+:min_caml_print_int32
+	ADDI	r4	r0	24	
+	ADDI	r5	r3	0
+:min_caml_print_int32_L1
+	SHR	r3	r5	r4
+	JSUB	:min_caml_print_char
+	ADDI	r4	r4	-8
+	BLE	r0	r4	:min_caml_print_int32_L1
+	RET
+
+:min_caml_fadd		#floating-point operation
+	ADDI	r15	r0	1	#frequently used constants
+	ADDI	r14	r0	23
+	ADDI	r12	r0	31
+	ADDI	r11	r0	9	#ok
+	SHL	r3	r1	r15	#r1 = larger
+	SHL	r4	r2	r15	#19
+	BLE	r4 	r3	:min_caml_fadd_L1
+	ADDI	r5	r1	r0
+	ADDI	r1	r2	r0
+	ADDI	r2	r5	r0
+:min_caml_fadd_L1
+	ADDI	r5	r0	24	#r3(4) = exp
+	SHL	r3	r1	r15
+	SHR	r3	r3	r5	#SRL
+	SHL	r4	r2	r15
+	SHR	r4	r4	r5	#SRL
+	SUB	r4	r3	r4	#r4 = shift
+	SHL 	r5	r1	r11	#r5(6) = man
+	SHR 	r5	r5	r11
+	SHL 	r6	r2	r11
+	SHR 	r6	r6	r11
+	SHL	r7	r15	r14	#r7 = 0x800000
+	OR	r5	r5	r7
+	OR	r6	r6	r7
+	SHR	r6	r6	r4	#shift man of smaller one
+	SHR	r7	r1	r12	#r7(8) = sig
+	SHR	r8	r2	r12
+	BEQ	r7	r8	:min_caml_fadd_L2 	#r9 = man
+	SUB	r9	r5	r6
+	BEQ	r0	r0	:min_caml_fadd_L3
+:min_caml_fadd_L2
+	ADD	r9	r5	r6
+:min_caml_fadd_L3
+	ADDI	r4	r0	25	#priority encoder modified
+:min_caml_fadd_L4
+	SHL	r10	r15	r4
+	AND	r10	r9	r10
+	BEQ	r10	r0	:min_caml_fadd_L4_1
+	BEQ	r0	r0	:min_caml_fadd_L5
+:min_caml_fadd_L4_1
+	SUB	r4	r4	r15
+	BLE	r4	0	:min_caml_fadd_L5	
+	BEQ	r0	r0	:min_caml_fadd_L4	#BLE+BEQmatomerareru?
+:min_caml_fadd_L5
+	BLE	r14	r4 	:min_caml_fadd_L6
+	SUB	r4	r14	r4	#borrow
+	SUB	r10	r3	r4
+	SHL	r9	r9	r4
+	BEQ	r0	r0	:min_caml_fadd_L7
+:min_caml_fadd_L6
+	SUB	r4	r4	r14	#carry
+	ADD	r10	r3	r4
+	SHR	r9	r9	r4
+:min_caml_fadd_L7
+	SHL	r10	r10	r14
+	SHL	r9	r9	r11
+	SHR	r9	r9	r11
+	SHL	r1	r7	r12
+	OR	r1	r1	r10
+	OR	r1	r1	r9
+	RET
+
+:min_caml_fsub
+	ADDI	r15	r0	1	
+	ADDI	r14	r0	31
+	SHL	r13	r15	r14
+	SHR	r3	r2	r14
+	BEQ	r3	r0	:min_caml_fsub_L1
+	SUB	r13	r13	r15
+	AND	r2	r2	r13
+	BEQ	r0	r0	:min_caml_fsub_L2
+:min_caml_fsub_L1
+	OR 	r2	r2	r13
+:min_caml_fsub_L2
+	JSUB	:min_caml_fadd
+	RET
+
+:min_caml_fmul
+	ADDI	r15	r0	31
+	SHR	r13	r3	r15
+	SHR	r14	r4	r15
+	XOR	r10	r13	r14
+	ADDI	r13	r0	1
+	ADDI	r14	r0	24
+	ADDI	r15	r0	9
+	ADDI	r12	r0	255
+	SHL	r5	r3	r13
+	SHR	r5	r5	r14
+	SHL	r6	r3	r15
+	SHR	r6	r6	r15
+	SHL	r7	r4	r13
+	SHR	r7	r7	r14
+	SHL	r8	r4	r15
+	SHR	r8	r8	r15
+	BEQ	r5	r12	:min_caml_fmul_INF
+	BEQ	r7	r12	:min_caml_fmul_INF
+	BEQ	r5	r0	:min_caml_fmul_ZERO
+	BEQ	r7	r0	:min_caml_fmul_ZERO
+	ADD	r13	r5	r7
+	ADDI	r14	r0	20
+	ADDI	r11	r0	21
+	SHL	r3	r6	r15
+	SHR	r3	r3	r14
+	SHL	r4	r6	r11
+	SHR	r4	r4	r11
+	SHL	r5	r8	r15
+	SHR	r5	r5	r14
+	SHL	r6	r8	r11
+	SHR	r6	r6	r11
+	ADDI	r14	r0	6
+	ADDI	r8	r0	127
+	BLT	r13	r8	:min_caml_fmul_ZERO
+	SUB	r13	r13	r8
+	ADDI	r11	r0	254
+	BLT	r11	r13	:min_caml_fmul_INF
+	ADDI	r8	r0	64
+	SHL	r8	r8	r14
+	ADD	r3	r3	r8
+	ADD	r5	r5	r8
+	PUSH	r6
+	PUSH	r8
+	PUSH	r3
+	PUSH	r4
+	PUSH	r5
+	ADD	r4	r5	r0
+	JSUB	:min_caml_mul
+	ADD	r9	r0	r3
+	POP	r3
+	POP	r4
+	PUSH	r3
+	PUSH	r4
+	JSUB	:min_caml_mul
+	ADD	r7	r0	r3 #70
+	POP	r4
+	POP	r5
+	POP	r3
+	POP	r8
+	POP	r6
+	ADDI	r11	r0	11
+	SHR	r7	r7	r11
+	ADD	r9	r9	r7
+	PUSH	r8
+	PUSH	r6
+	PUSH	r5
+	PUSH	r4
+	PUSH	r3
+	ADD	r4	r6	r0
+	JSUB	:min_caml_mul
+	ADD	r7	r3	r0
+	POP	r3
+	POP	r4
+	POP	r5
+	POP	r6
+	POP	r8
+	SHR	r7	r7	r11
+	ADD	r9	r9	r7
+	ADDI	r9	r9	2
+	ADDI	r7	r0	13
+	SHL	r8	r8	r7
+	BLT	r8	r9	:min_caml_fmul_KETA
+	BEQ	r13	r0	:min_caml_fmul_ZERO
+	ADDI	r14	r0	8
+	ADDI	r15	r0	9
+	SHL	r9	r9	r14
+	SHR	r9	r9	r15
+	BEQ	r0	r0	:min_caml_fmul_END
+:min_caml_fmul_KETA
+	ADDI	r13	r13	1
+	BEQ	r13	r12	:min_caml_fmul_INF
+	ADDI	r14	r0	7
+	SHL	r9	r9	r14
+	SHR	r9	r9	r15
+	BEQ	r0	r0	:min_caml_fmul_END
+:min_caml_fmul_INF
+	ADDI	r13	r0	255
+	ADDI	r9	r0	0
+	BEQ	r0	r0	:min_caml_fmul_END
+:min_caml_fmul_ZERO
+	ADDI	r9	r0	0
+	ADDI	r13	r0	0
+:min_caml_fmul_END
+	ADDI	r14	r0	23
+	ADDI	r15	r0	31
+	SHL	r13	r13	r14
+	SHL	r10	r10	r15
+	ADD	r3	r13	r10
+	ADD	r3	r3	r9
+	RET
+:min_caml_mul
+	ADDI	r5	r3	0
+	ADDI	r3	r0	0
+	ADDI	r6	r0	13
+	ADDI	r7	r0	1
+:min_caml_mul_loop
+	AND	r8	r7	r4
+	BEQ	r8	r0	:min_caml_mul_X
+	ADD	r3	r3	r5
+:min_caml_mul_X
+	SUB	r6	r6	r7
+	SHR	r4	r4	r7
+	SHL	r5	r5	r7
+	BLT	r0	r6	:min_caml_mul_loop
+	RET
+:min_caml_mul_EMD
+
+:min_caml_finv
+	ADDI	r16	r0	1
+	ADDI	r15	r0	30
+	ADDI	r14	r0	23
+	ADDI	r12	r0	22
+	ADDI	r13	r0	9
+	SHL	r5	r3	r13
+	SHR	r6	r5	r12
+	SHR	r5	r5	r13
+	ADDI	r12	r0	127
+	SHL	r11	r12	r14
+	OR	r7	r5	r11
+	ADDI	r15	r0	31
+	SHR	r5	r3	r15
+	SHL	r5	r5	r15
+	SHL	r4	r3	r16
+	SHR	r4	r4	r16
+	SHR	r4	r4	r14
+	BLT	r4	r12	:min_caml_finvelse
+	SUB	r4	r4	r12
+	SUB	r4	r12	r4
+	SUB	r4	r4	r16
+	BEQ	r0	r0	:min_caml_finvend
+:min_caml_finvelse
+	SUB	r4	r12	r4
+	ADD	r4	r12	r4
+	SUB	r4	r4	r16
+:min_caml_finvend
+	SHL	r4	r4	r14
+	LDI	r9	0x8000
+	LD	r3	r9	r6	# from a.txt
+	PUSH	r4
+	PUSH	r5
+	PUSH	r6
+	OR	r4	r7	r7
+	PUSH	r2
+	JSUB	:min_caml_fmul	# r3 * r4 = r3
+	POP	r2
+	POP	r6
+	PUSH	r2
+	OR	r4	r3	r3
+	LDI	r9	0x8000
+	LD	r3	r9	r6	# from b.txt
+	JSUB	:min_caml_fsub	# r3 - r4 = r3
+	POP	r2
+	POP	r5
+	POP	r4
+	SHL	r10	r3	r13
+	SHR	r10	r10	r13
+	OR	r3	r5	r4
+	OR	r3	r3	r10
+	RET
+
+:min_caml_fdiv
+	PUSH	r3
+	ADD	r4	r0	r4
+	JSUB	:min_caml_finv
+	POP	r4
+	JSUB	:min_caml_fmul
+	RET
+
+:min_caml_div2
+	ADDI	r15	r0	0xff
+	ADDI	r14	r0	23
+	SHL	r15	r15	r14
+	AND	r4	r3	r15
+	BLT	r4	r0	:min_caml_return_div2
+	ADDI	r15	r0	1
+	SHL	r15	r15	r14
+	SUB	r3	r3	r15
+:min_caml_return_div2
+	RET
+:min_caml_fsqrt
+	ADDI	r15	r0	0xffff # not tested yet!!!
+	ADDI	r14	r0	1
+	SHR	r15	r15	r14
+	AND	r3	r3	r15
+	BEQ	r3	r0	:min_caml_return_fsqrt
+	ADDI	r15	r0	0xfe	#normalize
+	ADDI	r14	r0	0
+	SHL	r15	r15	r14
+	ADDI	r13	r13	r14
+	AND	r4	r3	r15
+	SUB	r4	r4	r13
+	ADDI	r4	r0	1
+	SHR	r4	r4	r14
+	PUSH	r4
+	SUB	r15	r0	r15
+	ADDI	r15	r15	-1
+	AND	r3	r3	r15
+	OR	r3	r3	r13
+	PUSH	r3
+	JSUB	:min_caml_div2
+	ADD	r15	r3	r0
+	POP	r3
+	ADDI	r14	r0	4
+:min_caml_loop_fsqrt
+	BEQ	r14	r0	:min_caml_break_loop_fsqrt	#newton methods loop
+	ADDI	r14	r14	-1
+	PUSH	r14
+	PUSH	r15
+	PUSH	r3
+	JSUB	:min_caml_div2
+	POP	r4
+	POP	r5
+	PUSH	r5
+	PUSH	r3
+	ADDI	r3	r5	r0
+	JSUB	:min_caml_fdiv
+	ADDI	r2	r3	r0
+	POP	r1
+	JSUB	:min_caml_fadd
+	ADDI	r3	r1	r0
+	POP	r15
+	POP	r14
+	BEQ	r0	r0	:min_caml_loop_fsqrt
+:min_caml_break_loop_fsqrt
+	POP	r4
+	ADD	r3	r3	r4
+	ADDI	r15	r0	0xffff
+	ADDI	r14	r0	1
+	SHR	r15	r15	r14
+	AND	r3	r3	r15
+:min_caml_return_fsqrt
+	RET
+
+:min_caml_float_of_int
+	ADDI	r15	r0	31
+	ADDI	r14	r0	1
+	ADDI	r13	r0	32
+	ADDI	r12	r0	8
+	ADDI	r11	r0	23
+	SHR	r4	r3	r15			#r4 = sig(a)
+	SHL	r4	r4	r15
+	BLE	r0	r4	:min_caml_float_of_int_L1
+	SUB	r3	r0	r3			#負の数なら反転
+:min_caml_float_of_int_L1
+	ADDI	r5	r0	30
+:min_caml_float_of_int_L2					#r5 = exp(f)
+	SHR	r6	r3	r5
+	BLT	r0	r6	:min_caml_float_of_int_L3
+	SUB	r5	r5	r14
+	BLE	r0	r5	:min_caml_float_of_int_L2
+	ADDI	r3	r0	0			#0は0に
+	RET
+:min_caml_float_of_int_L3
+	SUB	r6	r13	r5
+	SHL	r3	r3	r6
+	SHR	r3	r3	r12
+	ADDI	r3	r3	1
+	SHR	r3	r3	r14
+	ADDI	r5	r5	127
+	SHL	r5	r5	r11
+	ADD	r3	r3	r5
+	OR	r3	r3	r4
+	RET
+
+:min_caml_ftoi
+	ADDI	r15	r0	31
+	ADDI	r14	r0	1
+	ADDI	r13	r0	24
+	ADDI	r12	r0	9
+	ADDI	r11	r0	150
+	ADDI	r10	r0	149
+	ADDI	r9	r0	158
+	ADDI	r8	r0	23
+	SHR	r5	r3	r15			#r5 = sig(a)
+	SHL	r4	r3	r14			#r4 = exp(a)
+	SHR	r4	r4	r13
+	SHL	r6	r14	r8			#24bit目の1を補完
+	SHL	r3	r3	r12			#r3 = man(a)
+	SHR	r3	r3	r12
+	OR	r3	r6	r3			#ここまでok
+	BLE	r11	r4	:min_caml_int_of_float_L1	#73
+	SUB	r4	r10	r4
+	SHR	r3	r3	r4
+	ADDI	r3	r3	1
+	SHR	r3	r3	r14
+	BEQ	r5	r0	:min_caml_int_of_float_L2
+	SUB	r3	r0	r3
+:min_caml_int_of_float_L2
+	RET
+:min_caml_int_of_float_L1
+	BLE	r9	r4	:min_caml_int_of_float_L3
+	SUB	r4	r4	r11
+	SHL	r3	r3	r4
+	BEQ	r5	r0	:min_caml_int_of_float_L4
+	SUB	r3	r0	r3
+:min_caml_int_of_float_L4
+	RET
+:min_caml_int_of_float_L3
+	ADDI	r4	r0	16
+	BEQ	r5	r0	:min_caml_int_of_float_L5
+	ADDI	r3	r0	0x8000
+	SHL	r3	r3	r4
+	RET
+:min_caml_int_of_float_L5
+	ADDI	r3	r0	0x7fff
+	SHL	r3	r3	r4
+	ADDI	r4	r0	0xffff
+	OR	r3	r4	r3
+	RET
+
+:min_caml_floor
+	ADDI	r15	r0	31
+	ADDI	r14	r0	1
+	ADDI	r13	r0	24
+	ADDI	r12	r0	150
+	ADDI	r11	r0	127
+	ADDI	r10	r0	32
+	SHR	r5	r3	r15
+	SHL	r4	r3	r14
+	SHR	r4	r4	r13			#modified
+	BLT	r4	r12	:min_caml_floor_L1
+	RET
+:min_caml_floor_L1
+	BLE	r11	r4	:min_caml_floor_L2
+	BEQ	r5	r0	:min_caml_floor_L4
+	ADDI	r4	r0	16
+	ADDI	r3	r0	0xbf80
+	SHL	r3	r3	r4
+	RET						#-1を返す
+:min_caml_floor_L4
+	ADDI	r3	r0	0			#0を返す
+	RET
+:min_caml_floor_L2
+	SUB	r6	r12	r4
+	SHR	r4	r3	r6
+	BEQ	r5	r0	:min_caml_floor_L3
+	SUB	r9	r10	r6
+	SHL	r5	r3	r9
+	BEQ	r5	r0	:min_caml_floor_L3
+	ADDI	r4	r4	1
+:min_caml_floor_L3
+	SHL	r3	r4	r6
+	RET
+
+:min_caml_fhalf
+	ADDI	r7	r0	9
+	ADDI	r8	r0	23
+	ADDI	r9	r0	24
+	ADDI	r10	r0	1
+	ADDI	r11	r0	31
+	SHR	r4	r3	r11	#r4 = sig(a)
+	SHL	r4	r4	r11	#r4 = sig(a)
+	SHL	r5	r3	r10	#r5 = exp(a)
+	SHR	r5	r5	r9
+	BLT	r0	r5	:min_caml_fhalf_L1
+	ADDI	r3	r0	0
+	RET
+:min_caml_fhalf_L1
+	SUB	r5	r5	r10	#r5 = exp(a) - 1
+	SHL	r5	r5	r8
+	SHL	r6	r3	r7	#r6 = man(a)
+	SHR	r6	r6	r7
+	OR 	r3	r4	r5
+	OR 	r3	r3	r6
+	RET
+
+:min_caml_fabs
+	ADDI	r15	r0	1
+	SHL	r3	r3	r15
+	SHR	r3	r3	r15
+	RET
