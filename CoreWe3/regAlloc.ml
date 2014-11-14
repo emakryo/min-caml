@@ -7,7 +7,8 @@ let rec target' src (dest, t) = function
   | Mr(x) when x = src && is_reg dest ->
      assert (t <> Type.Unit);
      false, [dest]
-  | IfEq(_, _, e1, e2) | IfLE(_, _, e1, e2) ->
+  | IfEq(_, _, e1, e2) | IfLE(_, _, e1, e2) 
+  | IfFLE(_, _, e1, e2) ->
      let c1, rs1 = target src (dest, t) e1 in
      let c2, rs2 = target src (dest, t) e2 in
      c1 && c2, rs1 @ rs2
@@ -123,6 +124,7 @@ and g' dest cont regenv = function (* 各命令のレジスタ割り当て (caml2html: regal
   | FNeg(x) -> (Ans(FNeg(find x Type.Float regenv)), regenv)
   | IfEq(x, y', e1, e2) as exp -> g'_if dest cont regenv exp (fun e1' e2' -> IfEq(find x Type.Int regenv, find y' Type.Int regenv, e1', e2')) e1 e2
   | IfLE(x, y', e1, e2) as exp -> g'_if dest cont regenv exp (fun e1' e2' -> IfLE(find x Type.Int regenv, find y' Type.Int regenv, e1', e2')) e1 e2
+  | IfFLE(x, y', e1, e2) as exp -> g'_if dest cont regenv exp (fun e1' e2' -> IfFLE(find x Type.Int regenv, find y' Type.Int regenv, e1', e2')) e1 e2
   | CallCls(x, ys) as exp -> g'_call dest cont regenv exp (fun ys -> CallCls(find x Type.Int regenv, ys)) ys
   | CallDir(l, ys) as exp -> g'_call dest cont regenv exp (fun ys -> CallDir(l, ys)) ys
   | Save(x, y) -> assert false

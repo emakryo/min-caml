@@ -33,7 +33,7 @@ and exp = (* 一つ一つの命令に対応する式 *)
   | IfLE of Id.t * Id.t * t * t
   (* | IfGE of Id.t * id_or_imm * t * t *)
   (* | IfFEq of Id.t * Id.t * t * t *)
-  (* | IfFLE of Id.t * Id.t * t * t *)
+  | IfFLE of Id.t * Id.t * t * t
   (* closure address, integer arguments, and float arguments *)
   | CallCls of Id.t * Id.t list
   | CallDir of Id.l * Id.t list
@@ -91,8 +91,8 @@ let rec fv_exp = function
   | Stw (x, y, z') (* | Stfd (x, y, z')  *)-> [x; y]
   | IfEq (x, y', e1, e2) | IfLE (x, y', e1, e2) (* | IfGE (x, y', e1, e2) *) -> 
     [x; y'] @ remove_and_uniq S.empty (fv e1 @ fv e2)
-  (* | IfFEq (x, y, e1, e2) | IfFLE (x, y, e1, e2) -> *)
-  (*     x :: y :: remove_and_uniq S.empty (fv e1 @ fv e2) *)
+  (* | IfFEq (x, y, e1, e2) *) | IfFLE (x, y, e1, e2) ->
+    x :: y :: remove_and_uniq S.empty (fv e1 @ fv e2)
   | CallCls (x, ys) -> x :: ys
   | CallDir (_, ys) -> ys 
 and fv = function 

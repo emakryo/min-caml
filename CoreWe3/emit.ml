@@ -111,10 +111,14 @@ and g' oc = function (* 各命令のアセンブリ生成 *)
      g'_tail_if oc e1 e2 "BEQ" (reg x) (reg y)
   | (Tail, IfLE(x, y, e1, e2)) ->
      g'_tail_if oc e1 e2 "BLE" (reg x) (reg y)
+  | (Tail, IfFLE(x, y, e1, e2)) ->
+     g'_tail_if oc e1 e2 "BFLE" (reg x) (reg y)
   | (NonTail(z), IfEq(x, y, e1, e2)) ->
      g'_non_tail_if oc (NonTail(z)) e1 e2 "BEQ" (reg x) (reg y)
   | (NonTail(z), IfLE(x, y, e1, e2)) ->
      g'_non_tail_if oc (NonTail(z)) e1 e2 "BLE" (reg x) (reg y)
+  | (NonTail(z), IfFLE(x, y, e1, e2)) ->
+     g'_non_tail_if oc (NonTail(z)) e1 e2 "BFLE" (reg x) (reg y)
   (* 関数呼び出しの仮想命令の実装 *)
   | (Tail, CallCls(x, ys)) -> (* 末尾呼び出し *)
      g'_args oc [(x, reg_cl)] ys;

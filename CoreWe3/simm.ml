@@ -14,6 +14,7 @@ and g' env = function (* 各命令の 16 bit 即値最適化 *)
   | Srw(x, V(y)) when M.mem y env -> Slw(x, C(M.find y env))
   | IfEq(x, y', e1, e2) -> IfEq(x, y', g env e1, g env e2)
   | IfLE(x, y', e1, e2) -> IfLE(x, y', g env e1, g env e2)
+  | IfFLE(x, y', e1, e2) -> IfFLE(x, y', g env e1, g env e2)
   | e -> e
 
 (* トップレベル関数の 16 bit 即値最適化 *)
