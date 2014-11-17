@@ -56,14 +56,15 @@ let rec sanitize (r, e) = (*kNormal.astのみを比較できるように、rangeを無効化*)
 
 let rec isnt_eliminatable (r, e) = 
   match e with
-  | Let(_, e1, e2) | IfEq(_, _, e1, e2) | IfLE(_, _, e1, e2) -> effect e1 || effect e2
-  | LetRec(_, e) | LetTuple(_, _, e) -> effect e
+  | Let(_, e1, e2) | IfEq(_, _, e1, e2) | IfLE(_, _, e1, e2) -> isnt_eliminatable e1 || isnt_eliminatable e2
+  | LetRec(_, e) | LetTuple(_, _, e) -> isnt_eliminatable e
   | App _ | Get _ | Put _ | ExtFunApp _ -> true
   | _ -> false
 
 let is_simple_exp (r, e) = 
   match e with
-  | Unit | Int(_) | Float(_) | Var(_) | ExtArray(_) | ExtTuple(_) -> true (*リテラルを変数に置き換えるとクロージャになる?*)
+  | Unit | Int(_) | Float(_) -> true
+  | Var(_) | ExtArray(_) | ExtTuple(_) -> true
   | _ -> false
 
 let rec elim_exp env (r, e) = (*共通部分式除去*)
@@ -86,7 +87,7 @@ let rec elim_exp env (r, e) = (*共通部分式除去*)
 	   let env' = Em.add (sanitize t1') n env in
 	   Let ((n, t), t1', elim_exp env' t2)
       | LetRec ({name = (n, ty); args = ags; body = b}, t) -> 
-	 LetRec ({name = (n, ty); args = ags; body = elim_exp env b}, elim_exp env t)
+	 LetRec ({name = (n, ty); args = ags; body = elim_exp (Em.empty) b}, elim_exp env t)
       | LetTuple (xs, n, t) -> LetTuple (xs, n, elim_exp env t)
   in
   (r, e')
