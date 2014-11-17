@@ -395,7 +395,7 @@
 	OR	r3	r3	r4
 	RET
 
-:min_caml_ftoi
+:min_caml_int_of_float
 	ADDI	r15	r0	31
 	ADDI	r14	r0	1
 	ADDI	r13	r0	24
