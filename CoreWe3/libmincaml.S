@@ -310,12 +310,13 @@
 	SUB	r3	r3	r15
 :min_caml_return_div2
 	RET
-:min_caml_fsqrt
+
+:min_caml_sqrt
 	ADDI	r15	r0	0xffff # not tested yet!!!
 	ADDI	r14	r0	1
 	SHR	r15	r15	r14
 	AND	r3	r3	r15
-	BEQ	r3	r0	:min_caml_return_fsqrt
+	BEQ	r3	r0	:min_caml_return_sqrt
 	ADDI	r15	r0	0xfe	#normalize
 	ADDI	r14	r0	0
 	SHL	r15	r15	r14
@@ -334,8 +335,8 @@
 	ADD	r15	r3	r0
 	POP	r3
 	ADDI	r14	r0	4
-:min_caml_loop_fsqrt
-	BEQ	r14	r0	:min_caml_break_loop_fsqrt	#newton methods loop
+:min_caml_loop_sqrt
+	BEQ	r14	r0	:min_caml_break_loop_sqrt	#newton methods loop
 	ADDI	r14	r14	-1
 	PUSH	r14
 	PUSH	r15
@@ -353,15 +354,15 @@
 	ADDI	r3	r1	r0
 	POP	r15
 	POP	r14
-	BEQ	r0	r0	:min_caml_loop_fsqrt
-:min_caml_break_loop_fsqrt
+	BEQ	r0	r0	:min_caml_loop_sqrt
+:min_caml_break_loop_sqrt
 	POP	r4
 	ADD	r3	r3	r4
 	ADDI	r15	r0	0xffff
 	ADDI	r14	r0	1
 	SHR	r15	r15	r14
 	AND	r3	r3	r15
-:min_caml_return_fsqrt
+:min_caml_return_sqrt
 	RET
 
 :min_caml_float_of_int
