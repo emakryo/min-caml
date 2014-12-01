@@ -185,7 +185,7 @@ let rec g env known (r, e) = (* クロージャ変換ルーチン本体 (caml2html: closure_g
 let f e =
   toplevel := [];
   let e' = g M.empty S.empty e in
-  print_string "Closure =======================\n";
-  List.iter (fun fdef -> print_string (pp_fundef fdef)) !toplevel;
+  (* print_string "Closure =======================\n"; *)
+  (* List.iter (fun fdef -> print_string (pp_fundef fdef)) !toplevel; *)
   print_string (pp_t e' 0);
   Prog(List.rev !toplevel, e')
