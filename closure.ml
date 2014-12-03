@@ -186,6 +186,6 @@ let f e =
   toplevel := [];
   let e' = g M.empty S.empty e in
   (* print_string "Closure =======================\n"; *)
-  (* List.iter (fun fdef -> print_string (pp_fundef fdef)) !toplevel; *)
-  print_string (pp_t e' 0);
+  (* List.iter (fun fdef -> print_string (pp_fundef fdef)) (List.rev !toplevel); *)
+  (* print_string (pp_t e' 0); *)
   Prog(List.rev !toplevel, e')

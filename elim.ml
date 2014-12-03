@@ -94,5 +94,5 @@ let rec elim_exp env (r, e) = (*共通部分式除去*)
 
 let f t = 
   let t' = elim_let t in
-  let t' = elim_exp (Em.empty) t' in
+  (* let t' = elim_exp (Em.empty) t' in *)
   t'
