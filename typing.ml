@@ -97,7 +97,12 @@ let rec g env (r, e) = (* 型推論ルーチン (caml2html: typing_g) *)
     | Neg(e) ->
        unify Type.Int (g env e) e;
        Type.Int
-    | Add(e1, e2) | Sub(e1, e2) | Lsl(e1, e2) | Lsr(e1, e2) -> (* 足し算（と引き算）の型推論 (caml2html: typing_add) *)
+    | Add(e1, e2) | Sub(e1, e2) ->
+       let t = Type.gentyp () in
+       unify t (g env e1) e1;
+       unify t (g env e2) e2;
+       t
+    | Lsl(e1, e2) | Lsr(e1, e2) -> (* 足し算（と引き算）の型推論 (caml2html: typing_add) *)
        unify Type.Int (g env e1) e1;
        unify Type.Int (g env e2) e2;
        Type.Int
