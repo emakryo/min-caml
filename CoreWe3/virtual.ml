@@ -1,4 +1,4 @@
-(* translation into PowerPC assembly (infinite number of virtual registers) *)
+(* translation into CoreWe3 assembly (infinite number of virtual registers) *)
 
 open Asm
 

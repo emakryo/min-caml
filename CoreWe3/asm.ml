@@ -1,4 +1,4 @@
-(* PowerPC assembly with a few virtual instructions *)
+(* CoreWe3 assembly with a few virtual instructions *)
 
 type id_or_imm = V of Id.t | C of int
 type t = (* Ì¿Îá¤ÎÎó *)
