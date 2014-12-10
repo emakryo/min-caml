@@ -47,16 +47,11 @@ let rec g env (r, e) = (*共通部分式除去*)
 	 (c1 || c2, IfLE (n1, n2, t1', t2'))
       | Let ((n, t), t1, t2) ->
 	 let c1, t1' = g env t1 in
-	 if c1 then (* 関数呼び出しがあったら退避が起こるので、置き換えをやめる *)
-	   let c2, t2' = g (Em.empty) t2 in
-	   (c2, Let ((n, t), t1', t2'))
-	 else if eliminatable t1' then
-	   let env' = Em.add (sanitize t1') n env in
-	   let c2, t2' = g env' t2 in
-	   (c2, Let ((n, t), t1', t2'))
-	 else
-	   let c2, t2' = g env t2 in
-	   (c2, Let ((n, t), t1', t2'))
+	 (* let env' = if c1 then Em.empty else env in  (\* 関数呼び出しがあったら退避が起こるので、置き換えをやめる *\) *)
+	 let env' = env in
+	 let env' = if eliminatable t1' then Em.add (sanitize t1') n env' else env' in
+	 let c2, t2' = g env' t2 in
+	 (c2, Let ((n, t), t1', t2'))
       | LetRec ({name = (n, ty); args = ags; body = b}, t) ->
 	 let c1, b' = g (Em.empty) b in
 	 let c2, t' = g env t in
