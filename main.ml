@@ -8,7 +8,7 @@ let rec iter n e = (* 最適化処理をくりかえす (caml2html: main_iter) *)
       print_string (KNormal.pp_t e);
       e)
   else
-    let e' = Elim.f (ConstFold.f (Inline.f (Assoc.f (Beta.f e)))) in
+    let e' = Cse.f (Elim.f (ConstFold.f (Inline.f (Assoc.f (Beta.f e))))) in
     if e = e' then 
       (
 	print_string "Optimized =======================\n" ;
