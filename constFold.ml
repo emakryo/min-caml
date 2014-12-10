@@ -80,6 +80,12 @@ let rec g env (r, e) = (* 定数畳み込みルーチン本体 (caml2html: constfold_g) *)
        xts
        (findt y env)
   | LetTuple(xts, y, e) -> (r, LetTuple(xts, y, g env e))
+  | ExtFunApp ("sqrt", [x]) when memf x env -> (r, Float (sqrt (findf x env)))
+  | ExtFunApp ("fabs", [x]) when memf x env -> (r, Float (abs_float (findf x env)))
+  | ExtFunApp ("float_of_int", [x]) when memi x env -> (r, Float (float_of_int (findi x env)))
+  | ExtFunApp ("int_of_float", [x]) when memf x env -> (r, Int (int_of_float (findf x env)))
+  | ExtFunApp ("floor", [x]) when memf x env -> (r, Float (floor (findf x env)))
+  | ExtFunApp ("fhalf", [x]) when memf x env -> (r, Float (findf x env *. 0.5))
   | e -> (r, e)
 	     
 let f = g M.empty
