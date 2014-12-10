@@ -48,13 +48,19 @@ let rec g env (r, e) = (* 定数畳み込みルーチン本体 (caml2html: constfold_g) *)
   | FMul(x, y) when memf y env && findf y env = -1.0 -> (r, FNeg(x))
   | FDiv(x, y) when memf x env && memf y env -> (r, Float(findf x env /. findf y env))
   | FDiv(x, y) when memf x env && findf x env = 0.0 -> (r, Float(0.0))
+  | FDiv(x, y) when memf x env && findf x env = 1.0 -> (r, FInv(y))
   | FDiv(x, y) when memf y env && findf y env = 1.0 -> (r, Var(x))
+  | FDiv(x, y) when memf x env && findf x env = -1.0 ->
+     let y_neg = Id.genid (y ^ "_neg") in
+     let e1 = (r, FNeg(y)) in
+     let e2 = (r, FInv(y_neg)) in
+     (r, Let((y_neg, Type.Float), e1, e2))
   | FDiv(x, y) when memf y env && findf y env = -1.0 -> (r, FNeg(x))
   | FDiv(x, y) when memf y env -> 
-     let y' = Id.id_of_typ (Type.Float) in
+     let y_inv = Id.genid (y ^ "_inv") in
      let e1 = (r, Float (1.0 /. findf y env)) in
-     let e2 = (r, FMul (x, y')) in
-     (r, Let((y', Type.Float), e1, e2))
+     let e2 = (r, FMul (x, y_inv)) in
+     (r, Let((y_inv, Type.Float), e1, e2))
   | IfEq(x, y, e1, e2) when memi x env && memi y env -> if findi x env = findi y env then g env e1 else g env e2
   | IfEq(x, y, e1, e2) when memf x env && memf y env -> if findf x env = findf y env then g env e1 else g env e2
   | IfEq(x, y, e1, e2) -> (r, IfEq(x, y, g env e1, g env e2))

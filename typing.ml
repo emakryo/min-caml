@@ -153,7 +153,7 @@ let rec g env (r, e) = (* 型推論ルーチン (caml2html: typing_g) *)
        unify Type.Int (g env e2) e2;
        Type.Unit
   with Unify(t1, t2, f) -> 
-    let e' = deref_term (r, e) in
+    let _ = deref_term (r, e) in
     let t1' = deref_typ t1 in
     let t2' = deref_typ t2 in
     failwith (Format.sprintf "The expression at %s had type %s but an expression was expected of type %s." 

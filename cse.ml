@@ -10,7 +10,7 @@ include Em
 
 let rec sanitize (r, e) = (*kNormal.astのみを比較できるように、rangeを無効化*)
   let e' = match e with
-    | Unit | Int(_) | Float(_) | Neg(_) | Add(_) | Sub(_) | Lsl(_) | Lsr(_) | FNeg(_) | FAdd(_) | FSub(_) | FMul(_) | FDiv(_) | Var(_) | App(_) | Tuple(_) | Get(_) | Put(_) | ExtArray(_) | ExtTuple(_) | ExtFunApp(_) -> e
+    | Unit | Int(_) | Float(_) | Neg(_) | Add(_) | Sub(_) | Lsl(_) | Lsr(_) | FNeg(_) | FAdd(_) | FSub(_) | FMul(_) | FDiv(_) | FInv(_) |Var(_) | App(_) | Tuple(_) | Get(_) | Put(_) | ExtArray(_) | ExtTuple(_) | ExtFunApp(_) -> e
     | IfEq (n1, n2, t1, t2) -> IfEq (n1, n2, sanitize t1, sanitize t2)
     | IfLE (n1, n2, t1, t2) -> IfLE (n1, n2, sanitize t1, sanitize t2)
     | Let ((n, ty), t1, t2) -> Let ((n, ty), sanitize t1, sanitize t2)
@@ -22,7 +22,7 @@ let rec sanitize (r, e) = (*kNormal.astのみを比較できるように、range
 let rec eliminatable (r, e) = 
   match e with
   | Unit | App _ | Get _ | Put _ | ExtFunApp _ | Var _ -> false
-  | Int _ | Float _ | Neg _ | Add _ | Sub _ | Lsl _ | Lsr _ | FNeg _ | FAdd _ | FSub _ | FMul _ | FDiv _ | Tuple _ | ExtArray _ | ExtTuple _ -> true
+  | Int _ | Float _ | Neg _ | Add _ | Sub _ | Lsl _ | Lsr _ | FNeg _ | FAdd _ | FSub _ | FMul _ | FDiv _ | FInv _ | Tuple _ | ExtArray _ | ExtTuple _ -> true
   | IfEq(_, _, e1, e2) | IfLE(_, _, e1, e2) -> eliminatable e1 && eliminatable e2
   | Let _ | LetRec _ | LetTuple _ -> false
 
@@ -36,7 +36,7 @@ let rec g env (r, e) = (*共通部分式除去*)
       Not_found ->
       match e with
       | Unit | Int(_) | Float(_) | Neg(_) | Add(_) | Sub(_) | Lsl(_) | Lsr(_) | FNeg(_) | Var(_) | Tuple(_) | Get(_) | Put(_) | ExtArray(_) | ExtTuple(_) -> (false, e)
-      | FAdd(_) | FSub(_) | FMul(_) | FDiv(_) | App(_) | ExtFunApp(_) -> (true, e)
+      | FAdd(_) | FSub(_) | FMul(_) | FDiv(_) | FInv(_) | App(_) | ExtFunApp(_) -> (true, e)
       | IfEq (n1, n2, t1, t2) ->
 	 let c1, t1' = g env t1 in
 	 let c2, t2' = g env t2 in

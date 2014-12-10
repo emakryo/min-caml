@@ -37,7 +37,6 @@ let rec pp_t t d =
   let indent d = String.make (2 * d) ' ' in
   let rec pp_t' d (r, t) =
     let sps = indent d in
-    let rng = Id.pp_range r in
     match t with
     | Unit -> Format.sprintf "()"
     | Int i -> Format.sprintf "%d" i
@@ -47,7 +46,7 @@ let rec pp_t t d =
     | Sub (n1, n2) -> Format.sprintf "(%s - %s)"(Id.pp_t n1) (Id.pp_t n2)
     | Lsl (n1, n2) -> Format.sprintf "(%s lsl %s)"(Id.pp_t n1) (Id.pp_t n2)
     | Lsr (n1, n2) -> Format.sprintf "(%s lsr %s)"(Id.pp_t n1) (Id.pp_t n2)
-    | FNeg n -> Format.sprintf "-.(%s)" (Id.pp_t n)
+    | FNeg n -> Format.sprintf "-.%s" (Id.pp_t n)
     | FAdd (n1, n2) -> Format.sprintf "(%s +. %s)"(Id.pp_t n1) (Id.pp_t n2)
     | FSub (n1, n2) -> Format.sprintf "(%s -. %s)"(Id.pp_t n1) (Id.pp_t n2)
     | FMul (n1, n2) -> Format.sprintf "(%s *. %s)"(Id.pp_t n1) (Id.pp_t n2)
@@ -135,6 +134,7 @@ let rec g env known (r, e) = (* クロージャ変換ルーチン本体 (caml2html: closure_g
     | KNormal.FSub(x, y) -> snd (g env known (r, floatop2app "fsub" [x; y]))
     | KNormal.FMul(x, y) -> snd (g env known (r, floatop2app "fmul" [x; y]))
     | KNormal.FDiv(x, y) -> snd (g env known (r, floatop2app "fdiv" [x; y]))
+    | KNormal.FInv(x) -> snd (g env known (r, floatop2app "finv" [x]))
     | KNormal.IfEq(x, y, e1, e2) -> IfEq(x, y, g env known e1, g env known e2)
     | KNormal.IfLE(x, y, e1, e2) -> IfLE(x, y, g env known e1, g env known e2)
     | KNormal.Let((x, t), e1, e2) -> Let((x, t), g env known e1, g (M.add x t env) known e2)

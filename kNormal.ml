@@ -15,6 +15,7 @@ and ast =
   | FSub of Id.t * Id.t
   | FMul of Id.t * Id.t
   | FDiv of Id.t * Id.t
+  | FInv of Id.t
   | IfEq of Id.t * Id.t * t * t (* 比較 + 分岐 (caml2html: knormal_branch) *)
   | IfLE of Id.t * Id.t * t * t (* 比較 + 分岐 *)
   | Let of (Id.t * Type.t) * t * t
@@ -34,7 +35,6 @@ let rec pp_t t =
   let indent d = String.make (2 * d) ' ' in
   let rec pp_t' d (r, t) =
     let sps = indent d in
-    let rng = Id.pp_range r in
     match t with
     | Unit -> Format.sprintf "()"
     | Int i -> Format.sprintf "%d" i
@@ -44,11 +44,12 @@ let rec pp_t t =
     | Sub (n1, n2) -> Format.sprintf "(%s - %s)"(Id.pp_t n1) (Id.pp_t n2)
     | Lsl (n1, n2) -> Format.sprintf "(%s lsl %s)"(Id.pp_t n1) (Id.pp_t n2)
     | Lsr (n1, n2) -> Format.sprintf "(%s lsr %s)"(Id.pp_t n1) (Id.pp_t n2)
-    | FNeg n -> Format.sprintf "-.(%s)" (Id.pp_t n)
+    | FNeg n -> Format.sprintf "-.%s" (Id.pp_t n)
     | FAdd (n1, n2) -> Format.sprintf "(%s +. %s)"(Id.pp_t n1) (Id.pp_t n2)
     | FSub (n1, n2) -> Format.sprintf "(%s -. %s)"(Id.pp_t n1) (Id.pp_t n2)
     | FMul (n1, n2) -> Format.sprintf "(%s *. %s)"(Id.pp_t n1) (Id.pp_t n2)
     | FDiv (n1, n2) -> Format.sprintf "(%s /. %s)"(Id.pp_t n1) (Id.pp_t n2)
+    | FInv n -> Format.sprintf "(1.0 /. %s)" (Id.pp_t n)
     | IfEq (n1, n2, t1, t2) ->
        let s1 = (pp_t' (d + 1) t1) in
        let s1 = if String.contains s1 '\n' then s1 else (indent (d + 1)) ^ s1 in
@@ -164,7 +165,7 @@ let rec pp_t t =
 let rec fv (r, t) =  (* 式に出現する（自由な）変数 (caml2html: knormal_fv) *)
   match t with
   | Unit | Int(_) | Float(_) | ExtArray(_) | ExtTuple(_) -> S.empty
-  | Neg(x) | FNeg(x) -> S.singleton x
+  | Neg(x) | FNeg(x) | FInv(x)-> S.singleton x
   | Add(x, y) | Sub(x, y) | Lsl(x, y) | Lsr(x, y) | FAdd(x, y) | FSub(x, y) | FMul(x, y) | FDiv(x, y) | Get(x, y) -> S.of_list [x; y]
   | IfEq(x, y, e1, e2) | IfLE(x, y, e1, e2) -> S.add x (S.add y (S.union (fv e1) (fv e2)))
   | Let((x, t), e1, e2) -> S.union (fv e1) (S.remove x (fv e2))
@@ -328,7 +329,7 @@ let rec g env (r, e) = (* K正規化ルーチン本体 (caml2html: knormal_g) *)
 
 let f e = 
   let s = fst (g M.empty e) in
-  (* print_string "kNormalized =======================-\n"; *)
-  (* print_string (pp_t s); *)
+  print_string "kNormalized =======================-\n";
+  print_string (pp_t s);
   s
 
