@@ -50,6 +50,8 @@ let rec g oc = function (* 命令列のアセンブリ生成 *)
 and g' oc = function (* 各命令のアセンブリ生成 *)
   (* 末尾でなかったら計算結果を dest にセット *)
   | (NonTail(_), Nop) -> ()
+  | (NonTail(x), Li(i)) when (imm_min <= i) && (i < imm_max) ->
+     Printf.fprintf oc "\tADDI\t%s\tr0\t%ld\n" (reg x) i
   | (NonTail(x), Li(i)) -> 
      Printf.fprintf oc "\tLDI\t%s\t%ld\t#0x%lx\n" (reg x) i i
   | (NonTail(x), SetL(Id.L(y))) -> 
