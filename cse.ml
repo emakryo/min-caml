@@ -21,8 +21,8 @@ let rec sanitize (r, e) = (*kNormal.astのみを比較できるように、range
 
 let rec eliminatable (r, e) = 
   match e with
-  | Unit | App _ | Get _ | Put _ | ExtFunApp _ | Var _ -> false
-  | Int _ | Float _ | Neg _ | Add _ | Sub _ | Lsl _ | Lsr _ | FNeg _ | FAdd _ | FSub _ | FMul _ | FDiv _ | FInv _ | Tuple _ | ExtArray _ | ExtTuple _ -> true
+  | Unit | App _ | Get _ | Put _ | ExtFunApp _ -> false
+  | Int _ | Float _ | Neg _ | Add _ | Sub _ | Lsl _ | Lsr _ | FNeg _ | FAdd _ | FSub _ | FMul _ | FDiv _ | FInv _ | Var _ | Tuple _ | ExtArray _ | ExtTuple _ -> true
   | IfEq(_, _, e1, e2) | IfLE(_, _, e1, e2) -> eliminatable e1 && eliminatable e2
   | Let _ | LetRec _ | LetTuple _ -> false
 
@@ -55,14 +55,8 @@ let rec g env (r, e) = (*共通部分式除去*)
 	   let c2, t2' = g env' t2 in
 	   (c2, Let ((n, t), t1', t2'))
 	 else
-	   (match e with
-	    | Var m -> 
-	       let env' = Em.add (sanitize (r, Var(n)))  m env in
-	       let c2, t2' = g env' t2 in
-	       (c2, Let ((n, t), t1', t2'))
-	    | _ -> 
-	       let c2, t2' = g env t2 in
-	       (c2, Let ((n, t), t1', t2')))
+	   let c2, t2' = g env t2 in
+	   (c2, Let ((n, t), t1', t2'))
       | LetRec ({name = (n, ty); args = ags; body = b}, t) ->
 	 let c1, b' = g (Em.empty) b in
 	 let c2, t' = g env t in
