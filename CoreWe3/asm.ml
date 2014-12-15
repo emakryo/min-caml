@@ -113,7 +113,3 @@ let align i = if i mod 8 = 0 then i else i + 4
 
 let imm_max = Int32.of_int 0x2000
 let imm_min = Int32.of_int (-0x2000)
-
-let load_ext_var l =
-  let addr = Id.genid (Id.pp_l(l)) in
-  Let((addr, Type.Int), SetL (l), Ans(Lwz(addr, 0)))

@@ -55,7 +55,7 @@ and g' oc = function (* 各命令のアセンブリ生成 *)
   | (NonTail(x), Li(i)) -> 
      Printf.fprintf oc "\tLDI\t%s\t%ld\t#0x%lx\n" (reg x) i i
   | (NonTail(x), SetL(Id.L(y))) -> 
-     Printf.fprintf oc "\tLDI\t%s\t.%s\n" (reg x) y     
+     Printf.fprintf oc "\tLDA\t%s\t.%s\n" (reg x) y
   | (NonTail(x), Mr(y)) when x = y -> ()
   | (NonTail(x), Mr(y)) -> Printf.fprintf oc "\tADDI\t%s\t%s\t0\n" (reg x) (reg y)
   | (NonTail(x), Neg(y)) -> Printf.fprintf oc "\tSUB\t%s\tr0\t%s\n" (reg x) (reg y)

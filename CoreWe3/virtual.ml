@@ -109,9 +109,9 @@ let rec g env (r, e) = (* 式の仮想マシンコード生成 *)
 	      Ans (Stw (z, addr, 0))) 
       | _ -> assert false)
   | Closure.ExtArray l -> 
-     load_ext_var l
+     Ans (SetL (l))
   | Closure.ExtTuple l -> 
-     load_ext_var l
+     Ans (SetL (l))
   | Closure.FAdd (_, _)| Closure.FSub (_, _)|Closure.FMul (_, _)| Closure.FDiv (_, _) ->
      failwith "Sorry, native floating-point operations are not supported yet..."
 
