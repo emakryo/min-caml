@@ -18,7 +18,7 @@ let rec plot canvas =
   let rec calc_j i = 
     let x = (2.0 *. (float_of_int i) /. (float_of_int image_size.(0)) -. 1.0) *. 6.283185307179586 in
     let h = float_of_int image_size.(1) in
-    int_of_float ((2.0 -. (sin x)) *. h /. 4.0)
+    int_of_float ((2.0 -. (cos x)) *. h /. 4.0)
   in
   let rec plot_point canvas i = 
     if i < image_size.(0) then
