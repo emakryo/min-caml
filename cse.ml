@@ -19,6 +19,11 @@ let rec sanitize (r, e) = (*kNormal.astのみを比較できるように、range
   in
   (((0,0),(0,0)), e')
 
+let rec cost (r, e) =
+  match e with
+  | Unit | Int(_) | Float(_) -> 0
+  | _ -> 1
+
 let rec eliminatable (r, e) = 
   match e with
   | Unit | App _ | Get _ | Put _ | ExtFunApp _ -> false
@@ -47,7 +52,7 @@ let rec g env (r, e) = (*共通部分式除去*)
 	 (c1 || c2, IfLE (n1, n2, t1', t2'))
       | Let ((n, t), t1, t2) ->
 	 let c1, t1' = g env t1 in
-	 (* let env = if c1 then Em.empty else env in  (\* 関数呼び出しがあったら退避が起こるので、置き換えをやめる *\) *)
+	 (* let env = if c1 then Em.filter (fun e n -> cost e > 0) env else env in  (\* 関数呼び出しがあったら退避が起こるので、置き換えをやめる *\) *)
 	 let env = if eliminatable t1' then Em.add (sanitize t1') n env else env in
 	 let c2, t2' = g env t2 in
 	 (c2, Let ((n, t), t1', t2'))
