@@ -10,6 +10,7 @@ and ast = (* クロージャ変換後の式 (caml2html: closure_t) *)
   | Lsl of Id.t * Id.t
   | Lsr of Id.t * Id.t
   | FNeg of Id.t
+  | FInv of Id.t
   | FAdd of Id.t * Id.t
   | FSub of Id.t * Id.t
   | FMul of Id.t * Id.t
@@ -46,7 +47,8 @@ let rec pp_t t d =
     | Sub (n1, n2) -> Format.sprintf "(%s - %s)"(Id.pp_t n1) (Id.pp_t n2)
     | Lsl (n1, n2) -> Format.sprintf "(%s lsl %s)"(Id.pp_t n1) (Id.pp_t n2)
     | Lsr (n1, n2) -> Format.sprintf "(%s lsr %s)"(Id.pp_t n1) (Id.pp_t n2)
-    | FNeg n -> Format.sprintf "-.%s" (Id.pp_t n)
+    | FNeg n -> Format.sprintf "-. %s" (Id.pp_t n)
+    | FInv n -> Format.sprintf "(1.0 /. %s)" (Id.pp_t n)
     | FAdd (n1, n2) -> Format.sprintf "(%s +. %s)"(Id.pp_t n1) (Id.pp_t n2)
     | FSub (n1, n2) -> Format.sprintf "(%s -. %s)"(Id.pp_t n1) (Id.pp_t n2)
     | FMul (n1, n2) -> Format.sprintf "(%s *. %s)"(Id.pp_t n1) (Id.pp_t n2)
@@ -104,7 +106,7 @@ let rec pp_fundef { name = (Id.L(x), t); args = yts; formal_fv = zts; body = b }
 let rec fv (r, e) =
   match e with
   | Unit | Int(_) | Float(_) | ExtArray(_) | ExtTuple(_) -> S.empty
-  | Neg(x) | FNeg(x) -> S.singleton x
+  | Neg(x) | FNeg(x) | FInv(x) -> S.singleton x
   | Add(x, y) | Sub(x, y) | Lsl(x, y) | Lsr(x, y) | FAdd(x, y) | FSub(x, y) | FMul(x, y) | FDiv(x, y) | Get(x, y) -> S.of_list [x; y]
   | IfEq(x, y, e1, e2)| IfLE(x, y, e1, e2) -> S.add x (S.add y (S.union (fv e1) (fv e2)))
   | Let((x, t), e1, e2) -> S.union (fv e1) (S.remove x (fv e2))
@@ -130,9 +132,12 @@ let rec g env known (r, e) = (* クロージャ変換ルーチン本体 (caml2html: closure_g
     | KNormal.Lsl(x, y) -> Lsl(x, y)
     | KNormal.Lsr(x, y) -> Lsr(x, y)
     | KNormal.FNeg(x) -> FNeg(x)
-    | KNormal.FAdd(x, y) -> snd (g env known (r, floatop2app "fadd" [x; y]))
-    | KNormal.FSub(x, y) -> snd (g env known (r, floatop2app "fsub" [x; y]))
-    | KNormal.FMul(x, y) -> snd (g env known (r, floatop2app "fmul" [x; y]))
+    | KNormal.FAdd(x, y) -> FAdd(x, y)
+    | KNormal.FSub(x, y) -> FSub(x, y)
+    | KNormal.FMul(x, y) -> FMul(x, y)
+    (* | KNormal.FAdd(x, y) -> snd (g env known (r, floatop2app "fadd" [x; y])) *)
+    (* | KNormal.FSub(x, y) -> snd (g env known (r, floatop2app "fsub" [x; y])) *)
+    (* | KNormal.FMul(x, y) -> snd (g env known (r, floatop2app "fmul" [x; y])) *)
     | KNormal.FDiv(x, y) -> snd (g env known (r, floatop2app "fdiv" [x; y]))
     | KNormal.FInv(x) -> snd (g env known (r, floatop2app "finv" [x]))
     | KNormal.IfEq(x, y, e1, e2) -> IfEq(x, y, g env known e1, g env known e2)

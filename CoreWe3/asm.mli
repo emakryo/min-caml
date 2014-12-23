@@ -19,10 +19,11 @@ and exp =
   | Stw of Id.t * Id.t * int
   (* | FMr of Id.t  *)
   | FNeg of Id.t
-  (* | FAdd of Id.t * Id.t *)
-  (* | FSub of Id.t * Id.t *)
-  (* | FMul of Id.t * Id.t *)
-  (* | FDiv of Id.t * Id.t *)
+  | FInv of Id.t
+  | FAdd of Id.t * Id.t
+  | FSub of Id.t * Id.t
+  | FMul of Id.t * Id.t
+  | FDiv of Id.t * Id.t
   (* | Lfd of Id.t * id_or_imm *)
   (* | Stfd of Id.t * Id.t * id_or_imm *)
   | Comment of string

@@ -33,10 +33,11 @@ let rec g env (r, e) = (* 式の仮想マシンコード生成 *)
   | Closure.Lsl (x, y) -> Ans (Slw (x, V(y)))
   | Closure.Lsr (x, y) -> Ans (Srw (x, V(y)))
   | Closure.FNeg (x) -> Ans (FNeg (x))
-  (* | Closure.FAdd (x, y) -> Ans (FAdd (x, y)) *)
-  (* | Closure.FSub (x, y) -> Ans (FSub (x, y)) *)
-  (* | Closure.FMul (x, y) -> Ans (FMul (x, y)) *)
-  (* | Closure.FDiv (x, y) -> Ans (FDiv (x, y)) *)
+  | Closure.FInv (x) -> Ans (FInv (x))
+  | Closure.FAdd (x, y) -> Ans (FAdd (x, y))
+  | Closure.FSub (x, y) -> Ans (FSub (x, y))
+  | Closure.FMul (x, y) -> Ans (FMul (x, y))
+  | Closure.FDiv (x, y) -> Ans (FDiv (x, y))
   | Closure.IfEq (x, y, e1, e2) -> 
      (match M.find x env with
       | Type.Bool | Type.Int | Type.Float -> Ans (IfEq (x, y, g env e1, g env e2))
@@ -112,8 +113,8 @@ let rec g env (r, e) = (* 式の仮想マシンコード生成 *)
      Ans (SetL (l))
   | Closure.ExtTuple l -> 
      Ans (SetL (l))
-  | Closure.FAdd (_, _)| Closure.FSub (_, _)|Closure.FMul (_, _)| Closure.FDiv (_, _) ->
-     failwith "Sorry, native floating-point operations are not supported yet..."
+  (* | Closure.FAdd (_, _)| Closure.FSub (_, _)|Closure.FMul (_, _)| Closure.FDiv (_, _) -> *)
+  (*    failwith "Sorry, native floating-point operations are not supported yet..." *)
 
 (* 関数の仮想マシンコード生成 *)
 let h { Closure.name = (Id.L(x), t); Closure.args = yts; 

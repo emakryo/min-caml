@@ -83,6 +83,17 @@ and g' oc = function (* 各命令のアセンブリ生成 *)
      Printf.fprintf oc "\tST\t%s\t%s\t%d\n" (reg x) (reg y) c
   | (NonTail(x), FNeg(y)) -> 
       Printf.fprintf oc "\tFNEG\t%s\t%s\n" (reg x) (reg y)
+  | (NonTail(x), FInv(y)) -> 
+      Printf.fprintf oc "\tFINV\t%s\t%s\n" (reg x) (reg y)
+  | (NonTail(x), FAdd(y, z)) -> 
+     Printf.fprintf oc "\tFADD\t%s\t%s\t%s\n" (reg x) (reg y) (reg z)
+  | (NonTail(x), FSub(y, z)) -> 
+     Printf.fprintf oc "\tFNEG\t%s\t%s\n" (reg z) (reg z);
+     Printf.fprintf oc "\tFADD\t%s\t%s\t%s\n" (reg x) (reg y) (reg z)
+  | (NonTail(x), FMul(y, z)) -> 
+     Printf.fprintf oc "\tFMUL\t%s\t%s\t%s\n" (reg x) (reg y) (reg z)
+  | (NonTail(x), FDiv(y, z)) -> 
+     Printf.fprintf oc "\tFDiv\t%s\t%s\t%s\n" (reg x) (reg y) (reg z)
   | (NonTail(_), Comment(s)) -> Printf.fprintf oc "#\t%s\n" s
   (* 退避の仮想命令の実装 *)
   | (NonTail(_), Save(x, y))
@@ -100,7 +111,7 @@ and g' oc = function (* 各命令のアセンブリ生成 *)
   | (Tail, (Nop | Stw _ | Comment _ | Save _ as exp)) ->
      g' oc (NonTail(Id.gentmp Type.Unit), exp);
      Printf.fprintf oc "\tRET\n";
-  | (Tail, (Li _ | SetL _ | Mr _ | Neg _ | Add _ | Sub _ | And _ | Or _ | Slw _ | Srw _ |Lwz _ | FNeg _ as exp)) -> 
+  | (Tail, (Li _ | SetL _ | Mr _ | Neg _ | Add _ | Sub _ | And _ | Or _ | Slw _ | Srw _ |Lwz _ | FNeg _ | FInv _ | FAdd _ | FSub _ | FMul _ | FDiv _ as exp)) -> 
      g' oc (NonTail(regs.(0)), exp);
      Printf.fprintf oc "\tRET\n";
   | (Tail, (Restore(x) as exp)) ->
