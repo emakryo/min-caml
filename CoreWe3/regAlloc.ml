@@ -110,7 +110,7 @@ and g'_and_restore dest cont regenv exp = (* »ÈÍÑ¤µ¤ì¤ëÊÑ¿ô¤ò¥¹¥¿¥Ã¥¯¤«¤é¥ì¥¸¥¹¥
     ((* Format.eprintf "restoring %s@." x; *)
      g dest cont regenv (Let((x, t), Restore(x), Ans(exp))))
 and g' dest cont regenv = function (* ³ÆÌ¿Îá¤Î¥ì¥¸¥¹¥¿³ä¤êÅö¤Æ (caml2html: regalloc_gprime) *)
-  | Nop | Li _ | SetL _ | Comment _ | Restore _ as exp -> (Ans(exp), regenv)
+  | Nop | Li _ | SetL _ | Comment _ | Restore _ | Read as exp -> (Ans(exp), regenv)
   | Mr(x) -> (Ans(Mr(find x Type.Int regenv)), regenv)
   | Neg(x) -> (Ans(Neg(find x Type.Int regenv)), regenv)
   | Add(x, y') -> (Ans(Add(find x Type.Int regenv, find' y' regenv)), regenv)
@@ -133,6 +133,7 @@ and g' dest cont regenv = function (* ³ÆÌ¿Îá¤Î¥ì¥¸¥¹¥¿³ä¤êÅö¤Æ (caml2html: regal
   | CallCls(x, ys) as exp -> g'_call dest cont regenv exp (fun ys -> CallCls(find x Type.Int regenv, ys)) ys
   | CallDir(l, ys) as exp -> g'_call dest cont regenv exp (fun ys -> CallDir(l, ys)) ys
   | Save(x, y) -> assert false
+  | Write(x) -> (Ans(Write(find x Type.Int regenv)), regenv)
 and g'_if dest cont regenv exp constr e1 e2 = (* if¤Î¥ì¥¸¥¹¥¿³ä¤êÅö¤Æ (caml2html: regalloc_if) *)
   let (e1', regenv1) = g dest cont regenv e1 in
   let (e2', regenv2) = g dest cont regenv e2 in

@@ -9,6 +9,8 @@ and ast =
   | Sub of Id.t * Id.t
   | Lsl of Id.t * Id.t
   | Lsr of Id.t * Id.t
+  | Lor of Id.t * Id.t
+  | Land of Id.t * Id.t
   | FNeg of Id.t
   | FInv of Id.t
   | FAdd of Id.t * Id.t
@@ -28,6 +30,10 @@ and ast =
   | Put of Id.t * Id.t * Id.t
   | ExtArray of Id.l
   | ExtTuple of Id.l
+  | Read
+  | Write of Id.t
+  | Fasi of Id.t
+  | Iasf of Id.t
 type fundef = { name : Id.l * Type.t;
 		args : (Id.t * Type.t) list;
 		formal_fv : (Id.t * Type.t) list;

@@ -29,6 +29,8 @@ let rec deref_term (r, t) =
     | Sub(e1, e2) -> Sub(deref_term e1, deref_term e2)
     | Lsl(e1, e2) -> Lsl(deref_term e1, deref_term e2)
     | Lsr(e1, e2) -> Lsr(deref_term e1, deref_term e2)
+    | Lor(e1, e2) -> Lor(deref_term e1, deref_term e2)
+    | Land(e1, e2) -> Land(deref_term e1, deref_term e2)
     | Eq(e1, e2) -> Eq(deref_term e1, deref_term e2)
     | LE(e1, e2) -> LE(deref_term e1, deref_term e2)
     | FNeg(e) -> FNeg(deref_term e)
@@ -49,6 +51,10 @@ let rec deref_term (r, t) =
     | Array(e1, e2) -> Array(deref_term e1, deref_term e2)
     | Get(e1, e2) -> Get(deref_term e1, deref_term e2)
     | Put(e1, e2, e3) -> Put(deref_term e1, deref_term e2, deref_term e3)
+    | Read(e) -> Read(deref_term e)
+    | Write(e) -> Write(deref_term e)
+    | Fasi(e) -> Fasi(deref_term e)
+    | Iasf(e) -> Iasf(deref_term e)
     | e -> e
   in
   (r, e')
@@ -97,7 +103,7 @@ let rec g env (r, e) = (* ·¿¿äÏÀ¥ë¡¼¥Á¥ó (caml2html: typing_g) *)
     | Neg(e) ->
        unify Type.Int (g env e) e;
        Type.Int
-    | Add(e1, e2) | Sub(e1, e2) | Lsl(e1, e2) | Lsr(e1, e2) -> (* Â­¤·»»¡Ê¤È°ú¤­»»¡Ë¤Î·¿¿äÏÀ (caml2html: typing_add) *)
+    | Add(e1, e2) | Sub(e1, e2) | Lsl(e1, e2) | Lsr(e1, e2) | Lor(e1, e2) | Land(e1, e2) -> (* Â­¤·»»¡Ê¤È°ú¤­»»¡Ë¤Î·¿¿äÏÀ (caml2html: typing_add) *)
        unify Type.Int (g env e1) e1;
        unify Type.Int (g env e2) e2;
        Type.Int
@@ -152,6 +158,18 @@ let rec g env (r, e) = (* ·¿¿äÏÀ¥ë¡¼¥Á¥ó (caml2html: typing_g) *)
        unify (Type.Array(t)) (g env e1) e1;
        unify Type.Int (g env e2) e2;
        Type.Unit
+    | Read(e) -> 
+       unify Type.Unit (g env e) e;
+       Type.Int
+    | Write(e) -> 
+       unify Type.Int (g env e) e;
+       Type.Unit
+    | Fasi(e) ->
+       unify Type.Float (g env e) e;
+       Type.Int
+    | Iasf(e) ->
+       unify Type.Int (g env e) e;
+       Type.Float
   with Unify(t1, t2, f) -> 
     let _ = deref_term (r, e) in
     let t1' = deref_typ t1 in

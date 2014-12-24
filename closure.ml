@@ -9,6 +9,8 @@ and ast = (* クロージャ変換後の式 (caml2html: closure_t) *)
   | Sub of Id.t * Id.t
   | Lsl of Id.t * Id.t
   | Lsr of Id.t * Id.t
+  | Lor of Id.t * Id.t
+  | Land of Id.t * Id.t
   | FNeg of Id.t
   | FInv of Id.t
   | FAdd of Id.t * Id.t
@@ -28,6 +30,10 @@ and ast = (* クロージャ変換後の式 (caml2html: closure_t) *)
   | Put of Id.t * Id.t * Id.t
   | ExtArray of Id.l
   | ExtTuple of Id.l
+  | Read
+  | Write of Id.t
+  | Fasi of Id.t
+  | Iasf of Id.t
 type fundef = { name : Id.l * Type.t;
 		args : (Id.t * Type.t) list;
 		formal_fv : (Id.t * Type.t) list;
@@ -47,6 +53,8 @@ let rec pp_t t d =
     | Sub (n1, n2) -> Format.sprintf "(%s - %s)"(Id.pp_t n1) (Id.pp_t n2)
     | Lsl (n1, n2) -> Format.sprintf "(%s lsl %s)"(Id.pp_t n1) (Id.pp_t n2)
     | Lsr (n1, n2) -> Format.sprintf "(%s lsr %s)"(Id.pp_t n1) (Id.pp_t n2)
+    | Lor (n1, n2) -> Format.sprintf "(%s lor %s)"(Id.pp_t n1) (Id.pp_t n2)
+    | Land (n1, n2) -> Format.sprintf "(%s land %s)"(Id.pp_t n1) (Id.pp_t n2)
     | FNeg n -> Format.sprintf "-. %s" (Id.pp_t n)
     | FInv n -> Format.sprintf "(1.0 /. %s)" (Id.pp_t n)
     | FAdd (n1, n2) -> Format.sprintf "(%s +. %s)"(Id.pp_t n1) (Id.pp_t n2)
@@ -92,6 +100,10 @@ let rec pp_t t d =
     | Put (n1, n2, n3) -> Format.sprintf "(%s.(%s) <- %s)" (Id.pp_t n1) (Id.pp_t n2) (Id.pp_t n3)
     | ExtArray n -> Format.sprintf "ext_array_%s" (Id.pp_l n)
     | ExtTuple n -> Format.sprintf "ext_tuple_%s" (Id.pp_l n)
+    | Read -> Format.sprintf "read_char ()"
+    | Write n -> Format.sprintf "print_char %s" (Id.pp_t n)
+    | Fasi n -> Format.sprintf "fasi %s" (Id.pp_t n)
+    | Iasf n -> Format.sprintf "iasf %s" (Id.pp_t n)
   in
   Format.sprintf "%s\n" (pp_t' d t)
 
@@ -105,9 +117,9 @@ let rec pp_fundef { name = (Id.L(x), t); args = yts; formal_fv = zts; body = b }
 
 let rec fv (r, e) =
   match e with
-  | Unit | Int(_) | Float(_) | ExtArray(_) | ExtTuple(_) -> S.empty
-  | Neg(x) | FNeg(x) | FInv(x) -> S.singleton x
-  | Add(x, y) | Sub(x, y) | Lsl(x, y) | Lsr(x, y) | FAdd(x, y) | FSub(x, y) | FMul(x, y) | FDiv(x, y) | Get(x, y) -> S.of_list [x; y]
+  | Unit | Int(_) | Float(_) | ExtArray(_) | ExtTuple(_) | Read -> S.empty
+  | Neg(x) | FNeg(x) | FInv(x) | Write(x) | Fasi(x) | Iasf(x) -> S.singleton x
+  | Add(x, y) | Sub(x, y) | Lsl(x, y) | Lsr(x, y) | Lor(x, y) | Land(x, y) | FAdd(x, y) | FSub(x, y) | FMul(x, y) | FDiv(x, y) | Get(x, y) -> S.of_list [x; y]
   | IfEq(x, y, e1, e2)| IfLE(x, y, e1, e2) -> S.add x (S.add y (S.union (fv e1) (fv e2)))
   | Let((x, t), e1, e2) -> S.union (fv e1) (S.remove x (fv e2))
   | Var(x) -> S.singleton x
@@ -131,6 +143,8 @@ let rec g env known (r, e) = (* クロージャ変換ルーチン本体 (caml2html: closure_g
     | KNormal.Sub(x, y) -> Sub(x, y)
     | KNormal.Lsl(x, y) -> Lsl(x, y)
     | KNormal.Lsr(x, y) -> Lsr(x, y)
+    | KNormal.Lor(x, y) -> Lor(x, y)
+    | KNormal.Land(x, y) -> Land(x, y)
     | KNormal.FNeg(x) -> FNeg(x)
     | KNormal.FAdd(x, y) -> FAdd(x, y)
     | KNormal.FSub(x, y) -> FSub(x, y)
@@ -184,6 +198,10 @@ let rec g env known (r, e) = (* クロージャ変換ルーチン本体 (caml2html: closure_g
     | KNormal.ExtArray(x) -> ExtArray(Id.L("min_caml_" ^ x))
     | KNormal.ExtTuple(x) -> ExtTuple(Id.L("min_caml_" ^ x))
     | KNormal.ExtFunApp(x, ys) -> AppDir(Id.L("min_caml_" ^ x), ys)
+    | KNormal.Read -> Read
+    | KNormal.Write(x) -> Write(x)
+    | KNormal.Fasi(x) -> Fasi(x)
+    | KNormal.Iasf(x) -> Iasf(x)
   in
   (r, e')
 

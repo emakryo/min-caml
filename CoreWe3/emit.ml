@@ -107,11 +107,13 @@ and g' oc = function (* 各命令のアセンブリ生成 *)
       Printf.fprintf oc "\tLD\t%s\t%s\t%d\n" (reg x) (reg reg_sp) (offset y)
   | (NonTail(x), Restore(y))->
      failwith "Only registers can be resutored.."
+  | (NonTail(x), Read) -> Printf.fprintf oc "\tLDA\t%s\t0xfffff\n" (reg x)
+  | (NonTail(_), Write(x)) -> Printf.fprintf oc "\tSTA\t%s\t0xfffff\n" (reg x)
   (* 末尾だったら計算結果を第一レジスタにセット *)
-  | (Tail, (Nop | Stw _ | Comment _ | Save _ as exp)) ->
+  | (Tail, (Nop | Stw _ | Comment _ | Save _ | Write _ as exp)) ->
      g' oc (NonTail(Id.gentmp Type.Unit), exp);
      Printf.fprintf oc "\tRET\n";
-  | (Tail, (Li _ | SetL _ | Mr _ | Neg _ | Add _ | Sub _ | And _ | Or _ | Slw _ | Srw _ |Lwz _ | FNeg _ | FInv _ | FAdd _ | FSub _ | FMul _ | FDiv _ as exp)) -> 
+  | (Tail, (Li _ | SetL _ | Mr _ | Neg _ | Add _ | Sub _ | And _ | Or _ | Slw _ | Srw _ |Lwz _ | FNeg _ | FInv _ | FAdd _ | FSub _ | FMul _ | FDiv _ | Read _ as exp)) -> 
      g' oc (NonTail(regs.(0)), exp);
      Printf.fprintf oc "\tRET\n";
   | (Tail, (Restore(x) as exp)) ->

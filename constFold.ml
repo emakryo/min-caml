@@ -1,5 +1,7 @@
 open KNormal
 
+external getsgl : float -> int = "getsgl"
+
 let memi x env =
   try (match M.find x env with Int(_) -> true | _ -> false)
   with Not_found -> false
@@ -32,6 +34,16 @@ let rec g env (r, e) = (* 定数畳み込みルーチン本体 (caml2html: constfold_g) *)
   | Lsr(x, y) when memi x env && memi y env -> (r, Int(findi x env lsr findi y env))
   | Lsr(x, y) when memi x env && findi x env = 0 -> (r, Int(0))
   | Lsr(x, y) when memi y env && findi y env = 0 -> (r, Var(x))
+  | Lor(x, y) when memi x env && memi y env -> (r, Int(findi x env lor findi y env))
+  | Lor(x, y) when memi x env && findi x env = 0 -> (r, Var(y))
+  | Lor(x, y) when memi y env && findi y env = 0 -> (r, Var(x))
+  | Lor(x, y) when memi x env && findi x env = -1 -> (r, Int(-1))
+  | Lor(x, y) when memi y env && findi y env = -1 -> (r, Int(-1))
+  | Land(x, y) when memi x env && memi y env -> (r, Int(findi x env land findi y env))
+  | Land(x, y) when memi x env && findi x env = 0 -> (r, Int(0))
+  | Land(x, y) when memi y env && findi y env = 0 -> (r, Int(0))
+  | Land(x, y) when memi x env && findi x env = -1 -> (r, Var(y))
+  | Land(x, y) when memi y env && findi y env = -1 -> (r, Var(x))
   | FNeg(x) when memf x env -> (r, Float(-.(findf x env)))
   | FAdd(x, y) when memf x env && memf y env -> (r, Float(findf x env +. findf y env))
   | FAdd(x, y) when memf x env && findf x env = 0.0 -> (r, Var(y))

@@ -8,6 +8,8 @@ and ast =
   | Sub of Id.t * Id.t
   | Lsl of Id.t * Id.t
   | Lsr of Id.t * Id.t
+  | Lor of Id.t * Id.t
+  | Land of Id.t * Id.t
   | FNeg of Id.t
   | FAdd of Id.t * Id.t
   | FSub of Id.t * Id.t
@@ -27,6 +29,10 @@ and ast =
   | ExtArray of Id.t
   | ExtTuple of Id.t
   | ExtFunApp of Id.t * Id.t list
+  | Read
+  | Write of Id.t
+  | Fasi of Id.t
+  | Iasf of Id.t
 and fundef = { name : Id.t * Type.t; args : (Id.t * Type.t) list; body : t }
 
 val pp_t : t -> string

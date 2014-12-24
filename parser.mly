@@ -14,6 +14,8 @@ let ex_range head tail ast = ((fst head, snd tail), ast)
 %token <Id.range>PLUS
 %token <Id.range>LSL
 %token <Id.range>LSR
+%token <Id.range>LOR
+%token <Id.range>LAND
 %token <Id.range>MINUS_DOT
 %token <Id.range>PLUS_DOT
 %token <Id.range>AST_DOT
@@ -38,6 +40,10 @@ let ex_range head tail ast = ((fst head, snd tail), ast)
 %token <Id.range>SEMICOLON
 %token <Id.range>LPAREN
 %token <Id.range>RPAREN
+%token <Id.range>READ
+%token <Id.range>WRITE
+%token <Id.range>FASI
+%token <Id.range>IASF
 %token EOF
 
 /* 優先順位とassociativityの定義（低い方から高い方へ） (caml2html: parser_prior) */
@@ -50,6 +56,7 @@ let ex_range head tail ast = ((fst head, snd tail), ast)
 %left PLUS MINUS PLUS_DOT MINUS_DOT
 %left AST SLASH AST_DOT SLASH_DOT
 %left LSL LSR
+%left LOR LAND
 %right prec_unary_minus
 %left prec_app
 %left DOT
@@ -63,7 +70,7 @@ let ex_range head tail ast = ((fst head, snd tail), ast)
 program: 
 | exp 
     { 
-      (* print_string "SyntaxTree =======================-\n"; *)
+      (* print_string "(\* =====SyntaxTree===== *\)\n"; *)
       (* print_string (pp_t $1); *)
       $1}
 
@@ -102,6 +109,10 @@ exp: /* 一般の式 (caml2html: parser_exp) */
     { ex_range (get_range $1) (get_range $3) (Lsl ($1, $3)) }
 | exp LSR exp
     { ex_range (get_range $1) (get_range $3) (Lsr ($1, $3)) }
+| exp LOR exp
+    { ex_range (get_range $1) (get_range $3) (Lor ($1, $3)) }
+| exp LAND exp
+    { ex_range (get_range $1) (get_range $3) (Land ($1, $3)) }
 | exp EQUAL exp
     { ex_range (get_range $1) (get_range $3) (Eq ($1, $3)) }
 | exp LESS_GREATER exp
@@ -160,6 +171,18 @@ exp: /* 一般の式 (caml2html: parser_exp) */
 | ARRAY_CREATE simple_exp simple_exp
     %prec prec_app
     { ex_range $1 (get_range $3) (Array($2, $3)) }
+| READ exp
+    %prec prec_app
+    { ex_range $1 (get_range $2) (Read $2)}
+| WRITE exp
+    %prec prec_app
+    { ex_range $1 (get_range $2) (Write $2)}
+| FASI exp
+    %prec prec_app
+    { ex_range $1 (get_range $2) (Fasi $2)}
+| IASF exp
+    %prec prec_app
+    { ex_range $1 (get_range $2) (Iasf $2)}
 | error
     { failwith
 	(Printf.sprintf "parse error near characters %d-%d"

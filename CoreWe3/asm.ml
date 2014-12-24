@@ -40,6 +40,8 @@ and exp = (* 一つ一つの命令に対応する式 *)
   | CallDir of Id.l * Id.t list
   | Save of Id.t * Id.t (* レジスタ変数の値をスタック変数へ保存 *)
   | Restore of Id.t (* スタック変数から値を復元 *)
+  | Read 
+  | Write of Id.t
 type fundef =
     { name : Id.l; args : Id.t list; body : t; ret : Type.t }
 (* プログラム全体 = 浮動小数点数テーブル + トップレベル関数 + メインの式 *)
@@ -80,11 +82,11 @@ let rec remove_and_uniq xs = function
 let fv_id_or_imm = function V (x) -> [x] | _ -> []
 (* fv_exp : Id.t list -> t -> S.t list *)
 let rec fv_exp = function
-  | Nop | Li (_) | SetL (_) | Comment (_) | Restore (_) -> []
-  | Mr (x) | Neg (x) | FNeg (x) | FInv (x) | Save (x, _) -> [x]
-  | Add (x, y') | Slw (x, y') | Srw (x, y') ->
+  | Nop | Li (_) | SetL (_) | Comment (_) | Restore (_) | Read -> []
+  | Mr (x) | Neg (x) | FNeg (x) | FInv (x) | Save (x, _) | Write (x) -> [x]
+  | Add (x, y') | Slw (x, y') | Srw (x, y')  ->
 	x :: fv_id_or_imm y'
-  | Lwz (x, y') -> [x]
+  | Lwz (x, y') -> [x]m
   | Sub (x, y) | And (x, y) | Or (x, y) | FAdd (x, y) | FSub (x, y) | FMul (x, y) | FDiv (x, y) ->
     [x; y]
   | Stw (x, y, z') (* | Stfd (x, y, z')  *)-> [x; y]

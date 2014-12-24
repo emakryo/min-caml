@@ -10,14 +10,16 @@ and ast =
   | Sub of Id.t * Id.t
   | Lsl of Id.t * Id.t
   | Lsr of Id.t * Id.t
+  | Lor of Id.t * Id.t
+  | Land of Id.t * Id.t
   | FNeg of Id.t
   | FAdd of Id.t * Id.t
   | FSub of Id.t * Id.t
   | FMul of Id.t * Id.t
   | FDiv of Id.t * Id.t
   | FInv of Id.t
-  | IfEq of Id.t * Id.t * t * t (* 比較 + 分岐 (caml2html: knormal_branch) *)
-  | IfLE of Id.t * Id.t * t * t (* 比較 + 分岐 *)
+  | IfEq of Id.t * Id.t * t * t
+  | IfLE of Id.t * Id.t * t * t
   | Let of (Id.t * Type.t) * t * t
   | Var of Id.t
   | LetRec of fundef * t
@@ -29,6 +31,10 @@ and ast =
   | ExtArray of Id.t
   | ExtTuple of Id.t
   | ExtFunApp of Id.t * Id.t list
+  | Read 
+  | Write of Id.t
+  | Fasi of Id.t
+  | Iasf of Id.t
 and fundef = { name : Id.t * Type.t; args : (Id.t * Type.t) list; body : t }
 
 let rec pp_t t =
@@ -44,6 +50,8 @@ let rec pp_t t =
     | Sub (n1, n2) -> Format.sprintf "(%s - %s)"(Id.pp_t n1) (Id.pp_t n2)
     | Lsl (n1, n2) -> Format.sprintf "(%s lsl %s)"(Id.pp_t n1) (Id.pp_t n2)
     | Lsr (n1, n2) -> Format.sprintf "(%s lsr %s)"(Id.pp_t n1) (Id.pp_t n2)
+    | Lor (n1, n2) -> Format.sprintf "(%s lor %s)"(Id.pp_t n1) (Id.pp_t n2)
+    | Land (n1, n2) -> Format.sprintf "(%s land %s)"(Id.pp_t n1) (Id.pp_t n2)
     | FNeg n -> Format.sprintf "-.%s" (Id.pp_t n)
     | FAdd (n1, n2) -> Format.sprintf "(%s +. %s)"(Id.pp_t n1) (Id.pp_t n2)
     | FSub (n1, n2) -> Format.sprintf "(%s -. %s)"(Id.pp_t n1) (Id.pp_t n2)
@@ -94,6 +102,10 @@ let rec pp_t t =
     | ExtArray n -> Format.sprintf "%s" (Id.pp_t n)
     | ExtTuple n -> Format.sprintf "%s" (Id.pp_t n)
     | ExtFunApp (n, ns) -> Format.sprintf "(%s %s)" (Id.pp_t n) (String.concat " " (List.map (fun m -> Id.pp_t m) ns))
+    | Read -> Format.sprintf "read_char ()"
+    | Write n -> Format.sprintf "print_char %s" (Id.pp_t n)
+    | Fasi n -> Format.sprintf "fasi %s" (Id.pp_t n)
+    | Iasf n -> Format.sprintf "iasf %s" (Id.pp_t n)
   in
   Format.sprintf "%s\n" (pp_t' 0 t)
 
@@ -164,9 +176,9 @@ let rec pp_t t =
 
 let rec fv (r, t) =  (* 式に出現する（自由な）変数 (caml2html: knormal_fv) *)
   match t with
-  | Unit | Int(_) | Float(_) | ExtArray(_) | ExtTuple(_) -> S.empty
-  | Neg(x) | FNeg(x) | FInv(x)-> S.singleton x
-  | Add(x, y) | Sub(x, y) | Lsl(x, y) | Lsr(x, y) | FAdd(x, y) | FSub(x, y) | FMul(x, y) | FDiv(x, y) | Get(x, y) -> S.of_list [x; y]
+  | Unit | Int(_) | Float(_) | ExtArray(_) | ExtTuple(_) | Read -> S.empty
+  | Neg(x) | FNeg(x) | FInv(x) | Write(x) | Fasi(x) | Iasf(x) -> S.singleton x
+  | Add(x, y) | Sub(x, y) | Lsl(x, y) | Lsr(x, y) | Lor(x, y) | Land(x, y) | FAdd(x, y) | FSub(x, y) | FMul(x, y) | FDiv(x, y) | Get(x, y) -> S.of_list [x; y]
   | IfEq(x, y, e1, e2) | IfLE(x, y, e1, e2) -> S.add x (S.add y (S.union (fv e1) (fv e2)))
   | Let((x, t), e1, e2) -> S.union (fv e1) (S.remove x (fv e2))
   | Var(x) -> S.singleton x
@@ -213,6 +225,14 @@ let rec g env (r, e) = (* K正規化ルーチン本体 (caml2html: knormal_g) *)
      insert_let (g env e1)
 		(fun x -> insert_let (g env e2)
 				     (fun y -> (r, Lsr(x, y)), Type.Int))
+  | Syntax.Lor(e1, e2) -> 
+     insert_let (g env e1)
+		(fun x -> insert_let (g env e2)
+				     (fun y -> (r, Lor(x, y)), Type.Int))
+  | Syntax.Land(e1, e2) ->
+     insert_let (g env e1)
+		(fun x -> insert_let (g env e2)
+				     (fun y -> (r, Land(x, y)), Type.Int))
   | Syntax.FNeg(e) ->
      insert_let (g env e)
 		(fun x -> (r, FNeg(x)), Type.Float)
@@ -326,10 +346,22 @@ let rec g env (r, e) = (* K正規化ルーチン本体 (caml2html: knormal_g) *)
 		(fun x -> insert_let (g env e2)
 				     (fun y -> insert_let (g env e3)
 							  (fun z -> (r, Put(x, y, z)), Type.Unit)))
+  | Syntax.Read (e) -> 
+     insert_let (g env e)
+		(fun x -> (r, Read), Type.Int)
+  | Syntax.Write (e) -> 
+     insert_let (g env e)
+		(fun x -> (r, Write (x)), Type.Unit)
+  | Syntax.Fasi (e) -> 
+     insert_let (g env e)
+		(fun x -> (r, Fasi (x)), Type.Int)
+  | Syntax.Iasf (e) -> 
+     insert_let (g env e)
+		(fun x -> (r, Iasf (x)), Type.Float)
 
 let f e = 
   let s = fst (g M.empty e) in
-  print_string "kNormalized =======================-\n";
+  print_string "(* =====kNormalized===== *)\n";
   print_string (pp_t s);
   s
 

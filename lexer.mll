@@ -47,6 +47,10 @@ rule token = parse
     { LSL(get_range lexbuf) }
 | "lsr"
     { LSR(get_range lexbuf) }
+| "lor"
+    { LOR(get_range lexbuf) }
+| "land"
+    { LAND(get_range lexbuf) }
 | "-."
     { MINUS_DOT(get_range lexbuf) }
 | "+."
@@ -93,6 +97,14 @@ rule token = parse
     { LESS_MINUS(get_range lexbuf) }
 | ';'
     { SEMICOLON(get_range lexbuf) }
+| "read_char"
+    { READ(get_range lexbuf)}
+| "print_char"
+    { WRITE(get_range lexbuf)}
+| "fasi"
+    { FASI(get_range lexbuf)}
+| "iasf"
+    { IASF(get_range lexbuf)}
 | eof
     { EOF }
 | lower (digit|lower|upper|'_')* (* 他の「予約語」より後でないといけない *)

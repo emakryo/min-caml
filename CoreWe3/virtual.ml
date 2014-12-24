@@ -32,6 +32,8 @@ let rec g env (r, e) = (* 式の仮想マシンコード生成 *)
   | Closure.Sub (x, y) -> Ans (Sub (x, y))
   | Closure.Lsl (x, y) -> Ans (Slw (x, V(y)))
   | Closure.Lsr (x, y) -> Ans (Srw (x, V(y)))
+  | Closure.Lor (x, y) -> Ans (Or (x, y))
+  | Closure.Land (x, y) -> Ans (And (x, y))
   | Closure.FNeg (x) -> Ans (FNeg (x))
   | Closure.FInv (x) -> Ans (FInv (x))
   | Closure.FAdd (x, y) -> Ans (FAdd (x, y))
@@ -113,6 +115,14 @@ let rec g env (r, e) = (* 式の仮想マシンコード生成 *)
      Ans (SetL (l))
   | Closure.ExtTuple l -> 
      Ans (SetL (l))
+  | Closure.Read ->
+     Ans (Read)
+  | Closure.Write(x) ->
+     Ans (Write(x))
+  | Closure.Fasi(x) ->
+     Ans (Mr(x))
+  | Closure.Iasf(x) ->
+     Ans (Mr(x))
   (* | Closure.FAdd (_, _)| Closure.FSub (_, _)|Closure.FMul (_, _)| Closure.FDiv (_, _) -> *)
   (*    failwith "Sorry, native floating-point operations are not supported yet..." *)
 
