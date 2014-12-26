@@ -18,12 +18,12 @@ let rec plot canvas =
   let rec calc_j i = 
     let w = float_of_int image_size.(0) in
     let h = float_of_int image_size.(1) in
-    let xmin = -6.283185307179586 in
-    let xmax = 6.283185307179586 in
-    let ymin = -1.1 in
-    let ymax = 1.1 in
+    let xmin = -2.0 in
+    let xmax = 2.0 in
+    let ymin = -2.0 in
+    let ymax = 2.0 in
     let x = (xmax -. xmin) /. w *. (float_of_int i) +. xmin in
-    let y = cos x in
+    let y = finv x in
     int_of_float ((ymax -. y) /. (ymax -. ymin) *. h)
   in
   let rec plot_point canvas i = 

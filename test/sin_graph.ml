@@ -16,9 +16,15 @@ let rec mkcanvas _ =
 in
 let rec plot canvas =
   let rec calc_j i = 
-    let x = (2.0 *. (float_of_int i) /. (float_of_int image_size.(0)) -. 1.0) *. 6.283185307179586 in
+    let w = float_of_int image_size.(0) in
     let h = float_of_int image_size.(1) in
-    int_of_float ((2.0 -. (sin x)) *. h /. 4.0)
+    let xmin = -6.283185307179586 in
+    let xmax = 6.283185307179586 in
+    let ymin = -1.1 in
+    let ymax = 1.1 in
+    let x = (xmax -. xmin) /. w *. (float_of_int i) +. xmin in
+    let y = sin x in
+    int_of_float ((ymax -. y) /. (ymax -. ymin) *. h)
   in
   let rec plot_point canvas i = 
     if i < image_size.(0) then
