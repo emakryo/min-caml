@@ -18,9 +18,24 @@ and g' env = function (* 各命令の 14 bit 即値最適化 *)
      Slw(x, C(M.find y env))
   | Srw(x, V(y)) when M.mem y env ->
      Srw(x, C(M.find y env))
-  | IfEq(x, y', e1, e2) -> IfEq(x, y', g env e1, g env e2)
-  | IfLE(x, y', e1, e2) -> IfLE(x, y', g env e1, g env e2)
-  | IfFLE(x, y, e1, e2) -> IfFLE(x, y, g env e1, g env e2)
+  | IfEq(x, y, e1, e2) when M.mem y env && M.find y env = 0 -> 
+     IfEq(x, reg_zero, g env e1, g env e2)
+  | IfEq(x, y, e1, e2) when M.mem x env && M.find x env = 0 -> 
+     IfEq(reg_zero, y, g env e1, g env e2)
+  | IfEq(x, y, e1, e2) -> 
+     IfEq(x, y, g env e1, g env e2)
+  | IfLE(x, y, e1, e2) when M.mem y env && M.find y env = 0 -> 
+     IfLE(x, reg_zero, g env e1, g env e2)
+  | IfLE(x, y, e1, e2) when M.mem x env && M.find x env = 0 -> 
+     IfLE(reg_zero, y, g env e1, g env e2)
+  | IfLE(x, y, e1, e2) -> 
+     IfLE(x, y, g env e1, g env e2)
+  | IfFLE(x, y, e1, e2) when M.mem y env && M.find y env = 0 -> 
+     IfFLE(x, reg_zero, g env e1, g env e2)
+  | IfFLE(x, y, e1, e2) when M.mem x env && M.find x env = 0 -> 
+     IfFLE(reg_zero, y, g env e1, g env e2)
+  | IfFLE(x, y, e1, e2) -> 
+     IfFLE(x, y, g env e1, g env e2)
   | e -> e
 
 (* トップレベル関数の 14 bit 即値最適化 *)

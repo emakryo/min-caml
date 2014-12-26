@@ -54,6 +54,7 @@ val allregs : Id.t list
 val reg_cl : Id.t
 val reg_sw : Id.t
 (* val reg_fsw : Id.t *)
+val reg_zero : Id.t
 val reg_hp : Id.t
 val reg_sp : Id.t
 val hp_default : int32

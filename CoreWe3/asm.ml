@@ -62,6 +62,7 @@ let allregs = Array.to_list regs
 let reg_cl = regs.(Array.length regs - 1) (* closure address *)
 let reg_sw = regs.(Array.length regs - 2) (* temporary for swap *)
 (* let reg_fsw = fregs.(Array.length fregs - 1) (\* temporary for swap *\) *)
+let reg_zero = "%r0"
 let reg_hp = "%r1"
 let reg_sp = "%r2"
 let hp_default = Int32.of_int 0x00000
@@ -86,7 +87,7 @@ let rec fv_exp = function
   | Mr (x) | Neg (x) | FNeg (x) | FInv (x) | Save (x, _) | Write (x) -> [x]
   | Add (x, y') | Slw (x, y') | Srw (x, y')  ->
 	x :: fv_id_or_imm y'
-  | Lwz (x, y') -> [x]m
+  | Lwz (x, y') -> [x]
   | Sub (x, y) | And (x, y) | Or (x, y) | FAdd (x, y) | FSub (x, y) | FMul (x, y) | FDiv (x, y) ->
     [x; y]
   | Stw (x, y, z') (* | Stfd (x, y, z')  *)-> [x; y]
