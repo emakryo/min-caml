@@ -113,7 +113,7 @@ and g' oc = function (* 各命令のアセンブリ生成 *)
   | (Tail, (Nop | Stw _ | Comment _ | Save _ | Write _ as exp)) ->
      g' oc (NonTail(Id.gentmp Type.Unit), exp);
      Printf.fprintf oc "\tRET\n";
-  | (Tail, (Li _ | SetL _ | Mr _ | Neg _ | Add _ | Sub _ | And _ | Or _ | Slw _ | Srw _ |Lwz _ | FNeg _ | FInv _ | FAdd _ | FSub _ | FMul _ | FDiv _ | Read _ as exp)) -> 
+  | (Tail, (Li _ | SetL _ | Mr _ | Neg _ | Add _ | Sub _ | And _ | Or _ | Slw _ | Srw _ |Lwz _ | FNeg _ | FInv _ | FAdd _ | FSub _ | FMul _ | FDiv _ | Read as exp)) -> 
      g' oc (NonTail(regs.(0)), exp);
      Printf.fprintf oc "\tRET\n";
   | (Tail, (Restore(x) as exp)) ->
