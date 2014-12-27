@@ -4,14 +4,14 @@ let rec iter n e = (* 最適化処理をくりかえす (caml2html: main_iter) *)
   Format.eprintf "iteration %d@." n;
   if n = 0 then 
     (
-      print_string "Optimized =======================\n" ;
+      print_string "(* =====Optimized===== *)\n" ;
       print_string (KNormal.pp_t e);
       e)
   else
     let e' = Cse.f (Elim.f (ConstFold.f (Inline.f (Assoc.f (Beta.f e))))) in
     if e = e' then 
       (
-	print_string "Optimized =======================\n" ;
+	print_string "(* =====Optimized===== *)\n" ;
 	print_string (KNormal.pp_t e);
 	e)
     else
