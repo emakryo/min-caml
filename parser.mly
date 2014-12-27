@@ -146,8 +146,10 @@ exp: /* ∞Ï»Ã§Œº∞ (caml2html: parser_exp) */
     { ex_range (get_range $1) (get_range $3) (FSub ($1, $3)) }
 | exp AST_DOT exp
     { ex_range (get_range $1) (get_range $3) (FMul ($1, $3)) }
+//| exp SLASH_DOT exp
+//    { ex_range (get_range $1) (get_range $3) (FDiv ($1, $3)) }
 | exp SLASH_DOT exp
-    { ex_range (get_range $1) (get_range $3) (FDiv ($1, $3)) }
+    { ex_range (get_range $1) (get_range $3) (App (($2, Var("fdiv")), [$1; $3])) }
 | LET IDENT EQUAL exp IN exp
     %prec prec_let
     { ex_range $1 (get_range $6) (Let (addtyp (snd $2), $4, $6)) }
