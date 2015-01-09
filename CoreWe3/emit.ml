@@ -88,8 +88,7 @@ and g' oc = function (* 各命令のアセンブリ生成 *)
   | (NonTail(x), FAdd(y, z)) -> 
      Printf.fprintf oc "\tFADD\t%s\t%s\t%s\n" (reg x) (reg y) (reg z)
   | (NonTail(x), FSub(y, z)) -> 
-     Printf.fprintf oc "\tFNEG\t%s\t%s\n" (reg z) (reg z);
-     Printf.fprintf oc "\tFADD\t%s\t%s\t%s\n" (reg x) (reg y) (reg z)
+     Printf.fprintf oc "\tFSUB\t%s\t%s\t%s\n" (reg x) (reg y) (reg z)
   | (NonTail(x), FMul(y, z)) -> 
      Printf.fprintf oc "\tFMUL\t%s\t%s\t%s\n" (reg x) (reg y) (reg z)
   | (NonTail(x), FDiv(y, z)) -> 
