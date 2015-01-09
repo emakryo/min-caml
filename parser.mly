@@ -142,8 +142,10 @@ exp: /* ∞Ï»Ã§Œº∞ (caml2html: parser_exp) */
     { ex_range $1 (get_range $2) (FNeg ($2)) }
 | exp PLUS_DOT exp
     { ex_range (get_range $1) (get_range $3) (FAdd ($1, $3)) }
+//| exp MINUS_DOT exp
+//    { ex_range (get_range $1) (get_range $3) (FSub ($1, $3)) }
 | exp MINUS_DOT exp
-    { ex_range (get_range $1) (get_range $3) (FSub ($1, $3)) }
+    { ex_range (get_range $1) (get_range $3) (App (($2, Var("fsub")), [$1; $3])) }
 | exp AST_DOT exp
     { ex_range (get_range $1) (get_range $3) (FMul ($1, $3)) }
 //| exp SLASH_DOT exp
