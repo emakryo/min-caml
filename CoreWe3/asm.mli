@@ -1,71 +1,49 @@
 type id_or_imm = V of Id.t | C of int
-type t = 
-  | Ans of exp
-  | Let of (Id.t * Type.t) * exp * t
-and exp = 
+type t = Id.range * exp
+and cond = Eq | NE | LE | LT | GE | GT
+and exp = (* 一つ一つの命令に対応する式 *)
   | Nop
-  | Li of int32
-  (* | FLi of Id.l *)
-  | SetL of Id.l
-  | Mr of Id.t
-  | Neg of Id.t
-  | Add of Id.t * id_or_imm
-  | Sub of Id.t * Id.t
-  | And of Id.t * Id.t
-  | Or of Id.t * Id.t
-  | Slw of Id.t * id_or_imm
-  | Srw of Id.t * id_or_imm
-  | Lwz of Id.t * int
-  | Stw of Id.t * Id.t * int
-  (* | FMr of Id.t  *)
-  | FNeg of Id.t
-  | FInv of Id.t
-  | FAdd of Id.t * Id.t
-  | FSub of Id.t * Id.t
-  | FMul of Id.t * Id.t
-  | FDiv of Id.t * Id.t
-  (* | Lfd of Id.t * id_or_imm *)
-  (* | Stfd of Id.t * Id.t * id_or_imm *)
-  | Comment of string
-  (* virtual instructions *)
-  | IfEq of Id.t * Id.t * t * t
-  | IfLE of Id.t * Id.t * t * t
-  (* | IfGE of Id.t * id_or_imm * t * t (\* for simm *\) *)
-  (* | IfFEq of Id.t * Id.t * t * t *)
-  | IfFLE of Id.t * Id.t * t * t
-  (* closure address, integer arguments, and float arguments *)
-  | CallCls of Id.t * Id.t list
-  | CallDir of Id.l * Id.t list
+  | Ld of (Id.t * Type.t) * Id.t * int
+  | St of Id.t * Id.t * int
+  | IToF of (Id.t * Type.t) * Id.t
+  | FToI of (Id.t * Type.t) * Id.t
+  | Neg of (Id.t * Type.t) * Id.t
+  | Add of (Id.t * Type.t) * Id.t * id_or_imm
+  | Sub of (Id.t * Type.t) * Id.t * Id.t
+  | And of (Id.t * Type.t) * Id.t * Id.t
+  | Or of (Id.t * Type.t) * Id.t * Id.t
+  | Li of (Id.t * Type.t) * int32
+  | Shl of (Id.t * Type.t) * Id.t * id_or_imm
+  | Shr of (Id.t * Type.t) * Id.t * id_or_imm
+  | FAdd of (Id.t * Type.t) * Id.t * Id.t
+  | FSub of (Id.t * Type.t) * Id.t * Id.t
+  | FMul of (Id.t * Type.t) * Id.t * Id.t
+  | FInv of (Id.t * Type.t) * Id.t
+  | FAbs of (Id.t * Type.t) * Id.t
+  | FLi of (Id.t * Type.t) * float
+  | If of cond * (Id.t * id_or_imm) * t list (*then*) * t list (*else*) * t list (*cont*) 
+  | IfF of cond * (Id.t * id_or_imm) * t list * t list * t list
+  | Call of (Id.t * Type.t) * Id.l * Id.t list
+  | LoadLabel of (Id.t * Type.t) * Id.l
+  | Mr of (Id.t * Type.t) * Id.t
+  | FMr of (Id.t * Type.t) * Id.t
   | Save of Id.t * Id.t (* レジスタ変数の値をスタック変数へ保存 *)
-  | Restore of Id.t (* スタック変数から値を復元 *)
-  | Read 
-  | Write of Id.t
+  | Restore of (Id.t * Type.t) * Id.t (* スタック変数から値を復元 *)
 type fundef =
-    { name : Id.l; args : Id.t list; body : t; ret : Type.t }
-type prog = Prog of (Id.l * float) list * fundef list * t
-
-val fletd : Id.t * exp * t -> t (* shorthand of Let for float *)
-val seq : exp * t -> t (* shorthand of Let for unit *)
+    { name : Id.l; args : Id.t list; body : t list; ret : Type.t }
+type prog = Prog of fundef list * t
 
 val regs : Id.t array
-(* val fregs : Id.t array *)
-val allregs : Id.t list
-(* val allfregs : Id.t list *)
-val reg_cl : Id.t
-val reg_sw : Id.t
-(* val reg_fsw : Id.t *)
+val fregs : Id.t array
+val reglist : Id.t list
+val freglist : Id.t list
 val reg_zero : Id.t
 val reg_hp : Id.t
 val reg_sp : Id.t
-val hp_default : int32
-val sp_default : int32
-val reg_tmp : Id.t
-val is_reg : Id.t -> bool
+val hp_default : int
+val sp_default : int
 
-val fv : t -> Id.t list
-val concat : t -> Id.t * Type.t -> t -> t
+val fv : t list -> Id.t list
 
-val align : int -> int
-
-val imm_max : int32
-val imm_min : int32
+val imm_max : int
+val imm_min : int

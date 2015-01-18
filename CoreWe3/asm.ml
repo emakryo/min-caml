@@ -1,76 +1,53 @@
 (* CoreWe3 assembly with a few virtual instructions *)
 
 type id_or_imm = V of Id.t | C of int
-type t = (* 命令の列 *)
-  | Ans of exp
-  | Let of (Id.t * Type.t) * exp * t
+type t = Id.range * exp
+and cond = Eq | NE | LE | LT | GE | GT
 and exp = (* 一つ一つの命令に対応する式 *)
   | Nop
-  | Li of int32
-  (* | FLi of Id.l *)
-  | SetL of Id.l
-  | Mr of Id.t
-  | Neg of Id.t
-  | Add of Id.t * id_or_imm
-  | Sub of Id.t * Id.t
-  | And of Id.t * Id.t
-  | Or of Id.t * Id.t
-  | Slw of Id.t * id_or_imm
-  | Srw of Id.t * id_or_imm
-  | Lwz of Id.t * int
-  | Stw of Id.t * Id.t * int
-  (* | FMr of Id.t  *)
-  | FNeg of Id.t
-  | FInv of Id.t
-  | FAdd of Id.t * Id.t
-  | FSub of Id.t * Id.t
-  | FMul of Id.t * Id.t
-  | FDiv of Id.t * Id.t
-  (* | Lfd of Id.t * id_or_imm *)
-  (* | Stfd of Id.t * Id.t * id_or_imm *)
-  | Comment of string
-  (* virtual instructions *)
-  | IfEq of Id.t * Id.t * t * t
-  | IfLE of Id.t * Id.t * t * t
-  (* | IfGE of Id.t * id_or_imm * t * t *)
-  (* | IfFEq of Id.t * Id.t * t * t *)
-  | IfFLE of Id.t * Id.t * t * t
-  (* closure address, integer arguments, and float arguments *)
-  | CallCls of Id.t * Id.t list
-  | CallDir of Id.l * Id.t list
+  | Ld of (Id.t * Type.t) * Id.t * int
+  | St of Id.t * Id.t * int
+  | IToF of (Id.t * Type.t) * Id.t
+  | FToI of (Id.t * Type.t) * Id.t
+  | Neg of (Id.t * Type.t) * Id.t
+  | Add of (Id.t * Type.t) * Id.t * id_or_imm
+  | Sub of (Id.t * Type.t) * Id.t * Id.t
+  | And of (Id.t * Type.t) * Id.t * Id.t
+  | Or of (Id.t * Type.t) * Id.t * Id.t
+  | Li of (Id.t * Type.t) * int32
+  | Shl of (Id.t * Type.t) * Id.t * id_or_imm
+  | Shr of (Id.t * Type.t) * Id.t * id_or_imm
+  | FAdd of (Id.t * Type.t) * Id.t * Id.t
+  | FSub of (Id.t * Type.t) * Id.t * Id.t
+  | FMul of (Id.t * Type.t) * Id.t * Id.t
+  | FInv of (Id.t * Type.t) * Id.t
+  | FAbs of (Id.t * Type.t) * Id.t
+  | FLi of (Id.t * Type.t) * float
+  | If of cond * (Id.t * id_or_imm) * t list (*then*) * t list (*else*) * t list (*cont*) 
+  | IfF of cond * (Id.t * id_or_imm) * t list * t list * t list
+  | Call of (Id.t * Type.t) * Id.l * Id.t list
+  | LoadLabel of (Id.t * Type.t) * Id.l
+  | Mr of (Id.t * Type.t) * Id.t
+  | FMr of (Id.t * Type.t) * Id.t
   | Save of Id.t * Id.t (* レジスタ変数の値をスタック変数へ保存 *)
-  | Restore of Id.t (* スタック変数から値を復元 *)
-  | Read 
-  | Write of Id.t
+  | Restore of (Id.t * Type.t) * Id.t (* スタック変数から値を復元 *)
 type fundef =
-    { name : Id.l; args : Id.t list; body : t; ret : Type.t }
-(* プログラム全体 = 浮動小数点数テーブル + トップレベル関数 + メインの式 *)
-type prog = Prog of (Id.l * float) list * fundef list * t
+    { name : Id.l; args : Id.t list; body : t list; ret : Type.t }
+type prog = Prog of fundef list * t
 
-(* shorthand of Let for float *)
-(* fletd : Id.t * exp * t -> t *)
-let fletd (x, e1, e2) = Let ((x, Type.Float), e1, e2)
-(* shorthand of Let for unit *)
-(* seq : exp * t -> t *)
-let seq (e1, e2) = Let ((Id.gentmp Type.Unit, Type.Unit), e1, e2)
+let reg_of_int i = "%r" ^ (string_of_int i)
+let freg_of_int i = "%f" ^ (string_of_int i)
+let is_reg x = x.[0] = '%'
 
-let regs = Array.init 60 (fun i -> "%r" ^ (string_of_int (i + 3)))
-(* let regs = Array.init 27 (fun i -> Printf.sprintf "_R_%d" i) *)
-(* let fregs = Array.init 32 (fun i -> Printf.sprintf "%%f%d" i) *)
-let allregs = Array.to_list regs
-(* let allfregs = Array.to_list fregs *)
-let reg_cl = regs.(Array.length regs - 1) (* closure address *)
-let reg_sw = regs.(Array.length regs - 2) (* temporary for swap *)
-(* let reg_fsw = fregs.(Array.length fregs - 1) (\* temporary for swap *\) *)
+let regs = Array.init (32-5) (fun i -> "%r" ^ (string_of_int (i + 3)));; (*r3-r29*)
+let fregs = Array.init 32 (fun i -> "%f" ^ (string_of_int i))
+let reglist = Array.to_list regs
+let freglist = Array.to_list fregs
 let reg_zero = "%r0"
 let reg_hp = "%r1"
 let reg_sp = "%r2"
-let hp_default = Int32.of_int 0x00000
-let sp_default = Int32.of_int 0x777ff
-let reg_tmp = "%r63"
-
-(* is_reg : Id.t -> bool *)
-let is_reg x = x.[0] = '%'
+let hp_default = 0x00000
+let sp_default = 0x777ff
 
 (* remove_and_uniq : S.t -> Id.t list -> Id.t list *)
 let rec remove_and_uniq xs = function 
@@ -78,40 +55,22 @@ let rec remove_and_uniq xs = function
   | x :: ys when S.mem x xs -> remove_and_uniq xs ys
   | x :: ys -> x :: remove_and_uniq (S.add x xs) ys
 
-(* free variables in the order of use (for spilling) *)
-(* fv_id_or_imm : id_or_imm -> Id.t list *)
 let fv_id_or_imm = function V (x) -> [x] | _ -> []
-(* fv_exp : Id.t list -> t -> S.t list *)
 let rec fv_exp = function
-  | Nop | Li (_) | SetL (_) | Comment (_) | Restore (_) | Read -> []
-  | Mr (x) | Neg (x) | FNeg (x) | FInv (x) | Save (x, _) | Write (x) -> [x]
-  | Add (x, y') | Slw (x, y') | Srw (x, y')  ->
-	x :: fv_id_or_imm y'
-  | Lwz (x, y') -> [x]
-  | Sub (x, y) | And (x, y) | Or (x, y) | FAdd (x, y) | FSub (x, y) | FMul (x, y) | FDiv (x, y) ->
-    [x; y]
-  | Stw (x, y, z') (* | Stfd (x, y, z')  *)-> [x; y]
-  | IfEq (x, y', e1, e2) | IfLE (x, y', e1, e2) (* | IfGE (x, y', e1, e2) *) -> 
-    [x; y'] @ remove_and_uniq S.empty (fv e1 @ fv e2)
-  (* | IfFEq (x, y, e1, e2) *) | IfFLE (x, y, e1, e2) ->
-    x :: y :: remove_and_uniq S.empty (fv e1 @ fv e2)
-  | CallCls (x, ys) -> x :: ys
-  | CallDir (_, ys) -> ys 
+  | Nop | Li(_) | FLi(_) | LoadLabel(_) | Restore(_) -> []
+  | Ld(_, x, _) -> [x]
+  | St(x, y, _) -> [x; y]
+  | IToF(_, x) | FToI(_, x) | Neg(_, x) | Mr(_, x) | Save(x, _) -> [x]
+  | Add(_, x, y') | Shl(_, x, y')| Shr(_, x, y') -> [x; fv_id_or_imm y']
+  | Sub(_, x, y) | And(_, x, y) | Or(_, x, y) -> [x; y]
+  | FAdd(_, x, y) | FSub(_, x, y) | FMul(_, x, y)  | FInv(_, x, y) -> [x; y]
+  | FAbs(_, x) | FMr(, x) -> [x]
+  | If(_, (x, y'), e_then, e_else, e_cont) | IfF(_, (x, y'), e_then, e_else, e_cont) -> 
+    [x; fv_id_or_imm y'] @ (remove_and_uniq S.empty (fv e_then @ fv e_else)) @ (fv e_cont)
+  | Call (_, xs) -> xs
 and fv = function 
-  | Ans (exp) -> fv_exp exp
-  | Let ((x, t), exp, e) ->
-      fv_exp exp @ remove_and_uniq (S.singleton x) (fv e)
+  | [] -> []
+  | (r, e)::e_rest -> (fv_exp e)@(fv e_rest)
 
-(* fv : t -> Id.t list *)
-let fv e = remove_and_uniq S.empty (fv e)
-
-(* concat : t -> Id.t * Type.t -> t -> t *)
-let rec concat e1 xt e2 = match e1 with
-  | Ans (exp) -> Let (xt, exp, e2)
-  | Let (yt, exp, e1') -> Let (yt, exp, concat e1' xt e2)
-
-(* align : int -> int *)
-let align i = if i mod 8 = 0 then i else i + 4
-
-let imm_max = Int32.of_int 0x2000
-let imm_min = Int32.of_int (-0x2000)
+let imm_max = 0x7fff
+let imm_min = 0x8000
