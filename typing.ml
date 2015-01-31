@@ -56,6 +56,10 @@ let rec deref_term (r, t) =
     | Write(e) -> Write(deref_term e)
     | Fasi(e) -> Fasi(deref_term e)
     | Iasf(e) -> Iasf(deref_term e)
+    | Ftoi(e) -> Ftoi(deref_term e)
+    | Itof(e) -> Itof(deref_term e)
+    | Fabs(e) -> Fabs(deref_term e)
+    | Sqrt(e) -> Sqrt(deref_term e)
     | e -> e
   in
   (r, e')
@@ -170,6 +174,18 @@ let rec g env (r, e) = (* ·¿¿äÏÀ¥ë¡¼¥Á¥ó (caml2html: typing_g) *)
        Type.Int
     | Iasf(e) ->
        unify Type.Int (g env e) e;
+       Type.Float
+    | Ftoi(e) ->
+       unify Type.Float (g env e) e;
+       Type.Int
+    | Itof(e) ->
+       unify Type.Int (g env e) e;
+       Type.Float
+    | Fabs(e) ->
+       unify Type.Float (g env e) e;
+       Type.Float
+    | Sqrt(e) ->
+       unify Type.Float (g env e) e;
        Type.Float
   with Unify(t1, t2, f) -> 
     let _ = deref_term (r, e) in
