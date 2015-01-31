@@ -105,6 +105,14 @@ rule token = parse
     { FASI(get_range lexbuf)}
 | "iasf"
     { IASF(get_range lexbuf)}
+| "fabs"
+    { FABS(get_range lexbuf)}
+| "sqrt"
+    { SQRT(get_range lexbuf)}
+| "float_of_int"
+    { ITOF(get_range lexbuf)}
+| "int_of_float"
+    { FTOI(get_range lexbuf)}
 | eof
     { EOF }
 | lower (digit|lower|upper|'_')* (* 他の「予約語」より後でないといけない *)

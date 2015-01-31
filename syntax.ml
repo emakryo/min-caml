@@ -33,6 +33,10 @@ and ast = (* MinCamlの構文を表現するデータ型 (caml2html: syntax_t) *)
   | Write of t
   | Fasi of t
   | Iasf of t
+  | Ftoi of t
+  | Itof of t
+  | Fabs of t
+  | Sqrt of t
 and fundef = { name : Id.t * Type.t; args : (Id.t * Type.t) list; body : t }
 
 let get_range = fst
@@ -111,6 +115,14 @@ let rec pp_t t =
        Format.sprintf "%sFasi\t#%s\n%s" sps rng (pp_t' (d + 1) t)
     | Iasf t -> 
        Format.sprintf "%sIasf\t#%s\n%s" sps rng (pp_t' (d + 1) t)    
+    | Ftoi t -> 
+       Format.sprintf "%sFtoi\t#%s\n%s" sps rng (pp_t' (d + 1) t)
+    | Itof t -> 
+       Format.sprintf "%sItof\t#%s\n%s" sps rng (pp_t' (d + 1) t)    
+    | Fabs t -> 
+       Format.sprintf "%sFabs\t#%s\n%s" sps rng (pp_t' (d + 1) t)
+    | Sqrt t -> 
+       Format.sprintf "%sSqrt\t#%s\n%s" sps rng (pp_t' (d + 1) t)    
   and pp_fundef d fdef = 
     let sps = indent d in
     let args = String.concat ", " (List.map (fun (name, _) -> Id.pp_t name) fdef.args) in

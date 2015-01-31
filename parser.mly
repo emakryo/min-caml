@@ -44,6 +44,10 @@ let ex_range head tail ast = ((fst head, snd tail), ast)
 %token <Id.range>WRITE
 %token <Id.range>FASI
 %token <Id.range>IASF
+%token <Id.range>FABS
+%token <Id.range>SQRT
+%token <Id.range>FTOI
+%token <Id.range>ITOF
 %token EOF
 
 /* 優先順位とassociativityの定義（低い方から高い方へ） (caml2html: parser_prior) */
@@ -142,16 +146,12 @@ exp: /* 一般の式 (caml2html: parser_exp) */
     { ex_range $1 (get_range $2) (FNeg ($2)) }
 | exp PLUS_DOT exp
     { ex_range (get_range $1) (get_range $3) (FAdd ($1, $3)) }
-//| exp MINUS_DOT exp
-//    { ex_range (get_range $1) (get_range $3) (FSub ($1, $3)) }
 | exp MINUS_DOT exp
-    { ex_range (get_range $1) (get_range $3) (App (($2, Var("fsub")), [$1; $3])) }
+    { ex_range (get_range $1) (get_range $3) (FSub ($1, $3)) }
 | exp AST_DOT exp
     { ex_range (get_range $1) (get_range $3) (FMul ($1, $3)) }
-//| exp SLASH_DOT exp
-//    { ex_range (get_range $1) (get_range $3) (FDiv ($1, $3)) }
 | exp SLASH_DOT exp
-    { ex_range (get_range $1) (get_range $3) (App (($2, Var("fdiv")), [$1; $3])) }
+    { ex_range (get_range $1) (get_range $3) (FDiv ($1, $3)) }
 | LET IDENT EQUAL exp IN exp
     %prec prec_let
     { ex_range $1 (get_range $6) (Let (addtyp (snd $2), $4, $6)) }
@@ -187,6 +187,18 @@ exp: /* 一般の式 (caml2html: parser_exp) */
 | IASF exp
     %prec prec_app
     { ex_range $1 (get_range $2) (Iasf $2)}
+| FTOI exp
+    %prec prec_app
+    { ex_range $1 (get_range $2) (Ftoi $2)}
+| ITOF exp
+    %prec prec_app
+    { ex_range $1 (get_range $2) (Itof $2)}
+| FABS exp
+    %prec prec_app
+    { ex_range $1 (get_range $2) (Fabs $2)}
+| SQRT exp
+    %prec prec_app
+    { ex_range $1 (get_range $2) (Sqrt $2)}
 | error
     { failwith
 	(Printf.sprintf "parse error near characters %d-%d"
