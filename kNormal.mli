@@ -33,6 +33,10 @@ and ast =
   | Write of Id.t
   | Fasi of Id.t
   | Iasf of Id.t
+  | Ftoi of Id.t
+  | Itof of Id.t
+  | Fabs of Id.t
+  | Sqrt of Id.t
 and fundef = { name : Id.t * Type.t; args : (Id.t * Type.t) list; body : t }
 
 val pp_t : t -> string

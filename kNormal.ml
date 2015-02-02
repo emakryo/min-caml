@@ -35,6 +35,10 @@ and ast =
   | Write of Id.t
   | Fasi of Id.t
   | Iasf of Id.t
+  | Ftoi of Id.t
+  | Itof of Id.t
+  | Fabs of Id.t
+  | Sqrt of Id.t
 and fundef = { name : Id.t * Type.t; args : (Id.t * Type.t) list; body : t }
 
 let rec pp_t t =
@@ -106,6 +110,10 @@ let rec pp_t t =
     | Write n -> Format.sprintf "print_char %s" (Id.pp_t n)
     | Fasi n -> Format.sprintf "fasi %s" (Id.pp_t n)
     | Iasf n -> Format.sprintf "iasf %s" (Id.pp_t n)
+    | Ftoi n -> Format.sprintf "ftoi %s" (Id.pp_t n)
+    | Itof n -> Format.sprintf "itof %s" (Id.pp_t n)
+    | Fabs n -> Format.sprintf "fabs %s" (Id.pp_t n)
+    | Sqrt n -> Format.sprintf "sqrt %s" (Id.pp_t n)
   in
   Format.sprintf "%s\n" (pp_t' 0 t)
 
@@ -177,7 +185,7 @@ let rec pp_t t =
 let rec fv (r, t) =  (* 式に出現する（自由な）変数 (caml2html: knormal_fv) *)
   match t with
   | Unit | Int(_) | Float(_) | ExtArray(_) | ExtTuple(_) | Read -> S.empty
-  | Neg(x) | FNeg(x) | FInv(x) | Write(x) | Fasi(x) | Iasf(x) -> S.singleton x
+  | Neg(x) | FNeg(x) | FInv(x) | Write(x) | Fasi(x) | Iasf(x) | Ftoi(x) | Itof(x) | Fabs(x) | Sqrt(x) -> S.singleton x
   | Add(x, y) | Sub(x, y) | Lsl(x, y) | Lsr(x, y) | Lor(x, y) | Land(x, y) | FAdd(x, y) | FSub(x, y) | FMul(x, y) | FDiv(x, y) | Get(x, y) -> S.of_list [x; y]
   | IfEq(x, y, e1, e2) | IfLE(x, y, e1, e2) -> S.add x (S.add y (S.union (fv e1) (fv e2)))
   | Let((x, t), e1, e2) -> S.union (fv e1) (S.remove x (fv e2))
@@ -356,6 +364,18 @@ let rec g env (r, e) = (* K正規化ルーチン本体 (caml2html: knormal_g) *)
      insert_let (g env e)
 		(fun x -> (r, Fasi (x)), Type.Int)
   | Syntax.Iasf (e) -> 
+     insert_let (g env e)
+		(fun x -> (r, Iasf (x)), Type.Float)
+  | Syntax.Ftoi (e) -> 
+     insert_let (g env e)
+		(fun x -> (r, Ftoi (x)), Type.Int)
+  | Syntax.Itof (e) -> 
+     insert_let (g env e)
+		(fun x -> (r, Itof (x)), Type.Float)
+  | Syntax.Fabs (e) -> 
+     insert_let (g env e)
+		(fun x -> (r, Fasi (x)), Type.Float)
+  | Syntax.Sqrt (e) -> 
      insert_let (g env e)
 		(fun x -> (r, Iasf (x)), Type.Float)
 

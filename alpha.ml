@@ -53,6 +53,10 @@ let rec g env (r, e) = (* α変換ルーチン本体 (caml2html: alpha_g) *)
     | Write(x) -> Write(find x env)
     | Fasi(x) -> Fasi(find x env)
     | Iasf(x) -> Iasf(find x env)
+    | Ftoi(x) -> Ftoi(find x env)
+    | Itof(x) -> Itof(find x env)
+    | Fabs(x) -> Fabs(find x env)
+    | Sqrt(x) -> Sqrt(find x env)
   in
   (r, e')
 let f = g M.empty
