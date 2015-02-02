@@ -34,6 +34,10 @@ and ast = (* クロージャ変換後の式 (caml2html: closure_t) *)
   | Write of Id.t
   | Fasi of Id.t
   | Iasf of Id.t
+  | Ftoi of Id.t
+  | Itof of Id.t
+  | Fabs of Id.t
+  | Sqrt of Id.t
 type fundef = { name : Id.l * Type.t;
 		args : (Id.t * Type.t) list;
 		formal_fv : (Id.t * Type.t) list;
@@ -104,6 +108,10 @@ let rec pp_t t d =
     | Write n -> Format.sprintf "print_char %s" (Id.pp_t n)
     | Fasi n -> Format.sprintf "fasi %s" (Id.pp_t n)
     | Iasf n -> Format.sprintf "iasf %s" (Id.pp_t n)
+    | Ftoi n -> Format.sprintf "ftoi %s" (Id.pp_t n)
+    | Itof n -> Format.sprintf "itof %s" (Id.pp_t n)
+    | Fabs n -> Format.sprintf "fabs %s" (Id.pp_t n)
+    | Sqrt n -> Format.sprintf "sqrt %s" (Id.pp_t n)
   in
   Format.sprintf "%s\n" (pp_t' d t)
 
@@ -118,7 +126,7 @@ let rec pp_fundef { name = (Id.L(x), t); args = yts; formal_fv = zts; body = b }
 let rec fv (r, e) =
   match e with
   | Unit | Int(_) | Float(_) | ExtArray(_) | ExtTuple(_) | Read -> S.empty
-  | Neg(x) | FNeg(x) | FInv(x) | Write(x) | Fasi(x) | Iasf(x) -> S.singleton x
+  | Neg(x) | FNeg(x) | FInv(x) | Write(x) | Fasi(x) | Iasf(x) | Ftoi(x) | Itof(x) | Fabs(x) | Sqrt(x) -> S.singleton x
   | Add(x, y) | Sub(x, y) | Lsl(x, y) | Lsr(x, y) | Lor(x, y) | Land(x, y) | FAdd(x, y) | FSub(x, y) | FMul(x, y) | FDiv(x, y) | Get(x, y) -> S.of_list [x; y]
   | IfEq(x, y, e1, e2)| IfLE(x, y, e1, e2) -> S.add x (S.add y (S.union (fv e1) (fv e2)))
   | Let((x, t), e1, e2) -> S.union (fv e1) (S.remove x (fv e2))
@@ -149,11 +157,8 @@ let rec g env known (r, e) = (* クロージャ変換ルーチン本体 (caml2html: closure_g
     | KNormal.FAdd(x, y) -> FAdd(x, y)
     | KNormal.FSub(x, y) -> FSub(x, y)
     | KNormal.FMul(x, y) -> FMul(x, y)
-    (* | KNormal.FAdd(x, y) -> snd (g env known (r, floatop2app "fadd" [x; y])) *)
-    (* | KNormal.FSub(x, y) -> snd (g env known (r, floatop2app "fsub" [x; y])) *)
-    (* | KNormal.FMul(x, y) -> snd (g env known (r, floatop2app "fmul" [x; y])) *)
-    | KNormal.FDiv(x, y) -> snd (g env known (r, floatop2app "fdiv" [x; y]))
-    | KNormal.FInv(x) -> snd (g env known (r, floatop2app "finv" [x]))
+    | KNormal.FDiv(x, y) -> FDiv(x, y)
+    | KNormal.FInv(x) -> FInv(x)
     | KNormal.IfEq(x, y, e1, e2) -> IfEq(x, y, g env known e1, g env known e2)
     | KNormal.IfLE(x, y, e1, e2) -> IfLE(x, y, g env known e1, g env known e2)
     | KNormal.Let((x, t), e1, e2) -> Let((x, t), g env known e1, g (M.add x t env) known e2)
@@ -202,6 +207,10 @@ let rec g env known (r, e) = (* クロージャ変換ルーチン本体 (caml2html: closure_g
     | KNormal.Write(x) -> Write(x)
     | KNormal.Fasi(x) -> Fasi(x)
     | KNormal.Iasf(x) -> Iasf(x)
+    | KNormal.Ftoi(x) -> Ftoi(x)
+    | KNormal.Itof(x) -> Itof(x)
+    | KNormal.Fabs(x) -> Fabs(x)
+    | KNormal.Sqrt(x) -> Sqrt(x)
   in
   (r, e')
 

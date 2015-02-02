@@ -34,6 +34,10 @@ and ast =
   | Write of Id.t
   | Fasi of Id.t
   | Iasf of Id.t
+  | Ftoi of Id.t
+  | Itof of Id.t
+  | Fabs of Id.t
+  | Sqrt of Id.t
 type fundef = { name : Id.l * Type.t;
 		args : (Id.t * Type.t) list;
 		formal_fv : (Id.t * Type.t) list;
