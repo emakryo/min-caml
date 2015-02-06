@@ -7,6 +7,8 @@ and exp = (* 一つ一つの命令に対応する式 *)
   | Nop
   | Ld of (Id.t * Type.t) * Id.t * int
   | St of Id.t * Id.t * int
+  | FLd of (Id.t * Type.t) * Id.t * int
+  | FSt of Id.t * Id.t * int
   | IToF of (Id.t * Type.t) * Id.t
   | FToI of (Id.t * Type.t) * Id.t
   | Neg of (Id.t * Type.t) * Id.t
@@ -22,9 +24,10 @@ and exp = (* 一つ一つの命令に対応する式 *)
   | FMul of (Id.t * Type.t) * Id.t * Id.t
   | FInv of (Id.t * Type.t) * Id.t
   | FAbs of (Id.t * Type.t) * Id.t
+  | Sqrt of (Id.t * Type.t) * Id.t
   | FLi of (Id.t * Type.t) * float
-  | If of cond * (Id.t * id_or_imm) * t list (*then*) * t list (*else*) * t list (*cont*) 
-  | IfF of cond * (Id.t * id_or_imm) * t list * t list * t list
+  | If of cond * (Id.t * id_or_imm) * t list (*then*) * t list (*else*) 
+  | IfF of cond * (Id.t * Id.t) * t list * t list
   | Call of (Id.t * Type.t) * Id.l * Id.t list
   | LoadLabel of (Id.t * Type.t) * Id.l
   | Mr of (Id.t * Type.t) * Id.t
@@ -58,16 +61,18 @@ let rec remove_and_uniq xs = function
 let fv_id_or_imm = function V (x) -> [x] | _ -> []
 let rec fv_exp = function
   | Nop | Li(_) | FLi(_) | LoadLabel(_) | Restore(_) -> []
-  | Ld(_, x, _) -> [x]
-  | St(x, y, _) -> [x; y]
-  | IToF(_, x) | FToI(_, x) | Neg(_, x) | Mr(_, x) | Save(x, _) -> [x]
-  | Add(_, x, y') | Shl(_, x, y')| Shr(_, x, y') -> [x; fv_id_or_imm y']
-  | Sub(_, x, y) | And(_, x, y) | Or(_, x, y) -> [x; y]
-  | FAdd(_, x, y) | FSub(_, x, y) | FMul(_, x, y)  | FInv(_, x, y) -> [x; y]
-  | FAbs(_, x) | FMr(, x) -> [x]
-  | If(_, (x, y'), e_then, e_else, e_cont) | IfF(_, (x, y'), e_then, e_else, e_cont) -> 
-    [x; fv_id_or_imm y'] @ (remove_and_uniq S.empty (fv e_then @ fv e_else)) @ (fv e_cont)
-  | Call (_, xs) -> xs
+  | Ld(_, x, _) | FLd(_, x, _) | IToF(_, x) | FToI(_, x) | Neg(_, x)  | FInv(_, x) | FAbs(_, x) | Sqrt(_, x) | Mr(_, x) | Save(x, _) | FMr(_, x) -> 
+     [x]
+  | St(x, y, _) | FSt(x, y, _) | Sub(_, x, y) | And(_, x, y) | Or(_, x, y) | FAdd(_, x, y) | FSub(_, x, y) | FMul(_, x, y) -> 
+     [x; y]  
+  | Add(_, x, y') | Shl(_, x, y')| Shr(_, x, y') -> 
+     x :: (fv_id_or_imm y')
+  | If(_, (x, y'), e_then, e_else) ->
+     x :: (fv_id_or_imm y') @ (remove_and_uniq S.empty (fv e_then @ fv e_else))
+  | IfF(_, (x, y), e_then, e_else) -> 
+     [x; y] @ (remove_and_uniq S.empty (fv e_then @ fv e_else))
+  | Call (_, _, xs) -> 
+     xs
 and fv = function 
   | [] -> []
   | (r, e)::e_rest -> (fv_exp e)@(fv e_rest)

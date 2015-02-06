@@ -5,6 +5,8 @@ and exp = (* 一つ一つの命令に対応する式 *)
   | Nop
   | Ld of (Id.t * Type.t) * Id.t * int
   | St of Id.t * Id.t * int
+  | FLd of (Id.t * Type.t) * Id.t * int
+  | FSt of Id.t * Id.t * int
   | IToF of (Id.t * Type.t) * Id.t
   | FToI of (Id.t * Type.t) * Id.t
   | Neg of (Id.t * Type.t) * Id.t
@@ -20,9 +22,10 @@ and exp = (* 一つ一つの命令に対応する式 *)
   | FMul of (Id.t * Type.t) * Id.t * Id.t
   | FInv of (Id.t * Type.t) * Id.t
   | FAbs of (Id.t * Type.t) * Id.t
+  | Sqrt of (Id.t * Type.t) * Id.t
   | FLi of (Id.t * Type.t) * float
-  | If of cond * (Id.t * id_or_imm) * t list (*then*) * t list (*else*) * t list (*cont*) 
-  | IfF of cond * (Id.t * id_or_imm) * t list * t list * t list
+  | If of cond * (Id.t * id_or_imm) * t list (*then*) * t list (*else*) 
+  | IfF of cond * (Id.t * Id.t) * t list * t list
   | Call of (Id.t * Type.t) * Id.l * Id.t list
   | LoadLabel of (Id.t * Type.t) * Id.l
   | Mr of (Id.t * Type.t) * Id.t
