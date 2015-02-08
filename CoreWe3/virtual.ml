@@ -4,145 +4,137 @@ open Asm
 
 external getsgl : float -> int32 = "getsgl"
 
-let data = ref [] (* 浮動小数点数の定数テーブル *)
-
-let classify xts ini addi =
-  List.fold_left
-    (fun acc (x, t) -> 
-     match t with
-     | Type.Unit -> acc
-     | _ -> addi acc x t) ini xts
-
-let expand xts ini addi = 
-  classify
-    xts
-    ini
-    (fun (offset, acc) x t -> (offset + 1, addi x t offset acc))
-
-let rec g env (r, e) = (* 式の仮想マシンコード生成 *)
-  match e with
-  | Closure.Unit -> Ans (Nop)
-  | Closure.Int (i) ->
-     let i32 = Int32.of_int i in
-     Ans (Li (i32))
-  | Closure.Float (d) -> 
-     Ans (Li (getsgl d))
-  | Closure.Neg (x) -> Ans (Neg (x))
-  | Closure.Add (x, y) -> Ans (Add (x, V (y)))
-  | Closure.Sub (x, y) -> Ans (Sub (x, y))
-  | Closure.Lsl (x, y) -> Ans (Slw (x, V(y)))
-  | Closure.Lsr (x, y) -> Ans (Srw (x, V(y)))
-  | Closure.Lor (x, y) -> Ans (Or (x, y))
-  | Closure.Land (x, y) -> Ans (And (x, y))
-  | Closure.FNeg (x) -> Ans (FNeg (x))
-  | Closure.FInv (x) -> Ans (FInv (x))
-  | Closure.FAdd (x, y) -> Ans (FAdd (x, y))
-  | Closure.FSub (x, y) -> Ans (FSub (x, y))
-  | Closure.FMul (x, y) -> Ans (FMul (x, y))
-  | Closure.FDiv (x, y) -> Ans (FDiv (x, y))
-  | Closure.IfEq (x, y, e1, e2) -> 
-     (match M.find x env with
-      | Type.Bool | Type.Int | Type.Float -> Ans (IfEq (x, y, g env e1, g env e2))
-      | _ -> failwith "equality supported only for bool, int and float.")
-  | Closure.IfLE (x, y, e1, e2) ->
-     (match M.find x env with
-      | Type.Bool | Type.Int -> Ans (IfLE (x, y, g env e1, g env e2))
-      | Type.Float ->  Ans (IfFLE (x, y, g env e1, g env e2))
-      | _ -> failwith "inequality supported only for bool, int.")
-  | Closure.Let ((x, t1), e1, e2) ->
-     let e1' = g env e1 in
-     let e2' = g (M.add x t1 env) e2 in
-     concat e1' (x, t1) e2'
-  | Closure.Var (x) ->
-     (match M.find x env with
-      | Type.Unit -> Ans (Nop)
-      | _ -> Ans (Mr (x)))
-  | Closure.MakeCls ((x, t), {Closure.entry = l; Closure.actual_fv = ys}, e2) ->
-     failwith "Sorry, closure is not supported yet..."
-     (* (\* closure のアドレスをセットしてからストア *\) *)
-     (* let e2' = g (M.add x t env) e2 in *)
-     (* let (offset, store_fv) =  *)
-     (*   expand *)
-     (* 	 (List.map (fun y -> (y, M.find y env)) ys) *)
-     (* 	 (1, e2') *)
-     (* 	 (fun y _ offset store_fv -> seq (Stw (y, x, offset), store_fv)) in *)
-     (* Let ((x, t), Mr (reg_hp),  *)
-     (* 	  Let ((reg_hp, Type.Int), Add (reg_hp, C (offset)),  *)
-     (* 	       let z = Id.genid "l" in   *)
-     (* 	       Let ((z, Type.Int), SetL(l),  *)
-     (* 		    seq (Stw (z, x, 0), store_fv)))) *)
-  | Closure.AppCls (x, ys) ->
-     failwith "Sorry, closure is not supported yet..."
-     (* Ans (CallCls (x, ys)) *)
-  | Closure.AppDir (Id.L(x), ys) ->
-     Ans (CallDir (Id.L(x), ys))
-  | Closure.Tuple (xs) -> (* 組の生成 *)
-     let y = Id.genid "t" in
-     let (offset, store) = 
-       expand
-	 (List.map (fun x -> (x, M.find x env)) xs)
-	 (0, Ans (Mr (y)))
-	 (fun x _ offset store -> seq (Stw (x, y, offset), store))  in
-     Let ((y, Type.Tuple (List.map (fun x -> M.find x env) xs)), Mr (reg_hp),
-	  Let ((reg_hp, Type.Int), Add (reg_hp, C (offset)), store))
-  | Closure.LetTuple (xts, y, e2) ->
-     let s = Closure.fv e2 in
-     let (offset, load) = 
-       expand
-	 xts
-	 (0, g (M.add_list xts env) e2)
-	 (fun x t offset load ->
-	  if not (S.mem x s) then load 
-	  else Let ((x, t), Lwz (y, offset), load)) in
-     load
-  | Closure.Get (x, y) -> (* 配列の読み出し *)
-     let addr = Id.genid "o" in  
-     (match M.find x env with
-      | Type.Array (Type.Unit) -> Ans (Nop)
-      | Type.Array (_) ->
-	 Let ((addr, Type.Int), Add (x, V(y)),
-	      Ans (Lwz (addr, 0)))
-      | _ -> assert false)
-  | Closure.Put (x, y, z) ->
-     let addr = Id.genid "o" in 
-     (match M.find x env with
-      | Type.Array (Type.Unit) -> Ans (Nop)
-      | Type.Array (_) ->
-	 Let ((addr, Type.Int), Add (x, V(y)), 
-	      Ans (Stw (z, addr, 0))) 
-      | _ -> assert false)
-  | Closure.ExtArray l -> 
-     Ans (SetL (l))
-  | Closure.ExtTuple l -> 
-     Ans (SetL (l))
-  | Closure.Read ->
-     Ans (Read)
-  | Closure.Write(x) ->
-     Ans (Write(x))
-  | Closure.Fasi(x) ->
-     Ans (Mr(x))
-  | Closure.Iasf(x) ->
-     Ans (Mr(x))
-  (* | Closure.FAdd (_, _)| Closure.FSub (_, _)|Closure.FMul (_, _)| Closure.FDiv (_, _) -> *)
-  (*    failwith "Sorry, native floating-point operations are not supported yet..." *)
+let rec g env dest (r, e) = (* 式の仮想マシンコード生成 *)
+    match e with
+    | Closure.Unit -> [Nop]
+    | Closure.Int(i) -> [Li(dest, Int32.of_int i)]
+    | Closure.Float(d) -> [FLi(dest, d)]
+    | Closure.Neg(x) -> [Neg(dest, x)]
+    | Closure.Add(x, y) -> [Add(dest, x, V (y))]
+    | Closure.Sub(x, y) -> [Sub(dest, x, y)]
+    | Closure.Lsl(x, y) -> [Shl(dest, x, V(y))]
+    | Closure.Lsr(x, y) -> [Shr(dest, x, V(y))]
+    | Closure.Lor(x, y) -> [Or(dest, x, y)]
+    | Closure.Land(x, y) -> [And(dest, x, y)]
+    | Closure.FNeg(x) -> 
+       let z = Id.genid "z" in
+       [FLi((z, Type.Float), 0.0); FSub(dest, z, x)]
+    | Closure.FInv(x) -> [FInv(dest, x)]
+    | Closure.FAdd(x, y) -> [FAdd(dest, x, y)]
+    | Closure.FSub(x, y) -> [FSub(dest, x, y)]
+    | Closure.FMul(x, y) -> [FMul(dest, x, y)]
+    | Closure.FDiv(x, y) -> 
+       let z = Id.genid "z" in
+       [FInv((z, Type.Float), y); FMul(dest, x, z)]
+    | Closure.Fabs(x) -> [FAbs(dest, x)]
+    | Closure.Sqrt(x) -> [Sqrt(dest, x)]
+    | Closure.IfEq(x, y, e1, e2) -> 
+       (match M.find x env with
+	| Type.Bool | Type.Int -> 
+		       [If(Eq, (x, V(y)), g env dest e1, g env dest e2)]
+	| Type.Float ->
+	   [IfF(Eq, (x, y), g env dest e1, g env dest e2)]
+	| _ -> failwith "equality supported only for bool, int and float.")
+    | Closure.IfLE(x, y, e1, e2) ->
+       (match M.find x env with
+	| Type.Bool | Type.Int -> 
+	   [If(LE, (x, V(y)), g env dest e1, g env dest e2)]
+	| Type.Float ->
+	   [IfF(LE, (x, y), g env dest e1, g env dest e2)]
+	| _ -> failwith "inequality supported only for bool, int and float.")
+    | Closure.Let ((x, t), e1, e2) ->
+       let e1' = g env (x, t) e1 in
+       let e2' = g (M.add x t env) dest e2 in
+       e1' @ e2'
+    | Closure.Var (x) ->
+       (match M.find x env with
+	| Type.Unit -> [Nop]
+	| Type.Float -> [FMr(dest, x)]
+	| _ -> [Mr(dest, x)])
+    | Closure.MakeCls ((x, t), {Closure.entry = l; Closure.actual_fv = ys}, e2) ->
+       failwith "Sorry, closure is not supported yet..."
+    | Closure.AppCls (x, ys) ->
+       failwith "Sorry, closure is not supported yet..."
+    | Closure.AppDir (Id.L(x), ys) ->
+       [Call(dest, Id.L(x), ys)]
+    | Closure.Tuple (xs) -> (* 組の生成 *)
+       let (tup, ty) = dest in
+       let xts = List.map (fun x -> (x, M.find x env)) xs in
+       let (len, store) = 
+	 List.fold_right
+	   (fun (x, t) (i, store) ->
+	    match t with
+	    | Type.Unit -> (i, store)
+	    | Type.Float -> (i + 1, (FSt(x, tup, i))::store)
+	    | _ -> (i + 1, (St(x, tup, i))::store))
+	   xts
+	   (0, []) in
+       [Mr(dest, reg_hp)] @ store @ [Add((reg_hp, Type.Int), reg_hp, C(len))]
+    | Closure.LetTuple (xts, y, e2) ->
+       let s = Closure.fv e2 in
+       let (len, load) = 
+	 List.fold_right
+	   (fun (x, t) (i, load) ->
+	    if not (S.mem x s) then 
+	      (i, load)
+	    else
+	      match t with
+	      | Type.Unit -> (i, load)
+	      | Type.Float -> (i + 1, (FLd((x, t), y, i))::load)
+	      | _ -> (i + 1, (Ld((x, t), y, i))::load))
+	   xts
+	   (0, []) in
+       let e2' = g (M.add_list xts env) dest e2 in
+       load @ e2'
+    | Closure.Get (x, y) -> (* 配列の読み出し *)
+       let addr = Id.genid "array" in  
+       (match M.find x env with
+	| Type.Array(Type.Unit) -> [Nop]
+	| Type.Array(Type.Float) -> [Add((addr, Type.Int), x, V(y)); FLd(dest, addr, 0)]
+	| Type.Array(_) -> [Add((addr, Type.Int), x, V(y)); Ld(dest, addr, 0)]
+	| _ -> assert false)
+    | Closure.Put (x, y, z) ->
+       let addr = Id.genid "array" in 
+       (match M.find x env with
+	| Type.Array(Type.Unit) -> [Nop]
+	| Type.Array(Type.Float) -> [Add((addr, Type.Int), x, V(y)); FSt(z, addr, 0)]
+	| Type.Array(_) -> [Add((addr, Type.Int), x, V(y)); St(z, addr, 0)]
+	| _ -> assert false)
+    | Closure.ExtArray l | Closure.ExtTuple l -> 
+			    [LoadLabel(dest, l)]
+    | Closure.Read -> (* TODO: replace by Get*)
+       let io = Id.genid "io" in
+       [Li((io, Type.Int), Int32.of_int io_addr); Ld(dest, io, 0)]
+    | Closure.Write(x) -> (* TODO: replace by Put*)
+       let io = Id.genid "io" in
+       [Li((io, Type.Int), Int32.of_int io_addr); St(x, io, 0)]
+    | Closure.Fasi(x) ->
+       [FAsI(dest, x)]
+    | Closure.Iasf(x) ->
+       [IAsF(dest, x)] 
+    | Closure.Ftoi(x) ->
+       [FToI(dest, x)]
+    | Closure.Itof(x) ->
+       [IToF(dest, x)] 
 
 (* 関数の仮想マシンコード生成 *)
 let h { Closure.name = (Id.L(x), t); Closure.args = yts; 
 	Closure.formal_fv = zts; Closure.body = e} =
   let ys = List.map (fun (y, t) -> y) yts in
-  let (offset, load) = 
-    expand
-      zts
-      (4, g (M.add x t (M.add_list yts (M.add_list zts M.empty))) e)
-      (fun z t offset load -> Let ((z, t), Lwz (reg_cl, offset), load)) in
+  let env = M.add x t (M.add_list yts (M.add_list zts M.empty)) in
+  let ret = Id.genid "ret" in
   match t with
-  | Type.Fun (_, t2) ->
-     { name = Id.L(x); args = ys; body = load; ret = t2 }
+  | Type.Fun (_, Type.Float) ->
+     let bdy = g env (ret, Type.Float) e in
+     {name = Id.L(x); args = ys; body = bdy; ret = Type.Float}
+  | Type.Fun (_, t_ret) ->
+     let bdy = g env (ret, t_ret) e in
+     {name = Id.L(x); args = ys; body = bdy; ret = t_ret}
   | _ -> assert false
 
 (* プログラム全体の仮想マシンコード生成 *)
 let f (Closure.Prog (fundefs, e)) =
-  data := [];
   let fundefs = List.map h fundefs in
-  let e = g M.empty e in
-  Prog (!data, fundefs, e)
+  let ret = Id.genid "ret" in
+  let e = g M.empty (ret, Type.Unit) e in
+  Prog (fundefs, e)

@@ -1,7 +1,6 @@
 type id_or_imm = V of Id.t | C of int
-type t = Id.range * exp
 and cond = Eq | NE | LE | LT | GE | GT
-and exp = (* 一つ一つの命令に対応する式 *)
+and t = (* 一つ一つの命令に対応する式 *)
   | Nop
   | Ld of (Id.t * Type.t) * Id.t * int
   | St of Id.t * Id.t * int
@@ -32,9 +31,11 @@ and exp = (* 一つ一つの命令に対応する式 *)
   | FMr of (Id.t * Type.t) * Id.t
   | Save of Id.t * Id.t (* レジスタ変数の値をスタック変数へ保存 *)
   | Restore of (Id.t * Type.t) * Id.t (* スタック変数から値を復元 *)
+  | IAsF of (Id.t * Type.t) * Id.t
+  | FAsI of (Id.t * Type.t) * Id.t
 type fundef =
     { name : Id.l; args : Id.t list; body : t list; ret : Type.t }
-type prog = Prog of fundef list * t
+type prog = Prog of fundef list * t list
 
 val regs : Id.t array
 val fregs : Id.t array
@@ -50,3 +51,5 @@ val fv : t list -> Id.t list
 
 val imm_max : int
 val imm_min : int
+
+val io_addr : int

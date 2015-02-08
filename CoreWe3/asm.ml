@@ -1,9 +1,8 @@
 (* CoreWe3 assembly with a few virtual instructions *)
 
 type id_or_imm = V of Id.t | C of int
-type t = Id.range * exp
 and cond = Eq | NE | LE | LT | GE | GT
-and exp = (* 一つ一つの命令に対応する式 *)
+and t = (* 一つ一つの命令に対応する式 *)
   | Nop
   | Ld of (Id.t * Type.t) * Id.t * int
   | St of Id.t * Id.t * int
@@ -34,9 +33,11 @@ and exp = (* 一つ一つの命令に対応する式 *)
   | FMr of (Id.t * Type.t) * Id.t
   | Save of Id.t * Id.t (* レジスタ変数の値をスタック変数へ保存 *)
   | Restore of (Id.t * Type.t) * Id.t (* スタック変数から値を復元 *)
+  | IAsF of (Id.t * Type.t) * Id.t
+  | FAsI of (Id.t * Type.t) * Id.t
 type fundef =
     { name : Id.l; args : Id.t list; body : t list; ret : Type.t }
-type prog = Prog of fundef list * t
+type prog = Prog of fundef list * t list
 
 let reg_of_int i = "%r" ^ (string_of_int i)
 let freg_of_int i = "%f" ^ (string_of_int i)
@@ -61,7 +62,7 @@ let rec remove_and_uniq xs = function
 let fv_id_or_imm = function V (x) -> [x] | _ -> []
 let rec fv_exp = function
   | Nop | Li(_) | FLi(_) | LoadLabel(_) | Restore(_) -> []
-  | Ld(_, x, _) | FLd(_, x, _) | IToF(_, x) | FToI(_, x) | Neg(_, x)  | FInv(_, x) | FAbs(_, x) | Sqrt(_, x) | Mr(_, x) | Save(x, _) | FMr(_, x) -> 
+  | Ld(_, x, _) | FLd(_, x, _) | IToF(_, x) | FToI(_, x) | IAsF(_, x) | FAsI(_, x) | Neg(_, x)  | FInv(_, x) | FAbs(_, x) | Sqrt(_, x) | Mr(_, x) | Save(x, _) | FMr(_, x) -> 
      [x]
   | St(x, y, _) | FSt(x, y, _) | Sub(_, x, y) | And(_, x, y) | Or(_, x, y) | FAdd(_, x, y) | FSub(_, x, y) | FMul(_, x, y) -> 
      [x; y]  
@@ -75,7 +76,9 @@ let rec fv_exp = function
      xs
 and fv = function 
   | [] -> []
-  | (r, e)::e_rest -> (fv_exp e)@(fv e_rest)
+  | e::e_rest -> (fv_exp e)@(fv e_rest)
 
 let imm_max = 0x7fff
 let imm_min = 0x8000
+
+let io_addr = 0xFFFFF
