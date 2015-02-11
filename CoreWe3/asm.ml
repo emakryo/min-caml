@@ -1,7 +1,7 @@
 (* CoreWe3 assembly with a few virtual instructions *)
 
 type id_or_imm = V of Id.t | C of int
-and cond = Eq | NE | LE | LT | GE | GT
+and cond = Eq | LE | LT 
 and t = (* 一つ一つの命令に対応する式 *)
   | Nop
   | Ld of (Id.t * Type.t) * Id.t * int
@@ -38,6 +38,11 @@ and t = (* 一つ一つの命令に対応する式 *)
 type fundef =
     { name : Id.l; args : Id.t list; body : t list; ret : Type.t }
 type prog = Prog of fundef list * t list
+
+let cond_of_string = function
+  | Eq -> "EQ" 
+  | LE -> "LE"
+  | LT -> "LT"
 
 let reg_of_int i = "%r" ^ (string_of_int i)
 let freg_of_int i = "%f" ^ (string_of_int i)

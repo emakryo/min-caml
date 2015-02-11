@@ -1,5 +1,5 @@
 type id_or_imm = V of Id.t | C of int
-and cond = Eq | NE | LE | LT | GE | GT
+and cond = Eq | LE | LT 
 and t = (* 一つ一つの命令に対応する式 *)
   | Nop
   | Ld of (Id.t * Type.t) * Id.t * int
@@ -36,6 +36,12 @@ and t = (* 一つ一つの命令に対応する式 *)
 type fundef =
     { name : Id.l; args : Id.t list; body : t list; ret : Type.t }
 type prog = Prog of fundef list * t list
+
+val cond_of_string : cond -> string
+
+val reg_of_int : int -> string
+val freg_of_int : int -> string
+val is_reg : string -> bool
 
 val regs : Id.t array
 val fregs : Id.t array

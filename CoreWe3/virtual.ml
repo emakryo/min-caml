@@ -16,7 +16,7 @@ let rec g env dest (r, e) = (* 式の仮想マシンコード生成 *)
     | Closure.Lsr(x, y) -> [Shr(dest, x, V(y))]
     | Closure.Lor(x, y) -> [Or(dest, x, y)]
     | Closure.Land(x, y) -> [And(dest, x, y)]
-    | Closure.FNeg(x) -> 
+    | Closure.FNeg(x) -> (*TODO: delete FLi*)
        let z = Id.genid "z" in
        [FLi((z, Type.Float), 0.0); FSub(dest, z, x)]
     | Closure.FInv(x) -> [FInv(dest, x)]
