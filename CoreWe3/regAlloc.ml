@@ -189,7 +189,7 @@ let use_set = function
   | Nop | Li(_) | FLi(_) | LoadLabel(_) | Restore(_) -> []
   | Ld(_, x, _) | FLd(_, x, _) | IToF(_, x) | FToI(_, x) | IAsF(_, x) | FAsI(_, x) | Neg(_, x)  | FInv(_, x) | FAbs(_, x) | Sqrt(_, x) | Mr(_, x) | Save(x, _) | FMr(_, x) -> 
      [x]
-  | St(x, y, _) | FSt(x, y, _) | Sub(_, x, y) | And(_, x, y) | Or(_, x, y) | FAdd(_, x, y) | FSub(_, x, y) | FMul(_, x, y) | IfF(_, (x, y'), _, _) -> 
+  | St(x, y, _) | FSt(x, y, _) | Sub(_, x, y) | And(_, x, y) | Or(_, x, y) | FAdd(_, x, y) | FSub(_, x, y) | FMul(_, x, y) | IfF(_, (x, y), _, _) -> 
      [x; y]  
   | Add(_, x, y') | Shl(_, x, y')| Shr(_, x, y') | If(_, (x, y'), _, _) -> 
      x :: (fv_id_or_imm y')
@@ -197,9 +197,9 @@ let use_set = function
      xs
 
 let def_set = function
-  | Nop | St(_) | If(_) | IfF(_) | Save(_) ->
+  | Nop | St(_) | FSt(_) | If(_) | IfF(_) | Save(_) ->
      []
-  | Ld(xt, _, _) | FLd(xt, _, _) | IToF(xt, _) | FToI(xt, _) | Neg(xt, _) | Add(xt, _, _) | Sub(xt, _, _) | And(xt, _, _) | Or(xt, _, _) | Li(xt, _) | Shl(xt, _, _) | Shr(xt, _, _) | FAdd(xt, _, _) | FSub(xt, _, _) | FMul(xt, _, _) | FInv(xt, _) | FAbs(xt, _) | Sqrt(xt, _) | FLi(xt, _) | Call(xt, _, _) | LoadLabel(xt, _) | Mr(xt, _) | FMr(xt, _) | Restore(xt, _) | IAsF(xt, _) | IAsF(xt, _) ->
+  | Ld(xt, _, _) | FLd(xt, _, _) | IToF(xt, _) | FToI(xt, _) | Neg(xt, _) | Add(xt, _, _) | Sub(xt, _, _) | And(xt, _, _) | Or(xt, _, _) | Li(xt, _) | Shl(xt, _, _) | Shr(xt, _, _) | FAdd(xt, _, _) | FSub(xt, _, _) | FMul(xt, _, _) | FInv(xt, _) | FAbs(xt, _) | Sqrt(xt, _) | FLi(xt, _) | Call(xt, _, _) | LoadLabel(xt, _) | Mr(xt, _) | FMr(xt, _) | Restore(xt, _) | IAsF(xt, _) | FAsI(xt, _) ->
      [fst xt]
 
 let f (Prog(fundefs, e)) = (* プログラム全体のレジスタ割り当て (caml2html: regalloc_f) *)
