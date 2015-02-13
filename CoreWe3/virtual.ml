@@ -101,13 +101,18 @@ let rec g env dest (r, e) = (* 式の仮想マシンコード生成 *)
 	| Type.Array(_) -> [Add((addr, Type.Int), x, V(y)); St(z, addr, 0)]
 	| _ -> assert false)
     | Closure.ExtArray l | Closure.ExtTuple l -> 
-			    [LoadLabel(dest, l)]
-    | Closure.Read -> (* TODO: replace by Get*)
-       let io = Id.genid "io" in
-       [Li((io, Type.Int), Int32.of_int io_addr); Ld(dest, io, 0)]
-    | Closure.Write(x) -> (* TODO: replace by Put*)
-       let io = Id.genid "io" in
-       [Li((io, Type.Int), Int32.of_int io_addr); St(x, io, 0)]
+       [LoadLabel(dest, l)]
+    | Closure.Read -> 
+       let (x, t) = dest in
+       (match t with
+	| Type.Int -> [Ld(dest, reg_zero, -1)]
+	| Type.Float -> [FLd(dest, reg_zero, -1)]
+	| _ -> failwith "read supported only for int and float.")
+    | Closure.Write(x) -> 
+       (match M.find x env with
+	| Type.Int -> [St(x, reg_zero, -1)]
+	| Type.Float -> [FSt(x, reg_zero, -1)]
+	| _ -> failwith "write supported only for int and float.")
     | Closure.Fasi(x) ->
        [FAsI(dest, x)]
     | Closure.Iasf(x) ->

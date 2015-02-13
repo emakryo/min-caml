@@ -54,6 +54,8 @@ let rec deref_term (r, t) =
     | Put(e1, e2, e3) -> Put(deref_term e1, deref_term e2, deref_term e3)
     | Read(e) -> Read(deref_term e)
     | Write(e) -> Write(deref_term e)
+    | FRead(e) -> FRead(deref_term e)
+    | FWrite(e) -> FWrite(deref_term e)
     | Fasi(e) -> Fasi(deref_term e)
     | Iasf(e) -> Iasf(deref_term e)
     | Ftoi(e) -> Ftoi(deref_term e)
@@ -168,6 +170,12 @@ let rec g env (r, e) = (* 型推論ルーチン (caml2html: typing_g) *)
        Type.Int
     | Write(e) -> 
        unify Type.Int (g env e) e;
+       Type.Unit
+    | FRead(e) -> 
+       unify Type.Unit (g env e) e;
+       Type.Float
+    | FWrite(e) -> 
+       unify Type.Float (g env e) e;
        Type.Unit
     | Fasi(e) ->
        unify Type.Float (g env e) e;

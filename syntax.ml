@@ -31,6 +31,8 @@ and ast = (* MinCamlの構文を表現するデータ型 (caml2html: syntax_t) *)
   | Put of t * t * t
   | Read of t
   | Write of t
+  | FRead of t
+  | FWrite of t
   | Fasi of t
   | Iasf of t
   | Ftoi of t
@@ -111,6 +113,10 @@ let rec pp_t t =
        Format.sprintf "%sRead\t#%s\n%s" sps rng (pp_t' (d + 1) t)
     | Write t -> 
        Format.sprintf "%sWrite\t#%s\n%s" sps rng (pp_t' (d + 1) t)
+    | FRead t -> 
+       Format.sprintf "%sFRead\t#%s\n%s" sps rng (pp_t' (d + 1) t)
+    | FWrite t -> 
+       Format.sprintf "%sFWrite\t#%s\n%s" sps rng (pp_t' (d + 1) t)
     | Fasi t -> 
        Format.sprintf "%sFasi\t#%s\n%s" sps rng (pp_t' (d + 1) t)
     | Iasf t -> 

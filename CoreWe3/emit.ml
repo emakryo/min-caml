@@ -62,9 +62,9 @@ and g' oc = function (* 各命令のアセンブリ生成 *)
   | (false, St(x, y, i)) -> 
      Printf.fprintf oc "\tST\t%s\t%s\t%d\n" (reg x) (reg y) i
   | (false, FLd((x, t), y, i)) -> 
-     Printf.fprintf oc "\tLD\t%s\t%s\t%d\n" (reg x) (reg y) i
+     Printf.fprintf oc "\tFLD\t%s\t%s\t%d\n" (reg x) (reg y) i
   | (false, FSt(x, y, i)) -> 
-     Printf.fprintf oc "\tST\t%s\t%s\t%d\n" (reg x) (reg y) i
+     Printf.fprintf oc "\tFST\t%s\t%s\t%d\n" (reg x) (reg y) i
   | (false, Li((x, t), i)) -> 
      Printf.fprintf oc "\tLDI\t%s\t%ld\n" (reg x) i
   | (false, FLi((x, t), d)) -> 
@@ -162,7 +162,6 @@ let h oc { name = Id.L(x); args = _; body = e; ret = _ } =
 
 let f oc (Prog(fundefs, e))  =
   Format.eprintf "generating assembly...@.";
-  (* Printf.fprintf oc "\tBEQ\tr0\tr0\t:_min_caml_start\n"; *)
   List.iter (fun fundef -> h oc fundef) fundefs;
   Format.eprintf "generating assembly...@.";  
   Printf.fprintf oc ":_min_caml_start # main entry point\n";

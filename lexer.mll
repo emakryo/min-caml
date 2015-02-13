@@ -101,6 +101,10 @@ rule token = parse
     { READ(get_range lexbuf)}
 | "print_char"
     { WRITE(get_range lexbuf)}
+| "read_float"
+    { FREAD(get_range lexbuf)}
+| "print_float"
+    { FWRITE(get_range lexbuf)}
 | "fasi"
     { FASI(get_range lexbuf)}
 | "iasf"

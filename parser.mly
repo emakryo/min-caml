@@ -42,6 +42,8 @@ let ex_range head tail ast = ((fst head, snd tail), ast)
 %token <Id.range>RPAREN
 %token <Id.range>READ
 %token <Id.range>WRITE
+%token <Id.range>FREAD
+%token <Id.range>FWRITE
 %token <Id.range>FASI
 %token <Id.range>IASF
 %token <Id.range>FABS
@@ -74,8 +76,8 @@ let ex_range head tail ast = ((fst head, snd tail), ast)
 program: 
 | exp 
     { 
-      (* print_string "(\* =====SyntaxTree===== *\)\n"; *)
-      (* print_string (pp_t $1); *)
+      print_string "(* =====SyntaxTree===== *)\n";
+      print_string (pp_t $1);
       $1}
 
 simple_exp: /* 括弧をつけなくても関数の引数になれる式 (caml2html: parser_simple) */
@@ -181,6 +183,12 @@ exp: /* 一般の式 (caml2html: parser_exp) */
 | WRITE exp
     %prec prec_app
     { ex_range $1 (get_range $2) (Write $2)}
+| FREAD exp
+    %prec prec_app
+    { ex_range $1 (get_range $2) (FRead $2)}
+| FWRITE exp
+    %prec prec_app
+    { ex_range $1 (get_range $2) (FWrite $2)}
 | FASI exp
     %prec prec_app
     { ex_range $1 (get_range $2) (Fasi $2)}

@@ -360,6 +360,12 @@ let rec g env (r, e) = (* K正規化ルーチン本体 (caml2html: knormal_g) *)
   | Syntax.Write (e) -> 
      insert_let (g env e)
 		(fun x -> (r, Write (x)), Type.Unit)
+  | Syntax.FRead (e) -> 
+     insert_let (g env e)
+		(fun x -> (r, Read), Type.Float)
+  | Syntax.FWrite (e) -> 
+     insert_let (g env e)
+		(fun x -> (r, Write (x)), Type.Unit)
   | Syntax.Fasi (e) -> 
      insert_let (g env e)
 		(fun x -> (r, Fasi (x)), Type.Int)
