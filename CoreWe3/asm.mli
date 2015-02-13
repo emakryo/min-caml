@@ -54,6 +54,7 @@ val sp_default : int
 
 val is_reg : string -> bool
 val ret_reg : Type.t -> string
+val move_reg : (Id.t * Type.t) -> Id.t -> t
 
 val fv_id_or_imm : id_or_imm -> Id.t list
 val fv : t list -> Id.t list

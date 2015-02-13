@@ -63,6 +63,12 @@ let ret_reg = function
   | Type.Unit -> reg_zero
   | _ -> regs.(0)
 
+let move_reg (x, t) y = 
+  match t with
+  | Type.Unit -> Nop
+  | Type.Float -> FMr((x, t), y)
+  | _ -> Mr((x, t), y)
+
 (* remove_and_uniq : S.t -> Id.t list -> Id.t list *)
 let rec remove_and_uniq xs = function 
   | [] -> []

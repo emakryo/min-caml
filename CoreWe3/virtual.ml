@@ -2,7 +2,18 @@
 
 open Asm
 
-external getsgl : float -> int32 = "getsgl"
+external getsgl : float -> int32 = "getsgl"  
+
+let rec set_args yts rs frs = 
+  match yts with
+  | [] -> []
+  | (y, t)::yts ->
+     match t with
+     | Type.Unit -> set_args yts rs frs
+     | Type.Float -> 
+	(move_reg (List.hd frs, t) y)::(set_args yts rs (List.tl frs))
+     | _ -> 
+	(move_reg (List.hd rs, t) y)::(set_args yts (List.tl rs) frs)
 
 let rec g env dest (r, e) = (* 式の仮想マシンコード生成 *)
     match e with
@@ -47,16 +58,15 @@ let rec g env dest (r, e) = (* 式の仮想マシンコード生成 *)
        let e2' = g (M.add x t env) dest e2 in
        e1' @ e2'
     | Closure.Var (x) ->
-       (match M.find x env with
-	| Type.Unit -> [Nop]
-	| Type.Float -> [FMr(dest, x)]
-	| _ -> [Mr(dest, x)])
+       [move_reg dest x]
     | Closure.MakeCls ((x, t), {Closure.entry = l; Closure.actual_fv = ys}, e2) ->
        failwith "Sorry, closure is not supported yet..."
     | Closure.AppCls (x, ys) ->
        failwith "Sorry, closure is not supported yet..."
-    | Closure.AppDir (Id.L(x), ys) ->
-       [Call(dest, Id.L(x), ys)]
+    | Closure.AppDir (Id.L(l), ys) ->
+       let (x, t) = dest in
+       let yts = List.map (fun y -> (y, M.find y env)) ys in
+       (set_args yts reglist freglist) @ [Call(dest, Id.L(l), ys); move_reg dest (ret_reg t) ]
     | Closure.Tuple (xs) -> (* 組の生成 *)
        let (tup, ty) = dest in
        let xts = List.map (fun x -> (x, M.find x env)) xs in
@@ -128,17 +138,13 @@ let h { Closure.name = (Id.L(x), t); Closure.args = yts;
   let ys = List.map (fun (y, t) -> y) yts in
   let env = M.add x t (M.add_list yts (M.add_list zts M.empty)) in
   match t with
-  | Type.Fun (_, Type.Float) ->
-     let bdy = g env (fregs.(0), Type.Float) e in
-     {name = Id.L(x); args = ys; body = bdy; ret = Type.Float}
   | Type.Fun (_, t_ret) ->
-     let bdy = g env (regs.(0), t_ret) e in
+     let bdy = g env (ret_reg t_ret, t_ret) e in
      {name = Id.L(x); args = ys; body = bdy; ret = t_ret}
   | _ -> assert false
 
 (* プログラム全体の仮想マシンコード生成 *)
 let f (Closure.Prog (fundefs, e)) =
   let fundefs = List.map h fundefs in
-  let ret = Id.genid "ret" in
-  let e = g M.empty (reg_zero, Type.Unit) e in
+  let e = g M.empty (ret_reg Type.Unit, Type.Unit) e in
   Prog (fundefs, e)

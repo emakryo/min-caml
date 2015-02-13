@@ -44,17 +44,33 @@ let reg r =
 (* 				    | yz -> yz) xys) *)
 (*       | (xys, acyc) -> acyc @ shuffle sw xys *)
 
+let rec rm_nop = function
+  | [] -> []
+  | e::es -> (rm_nop' e) @ (rm_nop es)
+and rm_nop'= function
+  | Nop -> []
+  | Mr((x, _), y) | FMr((x, _), y) when x == y  -> []
+  | If(cnd, dest, e_then, e_else) -> 
+     [If(cnd, dest, rm_nop e_then, rm_nop e_else)]
+  | IfF(cnd, dest, e_then, e_else) -> 
+     [IfF(cnd, dest, rm_nop e_then, rm_nop e_else)]
+  | e -> [e]
+
+
 let rec g oc = function (* 命令列のアセンブリ生成 *)
   | (_, []) -> ()
   | (tail, [e]) -> g' oc (tail, e)
   | (tail, e::es) -> g' oc (false, e); g oc (tail, es)
 and g' oc = function (* 各命令のアセンブリ生成 *)
   (* 末尾でなかったら計算結果を dest にセット *)
-  | (false, Nop) -> ()
-  | (false, Mr((x, t), y)) when x == y -> () 
+  | (false, Nop) -> 
+     Printf.fprintf oc "\tADDI\tr0\tr0\t0\t#Nop\n"
+  | (false, Mr((x, t), y)) when x == y -> 
+     Printf.fprintf oc "\tADDI\t%s\t%s\t0\t#Nop\n" (reg x) (reg y)
   | (false, Mr((x, t), y)) -> 
      Printf.fprintf oc "\tADDI\t%s\t%s\t0\t#Mr\n" (reg x) (reg y)
-  | (false, FMr((x, t), y)) when x == y -> () 
+  | (false, FMr((x, t), y)) when x == y -> (*TODO: implement virtual instruction*)
+     Printf.fprintf oc "\tFMR\t%s\t%s\t0\t#Nop\n" (reg x) (reg y)
   | (false, FMr((x, t), y)) -> (*TODO: implement virtual instruction*)
      Printf.fprintf oc "\tFMR\t%s\t%s\t\n" (reg x) (reg y)
   | (false, Ld((x, t), y, i)) -> 
@@ -134,12 +150,10 @@ and g' oc = function (* 各命令のアセンブリ生成 *)
        g'_tail_if oc e1 e2 bc
      else
        g'_non_tail_if oc e1 e2 bc
-  | (true, Call((x, t), Id.L(l), ys)) -> (* 末尾呼び出し *) (*TODO: implement virtual instruction*)
-     let args = String.concat "\t" (List.map reg ys) in
-     Printf.fprintf oc "\tTCALL\t:%s\t%s\t%s\n" l (reg x) args
+  | (true, Call((x, t), Id.L(l), ys)) -> (* 末尾呼び出し *)
+     Printf.fprintf oc "\tJ\t:%s\n" l
   | (false, Call((x, t), Id.L(l), ys)) -> (*TODO: implement virtual instruction*)
-     let args = String.concat "\t" (List.map reg ys) in
-     Printf.fprintf oc "\tCALL\t:%s\t%s\t%s\n" l (reg x) args
+     Printf.fprintf oc "\tJSUB\t:%s\n" l
 and g'_tail_if oc e1 e2 bc = 
   let b_then = Id.genid (bc ^ "_then") in
   Printf.fprintf oc "\t%s\t:%s\n" bc b_then;
@@ -158,12 +172,12 @@ and g'_non_tail_if oc e1 e2 bc =
 
 let h oc { name = Id.L(x); args = _; body = e; ret = _ } =
   Printf.fprintf oc ":%s\n" x;
-  g oc (true, e)
+  g oc (true, rm_nop e)
 
 let f oc (Prog(fundefs, e))  =
   Format.eprintf "generating assembly...@.";
   List.iter (fun fundef -> h oc fundef) fundefs;
   Format.eprintf "generating assembly...@.";  
   Printf.fprintf oc ":_min_caml_start # main entry point\n";
-  g oc (false, e)
-    
+  g oc (false, rm_nop e);
+  Printf.fprintf oc "\tJ\t0\n" 
