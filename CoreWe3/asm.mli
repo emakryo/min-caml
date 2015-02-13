@@ -41,7 +41,6 @@ val cond_of_string : cond -> string
 
 val reg_of_int : int -> string
 val freg_of_int : int -> string
-val is_reg : string -> bool
 
 val regs : Id.t array
 val fregs : Id.t array
@@ -53,6 +52,10 @@ val reg_sp : Id.t
 val hp_default : int
 val sp_default : int
 
+val is_reg : string -> bool
+val ret_reg : Type.t -> string
+
+val fv_id_or_imm : id_or_imm -> Id.t list
 val fv : t list -> Id.t list
 
 val imm_max : int

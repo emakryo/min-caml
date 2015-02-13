@@ -46,10 +46,9 @@ let cond_of_string = function
 
 let reg_of_int i = "%r" ^ (string_of_int i)
 let freg_of_int i = "%f" ^ (string_of_int i)
-let is_reg x = x.[0] = '%'
 
-let regs = Array.init (32-5) (fun i -> "%r" ^ (string_of_int (i + 3)));; (*r3-r29*)
-let fregs = Array.init 32 (fun i -> "%f" ^ (string_of_int i))
+let regs = Array.init (32-5) (fun i -> reg_of_int (i + 3));; (*r3-r29*)
+let fregs = Array.init 32 (fun i -> freg_of_int i)
 let reglist = Array.to_list regs
 let freglist = Array.to_list fregs
 let reg_zero = reg_of_int 0
@@ -57,6 +56,12 @@ let reg_hp = reg_of_int 1
 let reg_sp = reg_of_int 2
 let hp_default = 0x00000
 let sp_default = 0x777ff
+
+let is_reg x = x.[0] = '%'
+let ret_reg = function
+  | Type.Float -> fregs.(0)
+  | Type.Unit -> reg_zero
+  | _ -> regs.(0)
 
 (* remove_and_uniq : S.t -> Id.t list -> Id.t list *)
 let rec remove_and_uniq xs = function 
