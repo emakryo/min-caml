@@ -15,6 +15,17 @@ let rec set_args yts rs frs =
      | _ -> 
 	(move_reg (List.hd rs, t) y)::(set_args yts (List.tl rs) frs)
 
+let rec get_args yts rs frs = 
+  match yts with
+  | [] -> []
+  | (y, t)::yts ->
+     match t with
+     | Type.Unit -> get_args yts rs frs
+     | Type.Float -> 
+	(move_reg (y, t) (List.hd frs))::(get_args yts rs (List.tl frs))
+     | _ -> 
+	(move_reg (y, t) (List.hd rs))::(get_args yts (List.tl rs) frs)
+
 let rec g env dest (r, e) = (* 式の仮想マシンコード生成 *)
     match e with
     | Closure.Unit -> [Nop]
@@ -139,7 +150,7 @@ let h { Closure.name = (Id.L(x), t); Closure.args = yts;
   let env = M.add x t (M.add_list yts (M.add_list zts M.empty)) in
   match t with
   | Type.Fun (_, t_ret) ->
-     let bdy = g env (ret_reg t_ret, t_ret) e in
+     let bdy = (get_args yts reglist freglist) @ (g env (ret_reg t_ret, t_ret) e) in
      {name = Id.L(x); args = ys; body = bdy; ret = t_ret}
   | _ -> assert false
 

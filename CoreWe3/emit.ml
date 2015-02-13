@@ -56,7 +56,6 @@ and rm_nop'= function
      [IfF(cnd, dest, rm_nop e_then, rm_nop e_else)]
   | e -> [e]
 
-
 let rec g oc = function (* 命令列のアセンブリ生成 *)
   | (_, []) -> ()
   | (tail, [e]) -> g' oc (tail, e)
