@@ -30,19 +30,19 @@ let reg r =
   then String.sub r 1 (String.length r - 1)
   else r 
 
-(* 関数呼び出しのために引数を並べ替える (register shuffling) *)
-let rec shuffle sw xys = 
-  (* remove identical moves *)
-  let (_, xys) = List.partition (fun (x, y) -> x = y) xys in
-    (* find acyclic moves *)
-    match List.partition (fun (_, y) -> List.mem_assoc y xys) xys with
-      | ([], []) -> []
-      | ((x, y) :: xys, []) -> (* no acyclic moves; resolve a cyclic move *)
-	  (y, sw) :: (x, y) :: 
-	    shuffle sw (List.map (function 
-				    | (y', z) when y = y' -> (sw, z)
-				    | yz -> yz) xys)
-      | (xys, acyc) -> acyc @ shuffle sw xys
+(* (\* 関数呼び出しのために引数を並べ替える (register shuffling) *\) *)
+(* let rec shuffle sw xys =  *)
+(*   (\* remove identical moves *\) *)
+(*   let (_, xys) = List.partition (fun (x, y) -> x = y) xys in *)
+(*     (\* find acyclic moves *\) *)
+(*     match List.partition (fun (_, y) -> List.mem_assoc y xys) xys with *)
+(*       | ([], []) -> [] *)
+(*       | ((x, y) :: xys, []) -> (\* no acyclic moves; resolve a cyclic move *\) *)
+(* 	  (y, sw) :: (x, y) ::  *)
+(* 	    shuffle sw (List.map (function  *)
+(* 				    | (y', z) when y = y' -> (sw, z) *)
+(* 				    | yz -> yz) xys) *)
+(*       | (xys, acyc) -> acyc @ shuffle sw xys *)
 
 let rec g oc = function (* 命令列のアセンブリ生成 *)
   | (_, []) -> ()
@@ -135,11 +135,11 @@ and g' oc = function (* 各命令のアセンブリ生成 *)
      else
        g'_non_tail_if oc e1 e2 bc
   | (true, Call((x, t), Id.L(l), ys)) -> (* 末尾呼び出し *) (*TODO: implement virtual instruction*)
-     let args = String.concat "\t" ys in
-     Printf.fprintf oc "\tTCALL\t:%s\t%s\t%s\n" l x args
+     let args = String.concat "\t" (List.map reg ys) in
+     Printf.fprintf oc "\tTCALL\t:%s\t%s\t%s\n" l (reg x) args
   | (false, Call((x, t), Id.L(l), ys)) -> (*TODO: implement virtual instruction*)
-     let args = String.concat "\t" ys in
-     Printf.fprintf oc "\tCALL\t:%s\t%s\t%s\n" l x args
+     let args = String.concat "\t" (List.map reg ys) in
+     Printf.fprintf oc "\tCALL\t:%s\t%s\t%s\n" l (reg x) args
 and g'_tail_if oc e1 e2 bc = 
   let b_then = Id.genid (bc ^ "_then") in
   Printf.fprintf oc "\t%s\t:%s\n" bc b_then;

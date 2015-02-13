@@ -52,9 +52,9 @@ let regs = Array.init (32-5) (fun i -> "%r" ^ (string_of_int (i + 3)));; (*r3-r2
 let fregs = Array.init 32 (fun i -> "%f" ^ (string_of_int i))
 let reglist = Array.to_list regs
 let freglist = Array.to_list fregs
-let reg_zero = "%r0"
-let reg_hp = "%r1"
-let reg_sp = "%r2"
+let reg_zero = reg_of_int 0
+let reg_hp = reg_of_int 1
+let reg_sp = reg_of_int 2
 let hp_default = 0x00000
 let sp_default = 0x777ff
 

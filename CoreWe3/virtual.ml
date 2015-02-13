@@ -61,20 +61,20 @@ let rec g env dest (r, e) = (* 式の仮想マシンコード生成 *)
        let (tup, ty) = dest in
        let xts = List.map (fun x -> (x, M.find x env)) xs in
        let (len, store) = 
-	 List.fold_right
-	   (fun (x, t) (i, store) ->
+	 List.fold_left
+	   (fun (i, store) (x, t) ->
 	    match t with
 	    | Type.Unit -> (i, store)
 	    | Type.Float -> (i + 1, (FSt(x, tup, i))::store)
 	    | _ -> (i + 1, (St(x, tup, i))::store))
-	   xts
-	   (0, []) in
+	   (0, []) 
+	   xts in
        [Mr(dest, reg_hp)] @ store @ [Add((reg_hp, Type.Int), reg_hp, C(len))]
     | Closure.LetTuple (xts, y, e2) ->
        let s = Closure.fv e2 in
        let (len, load) = 
-	 List.fold_right
-	   (fun (x, t) (i, load) ->
+	 List.fold_left
+	   (fun (i, load) (x, t) ->
 	    if not (S.mem x s) then 
 	      (i, load)
 	    else
@@ -82,8 +82,8 @@ let rec g env dest (r, e) = (* 式の仮想マシンコード生成 *)
 	      | Type.Unit -> (i, load)
 	      | Type.Float -> (i + 1, (FLd((x, t), y, i))::load)
 	      | _ -> (i + 1, (Ld((x, t), y, i))::load))
-	   xts
-	   (0, []) in
+	   (0, []) 
+	   xts in
        let e2' = g (M.add_list xts env) dest e2 in
        load @ e2'
     | Closure.Get (x, y) -> (* 配列の読み出し *)
@@ -122,13 +122,12 @@ let h { Closure.name = (Id.L(x), t); Closure.args = yts;
 	Closure.formal_fv = zts; Closure.body = e} =
   let ys = List.map (fun (y, t) -> y) yts in
   let env = M.add x t (M.add_list yts (M.add_list zts M.empty)) in
-  let ret = Id.genid "ret" in
   match t with
   | Type.Fun (_, Type.Float) ->
-     let bdy = g env (ret, Type.Float) e in
+     let bdy = g env (fregs.(0), Type.Float) e in
      {name = Id.L(x); args = ys; body = bdy; ret = Type.Float}
   | Type.Fun (_, t_ret) ->
-     let bdy = g env (ret, t_ret) e in
+     let bdy = g env (regs.(0), t_ret) e in
      {name = Id.L(x); args = ys; body = bdy; ret = t_ret}
   | _ -> assert false
 
@@ -136,5 +135,5 @@ let h { Closure.name = (Id.L(x), t); Closure.args = yts;
 let f (Closure.Prog (fundefs, e)) =
   let fundefs = List.map h fundefs in
   let ret = Id.genid "ret" in
-  let e = g M.empty (ret, Type.Unit) e in
+  let e = g M.empty (reg_zero, Type.Unit) e in
   Prog (fundefs, e)
