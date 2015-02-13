@@ -25,7 +25,13 @@ let rec g env (r, e) = (* 定数畳み込みルーチン本体 (caml2html: constfold_g) *)
   | Add(x, y) when memi x env && memi y env -> (r, Int(findi x env + findi y env))
   | Add(x, y) when memi x env && findi x env = 0 -> (r, Var(y))
   | Add(x, y) when memi y env && findi y env = 0 -> (r, Var(x))
+  | Add(x, y) when x == y -> 
+     let one = Id.genid "one" in
+     let e1 = (r, Int(1)) in
+     let e2 = (r, Lsl(x, one)) in
+     (r, Let((one, Type.Int), e1, e2))
   | Sub(x, y) when memi x env && memi y env -> (r, Int(findi x env - findi y env))
+  | Sub(x, y) when x == y -> (r, Int(0))
   | Sub(x, y) when memi x env && findi x env = 0 -> (r, Neg(y))
   | Sub(x, y) when memi y env && findi y env = 0 -> (r, Var(x))
   | Lsl(x, y) when memi x env && memi y env -> (r, Int(findi x env lsl findi y env))
@@ -49,6 +55,7 @@ let rec g env (r, e) = (* 定数畳み込みルーチン本体 (caml2html: constfold_g) *)
   | FAdd(x, y) when memf x env && findf x env = 0.0 -> (r, Var(y))
   | FAdd(x, y) when memf y env && findf y env = 0.0 -> (r, Var(x))
   | FSub(x, y) when memf x env && memf y env -> (r, Float(findf x env -. findf y env))
+  | FSub(x, y) when x == y -> (r, Float(0.0))
   | FSub(x, y) when memf x env && findf x env = 0.0 -> (r, FNeg(y))
   | FSub(x, y) when memf y env && findf y env = 0.0 -> (r, Var(x))
   | FMul(x, y) when memf x env && memf y env -> (r, Float(findf x env *. findf y env))
