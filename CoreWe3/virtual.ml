@@ -28,7 +28,7 @@ let rec get_args yts rs frs =
 
 let rec g env dest (r, e) = (* 式の仮想マシンコード生成 *)
     match e with
-    | Closure.Unit -> [Nop]
+    | Closure.Unit -> []
     | Closure.Int(i) -> [Li(dest, Int32.of_int i)]
     | Closure.Float(d) -> [FLi(dest, d)]
     | Closure.Neg(x) -> [Neg(dest, x)]
