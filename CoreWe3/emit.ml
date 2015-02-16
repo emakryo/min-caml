@@ -63,15 +63,15 @@ let rec g oc = function (* 命令列のアセンブリ生成 *)
 and g' oc = function (* 各命令のアセンブリ生成 *)
   (* 末尾でなかったら計算結果を dest にセット *)
   | (false, Nop) -> 
-     Printf.fprintf oc "\tADDI\tr0\tr0\t0\t#Nop\n"
+     Printf.fprintf oc "\tADDI\t%s\t%s\t0\t#Nop\n" (reg reg_zero) (reg reg_zero)
   | (false, Mr((x, t), y)) when x == y -> 
      Printf.fprintf oc "\tADDI\t%s\t%s\t0\t#Nop\n" (reg x) (reg y)
   | (false, Mr((x, t), y)) -> 
      Printf.fprintf oc "\tADDI\t%s\t%s\t0\t#Mr\n" (reg x) (reg y)
   | (false, FMr((x, t), y)) when x == y -> (*TODO: implement virtual instruction*)
-     Printf.fprintf oc "\tFMR\t%s\t%s\t0\t#Nop\n" (reg x) (reg y)
+     Printf.fprintf oc "\tFADD\t%s\t%s\t%s\t#Nop\n" (reg x) (reg y) (reg freg_zero)
   | (false, FMr((x, t), y)) -> (*TODO: implement virtual instruction*)
-     Printf.fprintf oc "\tFMR\t%s\t%s\t\n" (reg x) (reg y)
+     Printf.fprintf oc "\tFADD\t%s\t%s\t%s\n" (reg x) (reg y) (reg freg_zero)
   | (false, Ld((x, t), y, i)) -> 
      Printf.fprintf oc "\tLD\t%s\t%s\t%d\n" (reg x) (reg y) i
   | (false, St(x, y, i)) -> 
@@ -89,7 +89,7 @@ and g' oc = function (* 各命令のアセンブリ生成 *)
   | (false, FToI((x, t), y)) -> 
      Printf.fprintf oc "\tFTOI\t%s\t%s\n" (reg x) (reg y)
   | (false, Neg((x, t), y)) -> 
-     Printf.fprintf oc "\tSUB\t%s\tr0\t%s\t#Neg\n" (reg x) (reg y)
+     Printf.fprintf oc "\tSUB\t%s\t%s\t%s\t#Neg\n" (reg x) (reg reg_zero) (reg y)
   | (false, Add((x, t), y, V(z))) -> 
      Printf.fprintf oc "\tADD\t%s\t%s\t%s\n" (reg x) (reg y) (reg z)
   | (false, Add((x, t), y, C(i))) -> 

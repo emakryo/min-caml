@@ -49,6 +49,7 @@ val freglist : Id.t list
 val reg_zero : Id.t
 val reg_hp : Id.t
 val reg_sp : Id.t
+val reg_zero : Id.t
 val hp_default : int
 val sp_default : int
 
