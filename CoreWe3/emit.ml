@@ -122,17 +122,17 @@ and g' oc (tail, (i, e, b)) =  (* 各命令のアセンブリ生成 *)
      Printf.fprintf oc "\tFABS%s\t%s\t%s\n" at (reg x) (reg y)
   | (false, Sqrt((x, t), y)) -> 
      Printf.fprintf oc "\tFSQRT%s\t%s\t%s\n" at (reg x) (reg y)
-  | (false, IAsF((x, t), y)) -> (*TODO: implement virtual instruction*)
-     Printf.fprintf oc "\tIASF%s\t%s\t%s\n" at (reg x) (reg y)
-  | (false, FAsI((x, t), y)) -> (*TODO: implement virtual instruction*)
-     Printf.fprintf oc "\tFASI%s\t%s\t%s\n" at (reg x) (reg y)
+  (* | (false, IAsF((x, t), y)) -> (\*TODO: implement virtual instruction*\) *)
+  (*    Printf.fprintf oc "\tIASF%s\t%s\t%s\n" at (reg x) (reg y) *)
+  (* | (false, FAsI((x, t), y)) -> (\*TODO: implement virtual instruction*\) *)
+  (*    Printf.fprintf oc "\tFASI%s\t%s\t%s\n" at (reg x) (reg y) *)
   | (false, LoadLabel((x, t), Id.L(l))) -> 
      Printf.fprintf oc "\tLDI%s\t%s\t.%s\n" at (reg x) l
   | (false, Save(x, y)) -> (*TODO: implement virtual instruction*)
      Printf.fprintf oc "\tSAVE%s\t%s\t%s\n" at (reg x) (reg y)
   | (false, Restore((x, t), y)) -> (*TODO: implement virtual instruction*)
      Printf.fprintf oc "\tRSTR%s\t%s\t%s\n" at (reg x) (reg y)
-  | (true, (Nop | Mr _ | FMr _ | Ld _ | St _ | FLd _ | FSt _ | Li _ | FLi _ | IToF _ | FToI _ | Neg _ | Add _ | Sub _ | And _ | Or _ | Shl _ | Shr _ | FAdd _ | FSub _ | FMul _ | FInv _ | FAbs _ | Sqrt _ | IAsF _ | FAsI _ | LoadLabel _ | Save _ | Restore _ as e)) ->
+  | (true, (Nop | Mr _ | FMr _ | Ld _ | St _ | FLd _ | FSt _ | Li _ | FLi _ | IToF _ | FToI _ | Neg _ | Add _ | Sub _ | And _ | Or _ | Shl _ | Shr _ | FAdd _ | FSub _ | FMul _ | FInv _ | FAbs _ | Sqrt _ (* | IAsF _ | FAsI _  *)| LoadLabel _ | Save _ | Restore _ as e)) ->
      g' oc (false, (i, e, b));
      Printf.fprintf oc "\tRET\n"
   | (tail, If(cnd, (x, y'), e1, e2)) ->

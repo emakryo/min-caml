@@ -32,8 +32,8 @@ and inst = (* 一つ一つの命令に対応する式 *)
   | FMr of (Id.t * Type.t) * Id.t
   | Save of Id.t * Id.t (* レジスタ変数の値をスタック変数へ保存 *)
   | Restore of (Id.t * Type.t) * Id.t (* スタック変数から値を復元 *)
-  | IAsF of (Id.t * Type.t) * Id.t
-  | FAsI of (Id.t * Type.t) * Id.t
+  (* | IAsF of (Id.t * Type.t) * Id.t *)
+  (* | FAsI of (Id.t * Type.t) * Id.t *)
 type fundef =
     { name : Id.l; args : Id.t list; body : t list; ret : Type.t }
 type prog = Prog of fundef list * t list

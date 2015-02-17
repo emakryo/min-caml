@@ -137,10 +137,9 @@ and g' env dest (r, e) = (* 式の仮想マシンコード生成 *)
 	| Type.Int -> [St(x, reg_zero, -1)]
 	| Type.Float -> [FSt(x, reg_zero, -1)]
 	| _ -> failwith "write supported only for int and float.")
-    | Closure.Fasi(x) ->
-       [FAsI(dest, x)]
-    | Closure.Iasf(x) ->
-       [IAsF(dest, x)] 
+    | Closure.Fasi(x) | Closure.Iasf(x) ->
+       let tmp = Id.genid "stk" in
+       [Save(x, tmp); Restore(dest, tmp)]
     | Closure.Ftoi(x) ->
        [FToI(dest, x)]
     | Closure.Itof(x) ->
