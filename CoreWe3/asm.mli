@@ -1,6 +1,7 @@
 type id_or_imm = V of Id.t | C of int
 and cond = Eq | LE | LT 
-and t = (* 一つ一つの命令に対応する式 *)
+and t = int * inst * bool (*ノードid * 命令 * 依存フラグ*)
+and inst = (* 一つ一つの命令に対応する式 *)
   | Nop
   | Ld of (Id.t * Type.t) * Id.t * int
   | St of Id.t * Id.t * int
@@ -39,6 +40,8 @@ type prog = Prog of fundef list * t list
 
 val cond_of_string : cond -> string
 
+val new_id : unit -> int
+
 val reg_of_int : int -> string
 val freg_of_int : int -> string
 
@@ -55,10 +58,12 @@ val sp_default : int
 
 val is_reg : string -> bool
 val ret_reg : Type.t -> string
-val move_reg : (Id.t * Type.t) -> Id.t -> t
+val move_reg : (Id.t * Type.t) -> Id.t -> inst
 
 val fv_id_or_imm : id_or_imm -> Id.t list
 val fv : t list -> Id.t list
+
+val new_t : inst -> t
 
 val imm_max : int
 val imm_min : int

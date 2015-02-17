@@ -2,7 +2,8 @@
 
 type id_or_imm = V of Id.t | C of int
 and cond = Eq | LE | LT 
-and t = (* 一つ一つの命令に対応する式 *)
+and t = int * inst * bool (*ノードid * 命令 * 依存フラグ*)
+and inst = (* 一つ一つの命令に対応する式 *)
   | Nop
   | Ld of (Id.t * Type.t) * Id.t * int
   | St of Id.t * Id.t * int
@@ -43,6 +44,9 @@ let cond_of_string = function
   | Eq -> "EQ" 
   | LE -> "LE"
   | LT -> "LT"
+
+let counter = ref 0
+let new_id () = incr counter; !counter
 
 let reg_of_int i = "%r" ^ (string_of_int i)
 let freg_of_int i = "%f" ^ (string_of_int i)
@@ -93,7 +97,9 @@ let rec fv_exp = function
      xs
 and fv = function 
   | [] -> []
-  | e::e_rest -> (fv_exp e)@(fv e_rest)
+  | (_, e, _)::e_rest -> (fv_exp e)@(fv e_rest)
+
+let new_t e = (new_id (), e, false)
 
 let imm_max = 0x7fff
 let imm_min = 0x8000
