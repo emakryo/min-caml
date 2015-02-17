@@ -26,7 +26,10 @@ let rec get_args yts rs frs =
      | _ -> 
 	(move_reg (y, t) (List.hd rs))::(get_args yts (List.tl rs) frs)
 
-let rec g env dest (r, e) = (* 式の仮想マシンコード生成 *)
+let rec g env dest e = (* 式の仮想マシンコード生成 *)
+  let e' = g' env dest e in
+  List.map new_t e'
+and g' env dest (r, e) = (* 式の仮想マシンコード生成 *)
     match e with
     | Closure.Unit -> []
     | Closure.Int(i) -> [Li(dest, Int32.of_int i)]
@@ -65,8 +68,8 @@ let rec g env dest (r, e) = (* 式の仮想マシンコード生成 *)
 	   [IfF(LE, (x, y), g env dest e1, g env dest e2)]
 	| _ -> failwith "inequality supported only for bool, int and float.")
     | Closure.Let ((x, t), e1, e2) ->
-       let e1' = g env (x, t) e1 in
-       let e2' = g (M.add x t env) dest e2 in
+       let e1' = g' env (x, t) e1 in
+       let e2' = g' (M.add x t env) dest e2 in
        e1' @ e2'
     | Closure.Var (x) ->
        [move_reg dest x]
@@ -105,7 +108,7 @@ let rec g env dest (r, e) = (* 式の仮想マシンコード生成 *)
 	      | _ -> (i + 1, (Ld((x, t), y, i))::load))
 	   (0, []) 
 	   xts in
-       let e2' = g (M.add_list xts env) dest e2 in
+       let e2' = g' (M.add_list xts env) dest e2 in
        load @ e2'
     | Closure.Get (x, y) -> (* 配列の読み出し *)
        let addr = Id.genid "array" in  
@@ -150,7 +153,8 @@ let h { Closure.name = (Id.L(x), t); Closure.args = yts;
   let env = M.add x t (M.add_list yts (M.add_list zts M.empty)) in
   match t with
   | Type.Fun (_, t_ret) ->
-     let bdy = (get_args yts reglist freglist) @ (g env (ret_reg t_ret, t_ret) e) in
+     let mrs = List.map new_t (get_args yts reglist freglist) in
+     let bdy = mrs @ (g env (ret_reg t_ret, t_ret) e) in
      {name = Id.L(x); args = ys; body = bdy; ret = t_ret}
   | _ -> assert false
 
