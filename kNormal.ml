@@ -387,7 +387,5 @@ let rec g env (r, e) = (* K正規化ルーチン本体 (caml2html: knormal_g) *)
 
 let f e = 
   let s = fst (g M.empty e) in
-  print_string "(* =====kNormalized===== *)\n";
-  print_string (pp_t s);
   s
 
