@@ -6,7 +6,6 @@ module Em =
       type t = KNormal.t
       let compare = compare
     end)
-include Em
 
 let rec sanitize (r, e) = (*kNormal.astのみを比較できるように、rangeを無効化*)
   let e' = match e with
