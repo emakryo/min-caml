@@ -85,7 +85,7 @@ and g' oc (tail, (i, e, b)) =  (* 各命令のアセンブリ生成 *)
   | (false, Li((x, t), i)) -> 
      Printf.fprintf oc "\tLDI%s\t%s\t%ld\n" at (reg x) i
   | (false, FLi((x, t), d)) -> 
-     Printf.fprintf oc "\tFLDI%s\t%s\t%ld\t#%f\n" at (reg x) (getsgl d) d
+     Printf.fprintf oc "\tFLDI%s\t%s\t0x%lx\t#%f\n" at (reg x) (getsgl d) d
   | (false, IToF((x, t), y)) -> 
      Printf.fprintf oc "\tITOF%s\t%s\t%s\n" at (reg x) (reg y)
   | (false, FToI((x, t), y)) -> 
