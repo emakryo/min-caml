@@ -181,4 +181,4 @@ let f oc (Prog(fundefs, e))  =
   Format.eprintf "generating assembly...@.";  
   Printf.fprintf oc ":_min_caml_start # main entry point\n";
   g oc (false, rm_nop e);
-  Printf.fprintf oc "\tJ\t0\n" 
+  Printf.fprintf oc "\tJ\t0\t#halt\n" 
