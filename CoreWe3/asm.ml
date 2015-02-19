@@ -48,6 +48,10 @@ let cond_of_string = function
 let counter = ref 0
 let new_id () = incr counter; !counter
 
+let new_t e = (new_id (), e, false)
+
+let get_inst (i, e, b) = e
+
 let reg_of_int i = "%r" ^ (string_of_int i)
 let freg_of_int i = "%f" ^ (string_of_int i)
 
@@ -100,8 +104,6 @@ let rec fv_exp = function
 and fv = function 
   | [] -> []
   | (_, e, _)::e_rest -> (fv_exp e)@(fv e_rest)
-
-let new_t e = (new_id (), e, false)
 
 let imm_max = 0x7fff
 let imm_min = 0x8000

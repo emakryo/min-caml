@@ -41,6 +41,9 @@ type prog = Prog of fundef list * t list
 val cond_of_string : cond -> string
 
 val new_id : unit -> int
+val new_t : inst -> t
+
+val get_inst : t -> inst
 
 val reg_of_int : int -> string
 val freg_of_int : int -> string
@@ -64,8 +67,6 @@ val move_reg : (Id.t * Type.t) -> Id.t -> inst
 
 val fv_id_or_imm : id_or_imm -> Id.t list
 val fv : t list -> Id.t list
-
-val new_t : inst -> t
 
 val imm_max : int
 val imm_min : int
