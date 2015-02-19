@@ -26,6 +26,17 @@ let rec get_args yts rs frs =
      | _ -> 
 	(move_reg (y, t) (List.hd rs))::(get_args yts (List.tl rs) frs)
 
+let rec map_args yts rs frs = 
+  match yts with
+  | [] -> []
+  | (y, t)::yts ->
+     match t with
+     | Type.Unit -> map_args yts rs frs
+     | Type.Float -> 
+	(List.hd frs)::(map_args yts rs (List.tl frs))
+     | _ -> 
+	(List.hd rs)::(map_args yts (List.tl rs) frs)
+
 let rec g env dest e = (* 式の仮想マシンコード生成 *)
   let e' = g' env dest e in
   List.map new_t e'
@@ -56,7 +67,7 @@ and g' env dest (r, e) = (* 式の仮想マシンコード生成 *)
     | Closure.IfEq(x, y, e1, e2) -> 
        (match M.find x env with
 	| Type.Bool | Type.Int -> 
-		       [If(Eq, (x, V(y)), g env dest e1, g env dest e2)]
+	   [If(Eq, (x, V(y)), g env dest e1, g env dest e2)]
 	| Type.Float ->
 	   [IfF(Eq, (x, y), g env dest e1, g env dest e2)]
 	| _ -> failwith "equality supported only for bool, int and float.")
@@ -79,8 +90,10 @@ and g' env dest (r, e) = (* 式の仮想マシンコード生成 *)
        failwith "Sorry, closure is not supported yet..."
     | Closure.AppDir (Id.L(l), ys) ->
        let (x, t) = dest in
+       let ret = ret_reg t in
        let yts = List.map (fun y -> (y, M.find y env)) ys in
-       (set_args yts reglist freglist) @ [Call(dest, Id.L(l), ys); move_reg dest (ret_reg t) ]
+       let args = map_args yts reglist freglist in
+       (set_args yts reglist freglist) @ [Call((ret, t), Id.L(l), args); move_reg dest ret]
     | Closure.Tuple (xs) -> (* 組の生成 *)
        let (tup, ty) = dest in
        let xts = List.map (fun x -> (x, M.find x env)) xs in
@@ -159,6 +172,6 @@ let h { Closure.name = (Id.L(x), t); Closure.args = yts;
 
 (* プログラム全体の仮想マシンコード生成 *)
 let f (Closure.Prog (fundefs, e)) =
-  let fundefs = List.map h fundefs in
   let e = g M.empty (ret_reg Type.Unit, Type.Unit) e in
+  let fundefs = List.map h fundefs in
   Prog (fundefs, e)
