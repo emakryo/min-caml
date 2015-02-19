@@ -65,96 +65,96 @@ and g' oc (tail, (i, e, b)) =  (* 各命令のアセンブリ生成 *)
   let at = if b then "@" else "" in
   match (tail, e) with
   | (false, Nop) -> 
-     Printf.fprintf oc "\tADDI%s\t%s\t%s\t0\t#Nop\n" at (reg reg_zero) (reg reg_zero)
+     Printf.fprintf oc "\t%sADDI\t%s\t%s\t0\t#Nop\n" at (reg reg_zero) (reg reg_zero)
   | (false, Mr((x, t), y)) when x == y -> 
-     Printf.fprintf oc "\tADDI%s\t%s\t%s\t0\t#Nop\n" at (reg x) (reg y)
+     Printf.fprintf oc "\t%sADDI\t%s\t%s\t0\t#Nop\n" at (reg x) (reg y)
   | (false, Mr((x, t), y)) -> 
-     Printf.fprintf oc "\tADDI%s\t%s\t%s\t0\t#Mr\n" at (reg x) (reg y)
+     Printf.fprintf oc "\t%sADDI\t%s\t%s\t0\t#Mr\n" at (reg x) (reg y)
   | (false, FMr((x, t), y)) when x == y -> 
-     Printf.fprintf oc "\tFADD%s\t%s\t%s\t%s\t#Nop\n" at (reg x) (reg y) (reg freg_zero)
+     Printf.fprintf oc "\t%sFADD\t%s\t%s\t%s\t#Nop\n" at (reg x) (reg y) (reg freg_zero)
   | (false, FMr((x, t), y)) -> 
-     Printf.fprintf oc "\tFADD%s\t%s\t%s\t%s\t#FMr\n" at (reg x) (reg y) (reg freg_zero)
+     Printf.fprintf oc "\t%sFADD\t%s\t%s\t%s\t#FMr\n" at (reg x) (reg y) (reg freg_zero)
   | (false, Ld((x, t), y, i)) -> 
-     Printf.fprintf oc "\tLD%s\t%s\t%s\t%d\n" at (reg x) (reg y) i
+     Printf.fprintf oc "\t%sLD\t%s\t%s\t%d\n" at (reg x) (reg y) i
   | (false, St(x, y, i)) -> 
-     Printf.fprintf oc "\tST%s\t%s\t%s\t%d\n" at (reg x) (reg y) i
+     Printf.fprintf oc "\t%sST\t%s\t%s\t%d\n" at (reg x) (reg y) i
   | (false, FLd((x, t), y, i)) -> 
-     Printf.fprintf oc "\tFLD%s\t%s\t%s\t%d\n" at (reg x) (reg y) i
+     Printf.fprintf oc "\t%sFLD\t%s\t%s\t%d\n" at (reg x) (reg y) i
   | (false, FSt(x, y, i)) -> 
-     Printf.fprintf oc "\tFST%s\t%s\t%s\t%d\n" at (reg x) (reg y) i
+     Printf.fprintf oc "\t%sFST\t%s\t%s\t%d\n" at (reg x) (reg y) i
   | (false, Li((x, t), i)) -> 
-     Printf.fprintf oc "\tLDI%s\t%s\t%ld\n" at (reg x) i
+     Printf.fprintf oc "\t%sLDI\t%s\t%ld\n" at (reg x) i
   | (false, FLi((x, t), d)) -> 
-     Printf.fprintf oc "\tFLDI%s\t%s\t0x%lx\t#%f\n" at (reg x) (getsgl d) d
+     Printf.fprintf oc "\t%sFLDI\t%s\t0x%lx\t#%f\n" at (reg x) (getsgl d) d
   | (false, IToF((x, t), y)) -> 
-     Printf.fprintf oc "\tITOF%s\t%s\t%s\n" at (reg x) (reg y)
+     Printf.fprintf oc "\t%sITOF\t%s\t%s\n" at (reg x) (reg y)
   | (false, FToI((x, t), y)) -> 
-     Printf.fprintf oc "\tFTOI%s\t%s\t%s\n" at (reg x) (reg y)
+     Printf.fprintf oc "\t%sFTOI\t%s\t%s\n" at (reg x) (reg y)
   | (false, Neg((x, t), y)) -> 
-     Printf.fprintf oc "\tSUB%s\t%s\t%s\t%s\t#Neg\n" at (reg x) (reg reg_zero) (reg y)
+     Printf.fprintf oc "\t%sSUB\t%s\t%s\t%s\t#Neg\n" at (reg x) (reg reg_zero) (reg y)
   | (false, Add((x, t), y, V(z))) -> 
-     Printf.fprintf oc "\tADD%s\t%s\t%s\t%s\n" at (reg x) (reg y) (reg z)
+     Printf.fprintf oc "\t%sADD\t%s\t%s\t%s\n" at (reg x) (reg y) (reg z)
   | (false, Add((x, t), y, C(i))) -> 
-     Printf.fprintf oc "\tADDI%s\t%s\t%s\t%d\n" at (reg x) (reg y) i
+     Printf.fprintf oc "\t%sADDI\t%s\t%s\t%d\n" at (reg x) (reg y) i
   | (false, Sub((x, t), y, z)) -> 
-     Printf.fprintf oc "\tSUB%s\t%s\t%s\t%s\n" at (reg x) (reg y) (reg z)
+     Printf.fprintf oc "\t%sSUB\t%s\t%s\t%s\n" at (reg x) (reg y) (reg z)
   | (false, And((x, t), y, z)) -> 
-     Printf.fprintf oc "\tAND%s\t%s\t%s\t%s\n" at (reg x) (reg y) (reg z)
+     Printf.fprintf oc "\t%sAND\t%s\t%s\t%s\n" at (reg x) (reg y) (reg z)
   | (false, Or((x, t), y, z)) -> 
-     Printf.fprintf oc "\tOR%s\t%s\t%s\t%s\n" at (reg x) (reg y) (reg z)
+     Printf.fprintf oc "\t%sOR\t%s\t%s\t%s\n" at (reg x) (reg y) (reg z)
   | (false, Shl((x, t), y, V(z))) -> 
-     Printf.fprintf oc "\tSHL%s\t%s\t%s\t%s\n" at (reg x) (reg y) (reg z)
+     Printf.fprintf oc "\t%sSHL\t%s\t%s\t%s\n" at (reg x) (reg y) (reg z)
   | (false, Shl((x, t), y, C(i))) -> 
-     Printf.fprintf oc "\tSHLI%s\t%s\t%s\t%d\n" at (reg x) (reg y) i
+     Printf.fprintf oc "\t%sSHLI\t%s\t%s\t%d\n" at (reg x) (reg y) i
   | (false, Shr((x, t), y, V(z))) -> 
-     Printf.fprintf oc "\tSHR%s\t%s\t%s\t%s\n" at (reg x) (reg y) (reg z)
+     Printf.fprintf oc "\t%sSHR\t%s\t%s\t%s\n" at (reg x) (reg y) (reg z)
   | (false, Shr((x, t), y, C(i))) -> 
-     Printf.fprintf oc "\tSHRI%s\t%s\t%s\t%d\n" at (reg x) (reg y) i
+     Printf.fprintf oc "\t%sSHRI\t%s\t%s\t%d\n" at (reg x) (reg y) i
   | (false, FAdd((x, t), y, z)) -> 
-     Printf.fprintf oc "\tFADD%s\t%s\t%s\t%s\n" at (reg x) (reg y) (reg z)
+     Printf.fprintf oc "\t%sFADD\t%s\t%s\t%s\n" at (reg x) (reg y) (reg z)
   | (false, FSub((x, t), y, z)) -> 
-     Printf.fprintf oc "\tFSub%s\t%s\t%s\t%s\n" at (reg x) (reg y) (reg z)
+     Printf.fprintf oc "\t%sFSub\t%s\t%s\t%s\n" at (reg x) (reg y) (reg z)
   | (false, FMul((x, t), y, z)) -> 
-     Printf.fprintf oc "\tFMUL%s\t%s\t%s\t%s\n" at (reg x) (reg y) (reg z)
+     Printf.fprintf oc "\t%sFMUL\t%s\t%s\t%s\n" at (reg x) (reg y) (reg z)
   | (false, FInv((x, t), y)) -> 
-     Printf.fprintf oc "\tFINV%s\t%s\t%s\n" at (reg x) (reg y)
+     Printf.fprintf oc "\t%sFINV\t%s\t%s\n" at (reg x) (reg y)
   | (false, FAbs((x, t), y)) -> 
-     Printf.fprintf oc "\tFABS%s\t%s\t%s\n" at (reg x) (reg y)
+     Printf.fprintf oc "\t%sFABS\t%s\t%s\n" at (reg x) (reg y)
   | (false, Sqrt((x, t), y)) -> 
-     Printf.fprintf oc "\tFSQRT%s\t%s\t%s\n" at (reg x) (reg y)
+     Printf.fprintf oc "\t%sFSQRT\t%s\t%s\n" at (reg x) (reg y)
   (* | (false, IAsF((x, t), y)) -> (\*TODO: implement virtual instruction*\) *)
   (*    Printf.fprintf oc "\tIASF%s\t%s\t%s\n" at (reg x) (reg y) *)
   (* | (false, FAsI((x, t), y)) -> (\*TODO: implement virtual instruction*\) *)
   (*    Printf.fprintf oc "\tFASI%s\t%s\t%s\n" at (reg x) (reg y) *)
   | (false, LoadLabel((x, t), Id.L(l))) -> 
-     Printf.fprintf oc "\tLDI%s\t%s\t.%s\n" at (reg x) l
+     Printf.fprintf oc "\t%sLDI\t%s\t.%s\n" at (reg x) l
   | (false, Save(x, y)) -> (*TODO: implement virtual instruction*)
-     Printf.fprintf oc "\tSAVE%s\t%s\t%s\n" at (reg x) (reg y)
+     Printf.fprintf oc "\t%sSAVE\t%s\t%s\n" at (reg x) (reg y)
   | (false, Restore((x, t), y)) -> (*TODO: implement virtual instruction*)
-     Printf.fprintf oc "\tRSTR%s\t%s\t%s\n" at (reg x) (reg y)
+     Printf.fprintf oc "\t%sRSTR\t%s\t%s\n" at (reg x) (reg y)
   | (true, (Nop | Mr _ | FMr _ | Ld _ | St _ | FLd _ | FSt _ | Li _ | FLi _ | IToF _ | FToI _ | Neg _ | Add _ | Sub _ | And _ | Or _ | Shl _ | Shr _ | FAdd _ | FSub _ | FMul _ | FInv _ | FAbs _ | Sqrt _ (* | IAsF _ | FAsI _  *)| LoadLabel _ | Save _ | Restore _ as e)) ->
      g' oc (false, (i, e, b));
      Printf.fprintf oc "\tRET\n"
   | (tail, If(cnd, (x, y'), e1, e2)) ->
      let bc = "J" ^ cond_of_string cnd in
      (match y' with
-      | V(y) -> Printf.fprintf oc "\tCMP%s\t%s\t%s\n" at (reg x) (reg y)
-      | C(i) -> Printf.fprintf oc "\tCMPI%s\t%s\t%d\n" at (reg x) i);
+      | V(y) -> Printf.fprintf oc "\t%sCMP\t%s\t%s\n" at (reg x) (reg y)
+      | C(i) -> Printf.fprintf oc "\t%sCMPI\t%s\t%d\n" at (reg x) i);
      if tail then
        g'_tail_if oc e1 e2 bc
      else
        g'_non_tail_if oc e1 e2 bc
   | (tail, IfF(cnd, (x, y), e1, e2)) ->
      let bc = "J" ^ cond_of_string cnd in
-     Printf.fprintf oc "\tFCMP%s\t%s\t%s\n" at (reg x) (reg y);
+     Printf.fprintf oc "\t%sFCMP\t%s\t%s\n" at (reg x) (reg y);
      if tail then
        g'_tail_if oc e1 e2 bc
      else
        g'_non_tail_if oc e1 e2 bc
   | (true, Call((x, t), Id.L(l), ys)) -> (* 末尾呼び出し *)
-     Printf.fprintf oc "\tJ\t:%s\n" l
+     Printf.fprintf oc "\t%sJ\t:%s\n" at l
   | (false, Call((x, t), Id.L(l), ys)) -> (*TODO: implement stack operation*)
-     Printf.fprintf oc "\tJSUB\t:%s\n" l
+     Printf.fprintf oc "\t%sJSUB\t:%s\n" at l
 and g'_tail_if oc e1 e2 bc = 
   let b_then = Id.genid (bc ^ "_then") in
   Printf.fprintf oc "\t%s\t:%s\n" bc b_then;
