@@ -70,8 +70,9 @@ let rec emit_livemap mp = function
       | If(_, _, e_then, e_else) | IfF(_, _, e_then, e_else) ->
          emit_livemap mp e_then; emit_livemap mp e_else
       | _ -> ());
-     Format.eprintf "%d(in)  =%s@." i (S.fold (fun x acc -> acc^" "^x) (get_livein (i, e, b) mp) "");
-     Format.eprintf "%d(out) =%s@." i (S.fold (fun x acc -> acc^" "^x) (get_liveout (i, e, b) mp) "")
+     let in_s = String.concat "; " (S.to_list (get_livein (i, e, b) mp)) in
+     let out_s = String.concat "; " (S.to_list (get_liveout (i, e, b) mp)) in
+     Format.eprintf "in[%d]  = {in: [%s], out: [%s]}@." i in_s out_s
 
 let rec calc_live_iter mp tl e n =
   Format.eprintf "iteration %d...@." n;
