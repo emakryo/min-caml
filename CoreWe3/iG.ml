@@ -6,7 +6,7 @@ let adj x ig = if M.mem x ig then M.find x ig else S.empty
 
 let deg x ig = S.cardinal (adj x ig)
 
-let mk_edge (x, y) ig = 
+let add_edge (x, y) ig = 
   if x = y then 
     ig 
   else
@@ -21,4 +21,4 @@ let rm_edge (x, y) ig =
 let pp_graph ig =
   M.iter
     (fun x adj_x ->
-     Format.eprintf "%s -> %s@." x (String.concat ", " (S.to_list adj_x)))
+     Format.eprintf "%s -> %s@." x (String.concat ", " (S.to_list adj_x))) ig
