@@ -67,16 +67,16 @@ and g' env dest (r, e) = (* 式の仮想マシンコード生成 *)
     | Closure.IfEq(x, y, e1, e2) -> 
        (match M.find x env with
 	| Type.Bool | Type.Int -> 
-	   [If(Eq, (x, V(y)), g env dest e1, g env dest e2)]
+	   [If(dest, Eq, (x, V(y)), g env dest e1, g env dest e2)]
 	| Type.Float ->
-	   [IfF(Eq, (x, y), g env dest e1, g env dest e2)]
+	   [IfF(dest, Eq, (x, y), g env dest e1, g env dest e2)]
 	| _ -> failwith "equality supported only for bool, int and float.")
     | Closure.IfLE(x, y, e1, e2) ->
        (match M.find x env with
 	| Type.Bool | Type.Int -> 
-	   [If(LE, (x, V(y)), g env dest e1, g env dest e2)]
+	   [If(dest, LE, (x, V(y)), g env dest e1, g env dest e2)]
 	| Type.Float ->
-	   [IfF(LE, (x, y), g env dest e1, g env dest e2)]
+	   [IfF(dest, LE, (x, y), g env dest e1, g env dest e2)]
 	| _ -> failwith "inequality supported only for bool, int and float.")
     | Closure.Let ((x, t), e1, e2) ->
        let e1' = g' env (x, t) e1 in
@@ -152,7 +152,7 @@ and g' env dest (r, e) = (* 式の仮想マシンコード生成 *)
 	| _ -> failwith "write supported only for int and float.")
     | Closure.Fasi(x) | Closure.Iasf(x) ->
        let tmp = Id.genid "stk" in
-       [Save(x, tmp); Restore(dest, tmp)]
+       [Save(x, Vr tmp); Restore(dest, Vr tmp)]
     | Closure.Ftoi(x) ->
        [FToI(dest, x)]
     | Closure.Itof(x) ->

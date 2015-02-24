@@ -51,11 +51,11 @@ and rm_nop'(i, e, b) =
   match e with
   | Nop -> []
   | Mr((x, _), y) | FMr((x, _), y) when x == y  -> []
-  | If(cnd, dest, e_then, e_else) -> 
-     [(i, If(cnd, dest, rm_nop e_then, rm_nop e_else), b)]
-  | IfF(cnd, dest, e_then, e_else) -> 
-     [(i, IfF(cnd, dest, rm_nop e_then, rm_nop e_else), b)]
-  | e -> [(i, e, b)]
+  | If(dest, cnd, cmp, e_then, e_else) -> 
+     [(i, If(dest, cnd, cmp, rm_nop e_then, rm_nop e_else), b)]
+  | IfF(dest, cnd, cmp, e_then, e_else) -> 
+     [(i, IfF(dest, cnd, cmp, rm_nop e_then, rm_nop e_else), b)]
+  | _ -> [(i, e, b)]
 
 let rec g oc = function (* 命令列のアセンブリ生成 *)
   | (_, []) -> ()
@@ -128,14 +128,22 @@ and g' oc (tail, (i, e, b)) =  (* 各命令のアセンブリ生成 *)
   (*    Printf.fprintf oc "\tFASI%s\t%s\t%s\n" at (reg x) (reg y) *)
   | (false, LoadLabel((x, t), Id.L(l))) -> 
      Printf.fprintf oc "\t%sLDI\t%s\t.%s\n" at (reg x) l
-  | (false, Save(x, y)) -> (*TODO: implement virtual instruction*)
+  | (false, Save(x, Vr(y))) -> (*TODO: implement virtual instruction*)
      Printf.fprintf oc "\t%sSAVE\t%s\t%s\n" at (reg x) (reg y)
-  | (false, Restore((x, t), y)) -> (*TODO: implement virtual instruction*)
+  | (false, Restore((x, t), Vr(y))) -> (*TODO: implement virtual instruction*)
      Printf.fprintf oc "\t%sRSTR\t%s\t%s\n" at (reg x) (reg y)
+  | (false, Save(x, I(i))) -> (*TODO: implement virtual instruction*)
+     Printf.fprintf oc "\t%sSAVE\t%s\t%d\n" at (reg x) i
+  | (false, Restore((x, t), I(i))) -> (*TODO: implement virtual instruction*)
+     Printf.fprintf oc "\t%sRSTR\t%s\t%d\n" at (reg x) i
+  | (false, Save(x, F(f))) -> (*TODO: implement virtual instruction*)
+     Printf.fprintf oc "\t%sSAVE\t%s\t%f\n" at (reg x) f
+  | (false, Restore((x, t), F(f))) -> (*TODO: implement virtual instruction*)
+     Printf.fprintf oc "\t%sRSTR\t%s\t%f\n" at (reg x) f
   | (true, (Nop | Mr _ | FMr _ | Ld _ | St _ | FLd _ | FSt _ | Li _ | FLi _ | IToF _ | FToI _ | Neg _ | Add _ | Sub _ | And _ | Or _ | Shl _ | Shr _ | FAdd _ | FSub _ | FMul _ | FInv _ | FAbs _ | Sqrt _ (* | IAsF _ | FAsI _  *)| LoadLabel _ | Save _ | Restore _ as e)) ->
      g' oc (false, (i, e, b));
      Printf.fprintf oc "\tRET\n"
-  | (tail, If(cnd, (x, y'), e1, e2)) ->
+  | (tail, If(dest, cnd, (x, y'), e1, e2)) ->
      let bc = "J" ^ cond_of_string cnd in
      (match y' with
       | V(y) -> Printf.fprintf oc "\t%sCMP\t%s\t%s\n" at (reg x) (reg y)
@@ -144,7 +152,7 @@ and g' oc (tail, (i, e, b)) =  (* 各命令のアセンブリ生成 *)
        g'_tail_if oc e1 e2 bc
      else
        g'_non_tail_if oc e1 e2 bc
-  | (tail, IfF(cnd, (x, y), e1, e2)) ->
+  | (tail, IfF(dest, cnd, (x, y), e1, e2)) ->
      let bc = "J" ^ cond_of_string cnd in
      Printf.fprintf oc "\t%sFCMP\t%s\t%s\n" at (reg x) (reg y);
      if tail then

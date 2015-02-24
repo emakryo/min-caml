@@ -1,41 +1,43 @@
 (* CoreWe3 assembly with a few virtual instructions *)
 
 type id_or_imm = V of Id.t | C of int
+and dest = Id.t * Type.t
+and stkvar = Vr of Id.t | I of int | F of float
 and cond = Eq | LE | LT 
 and t = int * inst * bool (*ノードid * 命令 * 依存フラグ*)
 and inst = (* 一つ一つの命令に対応する式 *)
   | Nop
-  | Ld of (Id.t * Type.t) * Id.t * int
+  | Ld of dest * Id.t * int
   | St of Id.t * Id.t * int
-  | FLd of (Id.t * Type.t) * Id.t * int
+  | FLd of dest * Id.t * int
   | FSt of Id.t * Id.t * int
-  | IToF of (Id.t * Type.t) * Id.t
-  | FToI of (Id.t * Type.t) * Id.t
-  | Neg of (Id.t * Type.t) * Id.t
-  | Add of (Id.t * Type.t) * Id.t * id_or_imm
-  | Sub of (Id.t * Type.t) * Id.t * Id.t
-  | And of (Id.t * Type.t) * Id.t * Id.t
-  | Or of (Id.t * Type.t) * Id.t * Id.t
-  | Li of (Id.t * Type.t) * int32
-  | Shl of (Id.t * Type.t) * Id.t * id_or_imm
-  | Shr of (Id.t * Type.t) * Id.t * id_or_imm
-  | FAdd of (Id.t * Type.t) * Id.t * Id.t
-  | FSub of (Id.t * Type.t) * Id.t * Id.t
-  | FMul of (Id.t * Type.t) * Id.t * Id.t
-  | FInv of (Id.t * Type.t) * Id.t
-  | FAbs of (Id.t * Type.t) * Id.t
-  | Sqrt of (Id.t * Type.t) * Id.t
-  | FLi of (Id.t * Type.t) * float
-  | If of cond * (Id.t * id_or_imm) * t list (*then*) * t list (*else*) 
-  | IfF of cond * (Id.t * Id.t) * t list * t list
-  | Call of (Id.t * Type.t) * Id.l * Id.t list
-  | LoadLabel of (Id.t * Type.t) * Id.l
-  | Mr of (Id.t * Type.t) * Id.t
-  | FMr of (Id.t * Type.t) * Id.t
-  | Save of Id.t * Id.t (* レジスタ変数の値をスタック変数へ保存 *)
-  | Restore of (Id.t * Type.t) * Id.t (* スタック変数から値を復元 *)
-  (* | IAsF of (Id.t * Type.t) * Id.t *)
-  (* | FAsI of (Id.t * Type.t) * Id.t *)
+  | IToF of dest * Id.t
+  | FToI of dest * Id.t
+  | Neg of dest * Id.t
+  | Add of dest * Id.t * id_or_imm
+  | Sub of dest * Id.t * Id.t
+  | And of dest * Id.t * Id.t
+  | Or of dest * Id.t * Id.t
+  | Li of dest * int32
+  | Shl of dest * Id.t * id_or_imm
+  | Shr of dest * Id.t * id_or_imm
+  | FAdd of dest * Id.t * Id.t
+  | FSub of dest * Id.t * Id.t
+  | FMul of dest * Id.t * Id.t
+  | FInv of dest * Id.t
+  | FAbs of dest * Id.t
+  | Sqrt of dest * Id.t
+  | FLi of dest * float
+  | If of dest * cond * (Id.t * id_or_imm) * t list (*then*) * t list (*else*) 
+  | IfF of dest * cond * (Id.t * Id.t) * t list * t list
+  | Call of dest * Id.l * Id.t list
+  | LoadLabel of dest * Id.l
+  | Mr of dest * Id.t
+  | FMr of dest * Id.t
+  | Save of Id.t * stkvar (* レジスタ変数の値をスタック変数へ保存 *)
+  | Restore of dest * stkvar (* スタック変数から値を復元 *)
+  (* | IAsF of dest * Id.t *)
+  (* | FAsI of dest * Id.t *)
 type fundef =
     { name : Id.l; args : Id.t list; body : t list; ret : Type.t }
 type prog = Prog of fundef list * t list
@@ -95,9 +97,9 @@ let rec fv_exp = function
      [x; y]  
   | Add(_, x, y') | Shl(_, x, y')| Shr(_, x, y') -> 
      x :: (fv_id_or_imm y')
-  | If(_, (x, y'), e_then, e_else) ->
+  | If(_, _, (x, y'), e_then, e_else) ->
      x :: (fv_id_or_imm y') @ (remove_and_uniq S.empty (fv e_then @ fv e_else))
-  | IfF(_, (x, y), e_then, e_else) -> 
+  | IfF(_, _, (x, y), e_then, e_else) -> 
      [x; y] @ (remove_and_uniq S.empty (fv e_then @ fv e_else))
   | Call (_, _, xs) -> 
      xs
