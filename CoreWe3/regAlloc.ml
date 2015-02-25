@@ -34,6 +34,30 @@ let rec mk_mgraph mps mgs = function (* 転送命令グラフ *)
        | _  -> mgs in
      mk_mgraph mps mgs es
 
+let rec simplify k ig stk =
+  let non_regs = S.filter (fun x -> not (is_reg x)) (UG.nodes ig) in
+  if S.is_empty non_regs then
+    (ig, stk)
+  else
+    let low_degs = S.filter (fun x -> UG.deg x ig < k) non_regs in
+    if S.is_empty low_degs then
+      (* let xc = let x = S.min_elt non_regs in (x, M.find x cst) in *)
+      (* let (x, _) =  *)
+      (* 	S.fold (fun y (x, c) ->  *)
+      (* 		let d = M.find y cst in *)
+      (* 		if d < c then (y, d) else (x, c)) *)
+      (* 	       non_regs xc in *)
+      let x = S.min_elt non_regs in
+      let adj_x = UG.adj x ig in
+      (UG.rm_node x ig, (x, adj_x)::stk)
+    else
+      let (ig, stk) = 
+	S.fold (fun x (ig, stk) -> 
+		let adj_x = UG.adj x ig in
+		(UG.rm_node x ig, (x, adj_x)::stk)) 
+	       low_degs (ig, stk) in
+      simplify k ig stk
+
 let h ({ name = Id.L(x); args = yts; body = e; ret = t } as fdef) =
   let mps = Liveness.h fdef in
   let igs = mk_igraph mps (UG.new_graph (), UG.new_graph ()) e in
