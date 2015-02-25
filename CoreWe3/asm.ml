@@ -100,11 +100,19 @@ let rec fv_exp = function
      x :: (fv_id_or_imm y') @ (remove_and_uniq S.empty (fv e_then @ fv e_else))
   | IfF(_, _, (x, y), e_then, e_else) -> 
      [x; y] @ (remove_and_uniq S.empty (fv e_then @ fv e_else))
-  | Call (_, _, xs) -> 
-     List.map fst xs
+  | Call (_, _, xts) -> 
+     List.map fst xts
 and fv = function 
   | [] -> []
   | (_, e, _)::e_rest -> (fv_exp e)@(fv e_rest)
+
+let ext_env env e = (*各命令で定義される変数*)
+  match get_inst e with
+  | Nop | St(_) | FSt(_)| Save(_) | FSave(_) ->
+     env
+  | Ld(xt, _, _) | FLd(xt, _, _) | IToF(xt, _) | FToI(xt, _) | Neg(xt, _) | Add(xt, _, _) | Sub(xt, _, _) | And(xt, _, _) | Or(xt, _, _) | Li(xt, _) | Shl(xt, _, _) | Shr(xt, _, _) | FAdd(xt, _, _) | FSub(xt, _, _) | FMul(xt, _, _) | FInv(xt, _) | FAbs(xt, _) | Sqrt(xt, _) | FLi(xt, _)  | If(xt, _, _, _, _) | IfF(xt, _, _, _, _) | Call(xt, _, _) | LoadLabel(xt, _) | Mr(xt, _) | FMr(xt, _) | Restore(xt, _) | FRestore(xt, _) ->
+     M.add (fst xt) (snd xt) env
+
 
 let imm_max = 0x7fff
 let imm_min = 0x8000

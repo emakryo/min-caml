@@ -34,3 +34,5 @@ and pp_t_tup ts =
     | s::ss -> Format.sprintf "%s * %s" (pp_t s) (pp_t_tup' ss)
   in
   Format.sprintf "(%s)" (pp_t_tup' ts)
+
+let isn't_float t = t <> Float

@@ -168,8 +168,9 @@ let h { Closure.name = (Id.L(x), t); Closure.args = yts;
   match t with
   | Type.Fun (_, t_ret) ->
      let mrs = List.map new_t (get_args yts reglist freglist) in
+     let args = map_args yts reglist freglist in
      let bdy = mrs @ (g env (ret_reg t_ret, t_ret) e) in
-     {name = Id.L(x); args = yts; body = bdy; ret = t_ret}
+     {name = Id.L(x); args = args; body = bdy; ret = t_ret}
   | _ -> assert false
 
 (* プログラム全体の仮想マシンコード生成 *)
