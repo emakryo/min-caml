@@ -128,19 +128,15 @@ and g' oc (tail, (i, e, b)) =  (* 各命令のアセンブリ生成 *)
   (*    Printf.fprintf oc "\tFASI%s\t%s\t%s\n" at (reg x) (reg y) *)
   | (false, LoadLabel((x, t), Id.L(l))) -> 
      Printf.fprintf oc "\t%sLDI\t%s\t.%s\n" at (reg x) l
-  | (false, Save(x, Vr(y))) -> (*TODO: implement virtual instruction*)
+  | (false, Save(x, y)) -> (*TODO: implement virtual instruction*)
      Printf.fprintf oc "\t%sSAVE\t%s\t%s\n" at (reg x) (reg y)
-  | (false, Restore((x, t), Vr(y))) -> (*TODO: implement virtual instruction*)
+  | (false, Restore((x, t), y)) -> (*TODO: implement virtual instruction*)
      Printf.fprintf oc "\t%sRSTR\t%s\t%s\n" at (reg x) (reg y)
-  | (false, Save(x, I(i))) -> (*TODO: implement virtual instruction*)
-     Printf.fprintf oc "\t%sSAVE\t%s\t%d\n" at (reg x) i
-  | (false, Restore((x, t), I(i))) -> (*TODO: implement virtual instruction*)
-     Printf.fprintf oc "\t%sRSTR\t%s\t%d\n" at (reg x) i
-  | (false, Save(x, F(f))) -> (*TODO: implement virtual instruction*)
-     Printf.fprintf oc "\t%sSAVE\t%s\t%f\n" at (reg x) f
-  | (false, Restore((x, t), F(f))) -> (*TODO: implement virtual instruction*)
-     Printf.fprintf oc "\t%sRSTR\t%s\t%f\n" at (reg x) f
-  | (true, (Nop | Mr _ | FMr _ | Ld _ | St _ | FLd _ | FSt _ | Li _ | FLi _ | IToF _ | FToI _ | Neg _ | Add _ | Sub _ | And _ | Or _ | Shl _ | Shr _ | FAdd _ | FSub _ | FMul _ | FInv _ | FAbs _ | Sqrt _ (* | IAsF _ | FAsI _  *)| LoadLabel _ | Save _ | Restore _ as e)) ->
+  | (false, FSave(x, y)) -> (*TODO: implement virtual instruction*)
+     Printf.fprintf oc "\t%sFSAVE\t%s\t%s\n" at (reg x) (reg y)
+  | (false, FRestore((x, t), y)) -> (*TODO: implement virtual instruction*)
+     Printf.fprintf oc "\t%sFRSTR\t%s\t%s\n" at (reg x) (reg y)
+  | (true, (Nop | Mr _ | FMr _ | Ld _ | St _ | FLd _ | FSt _ | Li _ | FLi _ | IToF _ | FToI _ | Neg _ | Add _ | Sub _ | And _ | Or _ | Shl _ | Shr _ | FAdd _ | FSub _ | FMul _ | FInv _ | FAbs _ | Sqrt _ (* | IAsF _ | FAsI _  *)| LoadLabel _ | Save _ | Restore _ | FSave _ | FRestore _ as e)) ->
      g' oc (false, (i, e, b));
      Printf.fprintf oc "\tRET\n"
   | (tail, If(dest, cnd, (x, y'), e1, e2)) ->

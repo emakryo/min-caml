@@ -33,9 +33,9 @@ let rec map_args yts rs frs =
      match t with
      | Type.Unit -> map_args yts rs frs
      | Type.Float -> 
-	(List.hd frs)::(map_args yts rs (List.tl frs))
+	(List.hd frs, t)::(map_args yts rs (List.tl frs))
      | _ -> 
-	(List.hd rs)::(map_args yts (List.tl rs) frs)
+	(List.hd rs, t)::(map_args yts (List.tl rs) frs)
 
 let rec g env dest e = (* 式の仮想マシンコード生成 *)
   let e' = g' env dest e in
@@ -150,9 +150,12 @@ and g' env dest (r, e) = (* 式の仮想マシンコード生成 *)
 	| Type.Int -> [St(x, reg_zero, -1)]
 	| Type.Float -> [FSt(x, reg_zero, -1)]
 	| _ -> failwith "write supported only for int and float.")
-    | Closure.Fasi(x) | Closure.Iasf(x) ->
+    | Closure.Fasi(x) ->
        let tmp = Id.genid "stk" in
-       [Save(x, Vr tmp); Restore(dest, Vr tmp)]
+       [FSave(x, tmp); Restore(dest, tmp)]
+    | Closure.Iasf(x) ->
+       let tmp = Id.genid "stk" in
+       [Save(x, tmp); FRestore(dest, tmp)]
     | Closure.Ftoi(x) ->
        [FToI(dest, x)]
     | Closure.Itof(x) ->
@@ -161,13 +164,12 @@ and g' env dest (r, e) = (* 式の仮想マシンコード生成 *)
 (* 関数の仮想マシンコード生成 *)
 let h { Closure.name = (Id.L(x), t); Closure.args = yts; 
 	Closure.formal_fv = zts; Closure.body = e} =
-  let ys = List.map (fun (y, t) -> y) yts in
   let env = M.add x t (M.add_list yts (M.add_list zts M.empty)) in
   match t with
   | Type.Fun (_, t_ret) ->
      let mrs = List.map new_t (get_args yts reglist freglist) in
      let bdy = mrs @ (g env (ret_reg t_ret, t_ret) e) in
-     {name = Id.L(x); args = ys; body = bdy; ret = t_ret}
+     {name = Id.L(x); args = yts; body = bdy; ret = t_ret}
   | _ -> assert false
 
 (* プログラム全体の仮想マシンコード生成 *)
