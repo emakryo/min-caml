@@ -42,6 +42,10 @@ type prog = Prog of fundef list * t list
 
 val cond_of_string : cond -> string
 
+val tuple2_map : ('a -> 'b) -> 'a * 'a -> 'b * 'b 
+val tuple2_map2 : ('a -> 'b -> 'c) -> 'a * 'a -> 'b * 'b -> 'c * 'c
+val tuple2_map3 : ('a -> 'b -> 'c -> 'd) -> 'a * 'a -> 'b * 'b -> 'c * 'c -> 'd * 'd
+
 val new_id : unit -> int
 val new_t : inst -> t
 

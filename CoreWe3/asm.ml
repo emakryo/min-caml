@@ -46,6 +46,10 @@ let cond_of_string = function
   | LE -> "LE"
   | LT -> "LT"
 
+let tuple2_map f (x, y) = (f x, f y)
+let tuple2_map2 f (x1, y1) (x2, y2) = (f x1 x2, f y1 y2)
+let tuple2_map3 f (x1, y1) (x2, y2) (x3, y3) = (f x1 x2 x3, f y1 y2 y3)
+
 let counter = ref 0
 let new_id () = incr counter; !counter
 
@@ -112,7 +116,6 @@ let ext_env env e = (*各命令で定義される変数*)
      env
   | Ld(xt, _, _) | FLd(xt, _, _) | IToF(xt, _) | FToI(xt, _) | Neg(xt, _) | Add(xt, _, _) | Sub(xt, _, _) | And(xt, _, _) | Or(xt, _, _) | Li(xt, _) | Shl(xt, _, _) | Shr(xt, _, _) | FAdd(xt, _, _) | FSub(xt, _, _) | FMul(xt, _, _) | FInv(xt, _) | FAbs(xt, _) | Sqrt(xt, _) | FLi(xt, _)  | If(xt, _, _, _, _) | IfF(xt, _, _, _, _) | Call(xt, _, _) | LoadLabel(xt, _) | Mr(xt, _) | FMr(xt, _) | Restore(xt, _) | FRestore(xt, _) ->
      M.add (fst xt) (snd xt) env
-
 
 let imm_max = 0x7fff
 let imm_min = 0x8000
