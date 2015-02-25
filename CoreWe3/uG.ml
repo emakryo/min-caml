@@ -31,6 +31,13 @@ let rm_node x ug =
   let egs = S.fold (fun y egs -> M.add y (S.remove x (adj y ug)) egs) adj_x ug.edges in
   {nodes = S.remove x ug.nodes; edges = M.remove x egs}
 
+let add_prod_edges xset yset ug = 
+  S.fold (fun x ug ->
+	  S.fold (fun y ug ->
+		  add_edge (x, y) ug)
+		 yset ug)
+	 xset ug
+
 let pp_graph ug =
   S.iter
     (fun x ->

@@ -14,16 +14,25 @@ let rec mk_igraph mps igs = function  (* ´³¾Ä¥°¥é¥Õ *)
        | Mr(_) | FMr(_) -> tuple2_map2 S.diff liveouts (Liveness.use_set e)
        | _  -> liveouts in
      let dsets = Liveness.def_set e in
-     let igs = 
-       tuple2_map3 
-	 (fun ig dset iset ->
-	  S.fold (fun x ig ->
-		  S.fold (fun y ig ->
-			  UG.add_edge (x, y) ig)
-			 iset ig)
-		 dset ig
-	 ) igs dsets isets in
+     let igs = tuple2_map3 UG.add_prod_edges dsets isets igs in
      mk_igraph mps igs es
+
+let rec mk_mgraph mps mgs = function (* Å¾Á÷Ì¿Îá¥°¥é¥Õ *)
+  | [] -> mgs
+  | e::es ->
+     let mgs =
+       match get_inst e with
+       | If(_, _, _, e_then, e_else) | IfF(_, _, _, e_then, e_else) ->
+	  mk_mgraph mps (mk_mgraph mps mgs e_then) e_else
+       | _ -> mgs in
+     let mgs =
+       match get_inst e with
+       | Mr(_) | FMr(_) -> 
+	  let usets = Liveness.use_set e in
+	  let dsets = Liveness.def_set e in
+	  tuple2_map3 UG.add_prod_edges dsets usets mgs
+       | _  -> mgs in
+     mk_mgraph mps mgs es
 
 let h ({ name = Id.L(x); args = yts; body = e; ret = t } as fdef) =
   let mps = Liveness.h fdef in
