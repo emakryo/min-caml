@@ -76,67 +76,80 @@ let rec select mg rset regenv = function
 	 S.fold (fun y s -> 
 		 if regmem y regenv then S.add (regfind y regenv) s
 	         else s) (UG.adj x mg) S.empty in
-       let u = S.union non_adj_regs move_regs in
+       let u = S.inter non_adj_regs move_regs in
        let r = S.max_elt (if S.is_empty u then non_adj_regs else u) in
        let ig = UG.add_adj x adj_x ig in
        select mg rset (M.add x r regenv) (ig, stk)
 
-(* let rec allocate regenv = function  *)
-(*   | [] -> [] *)
-(*   | e::es -> (allocate' regenv e)::(allocate regenv es) *)
-(* and allocate' regenv (i, e, b) = *)
-(*   let e' = *)
-(*     match e with *)
-(*     | Nop -> Nop *)
-(*     | Ld((x, t), y, i) -> Ld((),) *)
-(*     | St(_) -> "St" *)
-(*     | FLd(_) -> "FLd" *)
-(*     | FSt(_) -> "FSt" *)
-(*     | IToF(_) -> "IToF" *)
-(*     | FToI(_) -> "FToI" *)
-(*     | Neg(_) -> "Neg" *)
-(*     | Add(_) -> "Add" *)
-(*     | Sub(_) -> "Sub" *)
-(*     | And(_) -> "And" *)
-(*     | Or(_) -> "Or" *)
-(*     | Li(_) -> "Li" *)
-(*     | Shl(_) -> "Shl" *)
-(*     | Shr(_) -> "Shr" *)
-(*     | FAdd(_) -> "FAdd" *)
-(*     | FSub(_) -> "FSub" *)
-(*     | FMul(_) -> "FMul" *)
-(*     | FInv(_) -> "FInv" *)
-(*     | FAbs(_) -> "FAbs" *)
-(*     | Sqrt(_) -> "Sqrt" *)
-(*     | FLi(_) -> "FLi" *)
-(*     | If(_) -> "If" *)
-(*     | IfF(_) -> "IfF" *)
-(*     | Call(_) -> "Call" *)
-(*     | LoadLabel(_) -> "LoadLabel" *)
-(*     | Mr(_) -> "Mr" *)
-(*     | FMr(_) -> "FMr" *)
-(*     | Save(_) -> "Save" *)
-(*     | Restore(_) -> "Restore" *)
-(*     | FSave(_) -> "FSave" *)
-(*     | FRestore(_) -> "FRestore" *)
-(*   in *)
-(*   (i, e', b) *)
+let rec allocate regenv = function
+  | [] -> []
+  | e::es -> (allocate' regenv e)::(allocate regenv es)
+and allocate' regenv (i, e, b) =
+  let e' =
+    match e with
+    | Nop -> Nop
+    | Ld((x, t), y, i) -> Ld((regfind x regenv, t), regfind y regenv, i)
+    | St(x, y, i) -> St(regfind x regenv, regfind y regenv, i)
+    | FLd((x, t), y, i) -> FLd((regfind x regenv, t), regfind y regenv, i)
+    | FSt(x, y, i) -> FSt(regfind x regenv, regfind y regenv, i)
+    | IToF((x, t), y) -> IToF((regfind x regenv, t), regfind y regenv)
+    | FToI((x, t), y) -> FToI((regfind x regenv, t), regfind y regenv)
+    | Neg((x, t), y) -> Neg((regfind x regenv, t), regfind y regenv)
+    | Add((x, t), y, V(z)) -> Add((regfind x regenv, t), regfind y regenv, V(regfind z regenv))
+    | Add((x, t), y, C(i)) -> Add((regfind x regenv, t), regfind y regenv,C(i))
+    | Sub((x, t), y, z) -> Sub((regfind x regenv, t), regfind y regenv, regfind z regenv)
+    | And((x, t), y, z) -> And((regfind x regenv, t), regfind y regenv, regfind z regenv)
+    | Or((x, t), y, z) -> Or((regfind x regenv, t), regfind y regenv, regfind z regenv)
+    | Li((x, t), i) -> Li((regfind x regenv, t), i)
+    | Shl((x, t), y, V(z)) -> Shl((regfind x regenv, t), regfind y regenv, V(regfind z regenv))
+    | Shl((x, t), y, C(i)) -> Shl((regfind x regenv, t), regfind y regenv, C(i))
+    | Shr((x, t), y, V(z)) -> Shr((regfind x regenv, t), regfind y regenv, V(regfind z regenv))
+    | Shr((x, t), y, C(i)) -> Shr((regfind x regenv, t), regfind y regenv, C(i))
+    | FAdd((x, t), y, z) -> FAdd((regfind x regenv, t), regfind y regenv, regfind z regenv)
+    | FSub((x, t), y, z) -> FSub((regfind x regenv, t), regfind y regenv, regfind z regenv)
+    | FMul((x, t), y, z) -> FMul((regfind x regenv, t), regfind y regenv, regfind z regenv)
+    | FInv((x, t), y) -> FInv((regfind x regenv, t), regfind y regenv)
+    | FAbs((x, t), y) -> FAbs((regfind x regenv, t), regfind y regenv)
+    | Sqrt((x, t), y) -> Sqrt((regfind x regenv, t), regfind y regenv)
+    | FLi((x, t), f) -> FLi((regfind x regenv, t), f)
+    | If((x, t), cond, (y, V(z)), e_then, e_else) -> If((regfind x regenv, t), cond, (regfind y regenv, V(regfind z regenv)), allocate regenv e_then, allocate regenv e_else)
+    | If((x, t), cond, (y, C(i)), e_then, e_else) -> If((regfind x regenv, t), cond, (regfind y regenv, C(i)), allocate regenv e_then, allocate regenv e_else)
+    | IfF((x, t), cond, (y, z), e_then, e_else) -> IfF((regfind x regenv, t), cond, (regfind y regenv, regfind z regenv), allocate regenv e_then, allocate regenv e_else)
+    | Call((x, t), f, yts) -> Call((regfind x regenv, t), f, List.map (fun (y, t) -> (regfind y regenv, t)) yts)
+    | LoadLabel((x, t), l) -> LoadLabel((regfind x regenv, t), l)
+    | Mr((x, t), y) -> Mr((regfind x regenv, t), regfind y regenv)
+    | FMr((x, t), y) -> FMr((regfind x regenv, t), regfind y regenv)
+    | Save(x, s) -> Save(regfind x regenv, s)
+    | Restore((x, t), s) -> Restore((regfind x regenv, t), s)
+    | FSave(x, s) -> Save(regfind x regenv, s)
+    | FRestore((x, t), s) -> Restore((regfind x regenv, t), s)
+  in
+  (i, e', b)
 
-let h ({ name = Id.L(x); args = yts; body = e; ret = t } as fdef) =
-  let mps = Liveness.h fdef in
+let rec g tl e = 
+  let mps = Liveness.calc_live_main tl e in
   let igs = mk_igraph mps (UG.new_graph (), UG.new_graph ()) e in
-  Format.eprintf "igraph ==================@.";
-  UG.pp_graph (fst igs);
   let mgs = mk_mgraph mps (UG.new_graph (), UG.new_graph ()) e in
   let igstks = tuple2_map3 simplify (Array.length regs, Array.length fregs) igs ([], []) in
   let (regenvi, regenvf) = tuple2_map4 select mgs (regset, fregset) (M.empty, M.empty) igstks in
   let regenv = M.fold (fun x r env -> M.add x r env) regenvi regenvf in
-  Format.eprintf "regenv ==================@.";
-  M.iter (fun x r -> Format.eprintf "%s -> %s@." x r) regenv;
-  ()
+  let e' = allocate regenv e in
+  (* Format.eprintf "igraph ==================@."; *)
+  (* UG.pp_graph (fst igs); *)
+  (* UG.pp_graph (snd igs); *)
+  (* Format.eprintf "mgraph ==================@."; *)
+  (* UG.pp_graph (fst mgs); *)
+  (* UG.pp_graph (snd mgs); *)
+  (* Format.eprintf "regenv ==================@."; *)
+  (* M.iter (fun x r -> Format.eprintf "%s -> %s@." x r) regenv; *)
+  e'
+
+let h ({ name = Id.L(x); args = yts; body = e; ret = t }) =
+  let e' = g (Liveness.Tail (ret_reg t, t)) e in
+  { name = Id.L(x); args = yts; body = e'; ret = t }
 
 let f (Prog(fundefs, e)) = (* プログラム全体のレジスタ割り当て (caml2html: regalloc_f) *)
   Format.eprintf "register allocation: may take some time (up to a few minutes, depending on the size of functions)@.";
-  List.iter h fundefs;
-  let s = Liveness.g e in
-  Prog(fundefs, e)
+  let fundefs' = List.map h fundefs in
+  let e' = g (Liveness.NonTail []) e in
+  Prog(fundefs', e')

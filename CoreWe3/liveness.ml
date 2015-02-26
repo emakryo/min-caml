@@ -100,20 +100,13 @@ let rec emit_livemap mps = function
      let outf_s = String.concat "; " (S.to_list (get_liveout (i, e, b) mpf)) in
      Format.eprintf "in[%d]  = {int: {in: [%s], out: [%s]}, float: {in: [%s], out: [%s]}}@." i ini_s outi_s inf_s outf_s
 
-let rec calc_live_iter mps tl e n =
-  Format.eprintf "iteration %d...@." n;
-  let mps' = calc_live mps tl e in
-  (* emit_livemap mps' e; *)
-  if mps = mps' then
-    mps
-  else
-    calc_live_iter mps' tl e (n + 1)
-
-let h { name = Id.L(x); args = yts; body = e; ret = t } =
-  Format.eprintf "Analysing liveness in %s...@." x;
-  calc_live_iter (AM.empty, AM.empty) (Tail (ret_reg t, t)) e 1
-
-let g e =
-  Format.eprintf "Analysing liveness in toplevel...@.";
-  calc_live_iter (AM.empty, AM.empty) (NonTail []) e 1
-
+let calc_live_main tl e =
+  let rec calc_live_iter mps tl e n =
+    Format.eprintf "iteration %d...@." n;
+    let mps' = calc_live mps tl e in
+    (* emit_livemap mps' e; *)
+    if mps = mps' then
+      mps
+    else
+      calc_live_iter mps' tl e (n + 1) in
+  calc_live_iter (AM.empty, AM.empty) tl e 1
