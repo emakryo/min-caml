@@ -61,11 +61,13 @@ and rm_nop' (i, e, b) =
   | _ -> [(i, e, b)]
 
 let rec g oc = function (* 命令列のアセンブリ生成 *)
-  | (_, []) -> ()
+  | (false, []) -> ()
+  | (true, []) -> Printf.fprintf oc "\tRET\n"
   | (tail, [e]) -> g' oc (tail, e)
   | (tail, e::es) -> g' oc (false, e); g oc (tail, es)
 and g' oc (tail, (i, e, b)) =  (* 各命令のアセンブリ生成 *)
   let at = if b then "@" else "" in
+  (* let at = if b then "@" else "<"^(string_of_int i)^">" in *)
   match (tail, e) with
   | (false, Nop) -> 
      Printf.fprintf oc "\t%sADDI\t%s\t%s\t0\t#Nop\n" at (reg reg_zero) (reg reg_zero)
