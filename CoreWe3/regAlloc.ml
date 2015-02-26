@@ -17,6 +17,17 @@ let rec mk_igraph mps igs = function  (* 干渉グラフ *)
      let igs = tuple2_map3 UG.add_prod_edges dsets isets igs in
      mk_igraph mps igs es
 
+let rec add_move_edges yts rs frs (mgi, mgf) =
+  match yts with
+  | [] -> (mgi, mgf)
+  | (y, t)::yts ->
+     match t with
+     | Type.Unit -> add_move_edges yts rs frs (mgi, mgf)
+     | Type.Float -> 
+	add_move_edges yts rs (List.tl frs) (mgi, UG.add_edge (y, List.hd frs) mgf)
+     | _ -> 
+	add_move_edges yts (List.tl rs) frs (UG.add_edge (y, List.hd rs) mgi, mgf)
+
 let rec mk_mgraph mps mgs = function (* 転送命令グラフ *)
   | [] -> mgs
   | e::es ->
@@ -31,6 +42,9 @@ let rec mk_mgraph mps mgs = function (* 転送命令グラフ *)
 	  let usets = Liveness.use_set e in
 	  let dsets = Liveness.def_set e in
 	  tuple2_map3 UG.add_prod_edges dsets usets mgs
+       | Call(xt, _, yts) ->
+	  let mgs = add_move_edges yts reglist freglist mgs in
+	  add_move_edges [xt] reglist freglist mgs
        | _  -> mgs in
      mk_mgraph mps mgs es
 
@@ -63,23 +77,42 @@ let rec simplify k ig stk =
 	       low_degs (ig, stk) in
       simplify k ig stk
 
+let rec init_regenv regenv = function
+  | [] -> regenv
+  | e::es ->
+     let regenv =
+       match get_inst e with
+       | If(_, _, _, e_then, e_else) | IfF(_, _, _, e_then, e_else) ->
+	  init_regenv (init_regenv regenv e_then) e_else
+       | _ -> regenv in
+     let unit_dests = List.filter (fun (x, t) -> t = Type.Unit) (get_dests e) in
+     let regenv = M.add_list (List.map (fun (x, t) -> (x, reg_zero)) unit_dests) regenv in
+     init_regenv regenv es
+
 let rec select mg rset regenv = function
   | (ig, []) -> regenv
   | (ig, (x, adj_x)::stk) -> 
-     let adj_regs = 
-       S.fold (fun y s -> S.add (regfind y regenv) s) adj_x S.empty in
-     let non_adj_regs = S.diff rset adj_regs in
-     if S.is_empty non_adj_regs then
-       raise (Spill x)
-     else
-       let move_regs = 
-	 S.fold (fun y s -> 
-		 if regmem y regenv then S.add (regfind y regenv) s
-	         else s) (UG.adj x mg) S.empty in
-       let u = S.inter non_adj_regs move_regs in
-       let r = S.max_elt (if S.is_empty u then non_adj_regs else u) in
-       let ig = UG.add_adj x adj_x ig in
-       select mg rset (M.add x r regenv) (ig, stk)
+     let regenv = 
+       if M.mem x regenv then
+	 regenv
+       else
+	 let adj_regs = 
+	   S.fold (fun y s -> S.add (regfind y regenv) s) adj_x S.empty in
+	 let non_adj_regs = S.diff rset adj_regs in
+	 if S.is_empty non_adj_regs then
+	   raise (Spill x)
+	 else
+	   let move_regs = 
+	     S.fold (fun y s -> 
+		     if regmem y regenv then S.add (regfind y regenv) s
+	             else s) (UG.adj x mg) S.empty in
+	   let u = S.inter non_adj_regs move_regs in
+	   let r = S.max_elt (if S.is_empty u then non_adj_regs else u) in
+	   M.add x r regenv in
+     let ig = UG.add_adj x adj_x ig in
+     select mg rset regenv (ig, stk)
+
+(* let rec spill_for_call  *)
 
 let rec allocate regenv = function
   | [] -> []
@@ -131,25 +164,27 @@ let rec g tl e =
   let igs = mk_igraph mps (UG.new_graph (), UG.new_graph ()) e in
   let mgs = mk_mgraph mps (UG.new_graph (), UG.new_graph ()) e in
   let igstks = tuple2_map3 simplify (Array.length regs, Array.length fregs) igs ([], []) in
-  let (regenvi, regenvf) = tuple2_map4 select mgs (regset, fregset) (M.empty, M.empty) igstks in
+  let (regenvi, regenvf) = tuple2_map4 select mgs (regset, fregset) (init_regenv M.empty e, M.empty) igstks in
   let regenv = M.fold (fun x r env -> M.add x r env) regenvi regenvf in
-  let e' = allocate regenv e in
-  (* Format.eprintf "igraph ==================@."; *)
-  (* UG.pp_graph (fst igs); *)
-  (* UG.pp_graph (snd igs); *)
-  (* Format.eprintf "mgraph ==================@."; *)
-  (* UG.pp_graph (fst mgs); *)
-  (* UG.pp_graph (snd mgs); *)
-  (* Format.eprintf "regenv ==================@."; *)
-  (* M.iter (fun x r -> Format.eprintf "%s -> %s@." x r) regenv; *)
-  e'
+  let e = allocate regenv e in
+  Format.eprintf "igraph ==================@.";
+  UG.pp_graph (fst igs);
+  UG.pp_graph (snd igs);
+  Format.eprintf "mgraph ==================@.";
+  UG.pp_graph (fst mgs);
+  UG.pp_graph (snd mgs);
+  Format.eprintf "regenv ==================@.";
+  M.iter (fun x r -> Format.eprintf "%s -> %s@." x r) regenv;
+  e
 
 let h ({ name = Id.L(x); args = yts; body = e; ret = t }) =
+  Format.eprintf "allocating register in %s@." x;
   let e' = g (Liveness.Tail (ret_reg t, t)) e in
   { name = Id.L(x); args = yts; body = e'; ret = t }
 
 let f (Prog(fundefs, e)) = (* プログラム全体のレジスタ割り当て (caml2html: regalloc_f) *)
   Format.eprintf "register allocation: may take some time (up to a few minutes, depending on the size of functions)@.";
   let fundefs' = List.map h fundefs in
+  Format.eprintf "allocating register in main pocedure@.";
   let e' = g (Liveness.NonTail []) e in
   Prog(fundefs', e')
