@@ -57,6 +57,14 @@ let new_id () = incr counter; !counter
 let new_t e = (new_id (), e, false)
 
 let get_inst (i, e, b) = e
+let get_id (i, e, b) = i
+let get_flag (i, e, b) = b
+let get_dests e = 
+  match get_inst e with
+  | Nop | St(_) | FSt(_)| Save(_) | FSave(_) ->
+     []
+  | Ld(xt, _, _) | FLd(xt, _, _) | IToF(xt, _) | FToI(xt, _) | Neg(xt, _) | Add(xt, _, _) | Sub(xt, _, _) | And(xt, _, _) | Or(xt, _, _) | Li(xt, _) | Shl(xt, _, _) | Shr(xt, _, _) | FAdd(xt, _, _) | FSub(xt, _, _) | FMul(xt, _, _) | FInv(xt, _) | FAbs(xt, _) | Sqrt(xt, _) | FLi(xt, _)  | If(xt, _, _, _, _) | IfF(xt, _, _, _, _) | Call(xt, _, _) | LoadLabel(xt, _) | Mr(xt, _) | FMr(xt, _) | Restore(xt, _) | FRestore(xt, _) ->
+     [xt]
 
 let reg_of_int i = "%r" ^ (Format.sprintf "%02d" i)
 let freg_of_int i = "%f" ^ (Format.sprintf "%02d" i)
@@ -113,12 +121,7 @@ and fv = function
   | [] -> []
   | (_, e, _)::e_rest -> (fv_exp e)@(fv e_rest)
 
-let ext_env env e = (*各命令で定義される変数*)
-  match get_inst e with
-  | Nop | St(_) | FSt(_)| Save(_) | FSave(_) ->
-     env
-  | Ld(xt, _, _) | FLd(xt, _, _) | IToF(xt, _) | FToI(xt, _) | Neg(xt, _) | Add(xt, _, _) | Sub(xt, _, _) | And(xt, _, _) | Or(xt, _, _) | Li(xt, _) | Shl(xt, _, _) | Shr(xt, _, _) | FAdd(xt, _, _) | FSub(xt, _, _) | FMul(xt, _, _) | FInv(xt, _) | FAbs(xt, _) | Sqrt(xt, _) | FLi(xt, _)  | If(xt, _, _, _, _) | IfF(xt, _, _, _, _) | Call(xt, _, _) | LoadLabel(xt, _) | Mr(xt, _) | FMr(xt, _) | Restore(xt, _) | FRestore(xt, _) ->
-     M.add (fst xt) (snd xt) env
+let ext_env env e = M.add_list (get_dests e) env
 
 let imm_max = 0x7fff
 let imm_min = 0x8000

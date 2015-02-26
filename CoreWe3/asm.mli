@@ -51,6 +51,9 @@ val new_id : unit -> int
 val new_t : inst -> t
 
 val get_inst : t -> inst
+val get_id : t -> int
+val get_flag : t -> bool
+val get_dests : t -> dest list
 
 val reg_of_int : int -> string
 val freg_of_int : int -> string
