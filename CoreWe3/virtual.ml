@@ -42,7 +42,7 @@ let rec g env dest e = (* 式の仮想マシンコード生成 *)
   List.map new_t e'
 and g' env dest (r, e) = (* 式の仮想マシンコード生成 *)
     match e with
-    | Closure.Unit -> []
+    | Closure.Unit -> [Nop]
     | Closure.Int(i) -> [Li(dest, Int32.of_int i)]
     | Closure.Float(d) -> [FLi(dest, d)]
     | Closure.Neg(x) -> [Neg(dest, x)]
@@ -89,11 +89,8 @@ and g' env dest (r, e) = (* 式の仮想マシンコード生成 *)
     | Closure.AppCls (x, ys) ->
        failwith "Sorry, closure is not supported yet..."
     | Closure.AppDir (Id.L(l), ys) ->
-       let (x, t) = dest in
-       let ret = ret_reg t in
        let yts = List.map (fun y -> (y, M.find y env)) ys in
-       let args = map_args yts reglist freglist in
-       (set_args yts reglist freglist) @ [Call((ret, t), Id.L(l), args); move_reg dest ret]
+       [Call(dest, Id.L(l), yts)]
     | Closure.Tuple (xs) -> (* 組の生成 *)
        let (tup, ty) = dest in
        let xts = List.map (fun x -> (x, M.find x env)) xs in
@@ -167,10 +164,8 @@ let h { Closure.name = (Id.L(x), t); Closure.args = yts;
   let env = M.add x t (M.add_list yts (M.add_list zts M.empty)) in
   match t with
   | Type.Fun (_, t_ret) ->
-     let mrs = List.map new_t (get_args yts reglist freglist) in
-     let args = map_args yts reglist freglist in
-     let bdy = mrs @ (g env (ret_reg t_ret, t_ret) e) in
-     {name = Id.L(x); args = args; body = bdy; ret = t_ret}
+     let bdy = g env (ret_reg t_ret, t_ret) e in
+     {name = Id.L(x); args = yts; body = bdy; ret = t_ret}
   | _ -> assert false
 
 (* プログラム全体の仮想マシンコード生成 *)
