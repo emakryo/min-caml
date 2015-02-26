@@ -49,6 +49,7 @@ let cond_of_string = function
 let tuple2_map f (x, y) = (f x, f y)
 let tuple2_map2 f (x1, y1) (x2, y2) = (f x1 x2, f y1 y2)
 let tuple2_map3 f (x1, y1) (x2, y2) (x3, y3) = (f x1 x2 x3, f y1 y2 y3)
+let tuple2_map4 f (x1, y1) (x2, y2) (x3, y3) (x4, y4) = (f x1 x2 x3 x4, f y1 y2 y3 y4)
 
 let counter = ref 0
 let new_id () = incr counter; !counter
@@ -64,6 +65,8 @@ let regs = Array.init (32-5) (fun i -> reg_of_int (i + 3));; (*r3-r29*)
 let fregs = Array.init (32-1) (fun i -> freg_of_int (i + 1))
 let reglist = Array.to_list regs
 let freglist = Array.to_list fregs
+let regset = S.of_list reglist
+let fregset = S.of_list freglist
 let reg_zero = reg_of_int 0
 let reg_hp = reg_of_int 1
 let reg_sp = reg_of_int 2

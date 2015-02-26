@@ -45,6 +45,7 @@ val cond_of_string : cond -> string
 val tuple2_map : ('a -> 'b) -> 'a * 'a -> 'b * 'b 
 val tuple2_map2 : ('a -> 'b -> 'c) -> 'a * 'a -> 'b * 'b -> 'c * 'c
 val tuple2_map3 : ('a -> 'b -> 'c -> 'd) -> 'a * 'a -> 'b * 'b -> 'c * 'c -> 'd * 'd
+val tuple2_map4 : ('a -> 'b -> 'c -> 'd -> 'e) -> 'a * 'a -> 'b * 'b -> 'c * 'c -> 'd * 'd -> 'e * 'e
 
 val new_id : unit -> int
 val new_t : inst -> t
@@ -58,6 +59,8 @@ val regs : Id.t array
 val fregs : Id.t array
 val reglist : Id.t list
 val freglist : Id.t list
+val regset : S.t
+val fregset : S.t
 val reg_zero : Id.t
 val reg_hp : Id.t
 val reg_sp : Id.t

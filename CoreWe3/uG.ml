@@ -38,6 +38,10 @@ let add_prod_edges xset yset ug =
 		 yset ug)
 	 xset ug
 
+let add_adj x ys ug =
+  let adj_x = adj x ug in
+  {nodes = S.add x ug.nodes; edges = M.add x (S.union ys adj_x) ug.edges}
+
 let pp_graph ug =
   S.iter
     (fun x ->
