@@ -25,6 +25,7 @@ let rec mk_igraph mps igs = function  (* 干渉グラフ *)
        | Mr(_) | FMr(_) -> tuple2_map2 S.diff liveouts (Liveness.use_set e)
        | _  -> liveouts in
      let dsets = Liveness.def_set e in
+     let igs = tuple2_map2 (S.fold (fun x ig -> UG.add_node x ig)) dsets igs in
      let igs = tuple2_map3 UG.add_prod_edges dsets isets igs in
      mk_igraph mps igs es
 
@@ -190,12 +191,13 @@ let rec g tl e =
 
 let h ({ name = Id.L(x); args = yts; body = e; ret = t }) =
   Format.eprintf "allocating register in %s@." x;
-  let e' = g (Liveness.Tail (ret_reg t, t)) ((get_args yts reglist freglist)@e) in
-  { name = Id.L(x); args = yts; body = e'; ret = t }
+  let e = (get_args yts reglist freglist) @ e in
+  let e = g (Liveness.Tail (ret_reg t, t)) e in
+  { name = Id.L(x); args = yts; body = e; ret = t }
 
 let f (Prog(fundefs, e)) = (* プログラム全体のレジスタ割り当て (caml2html: regalloc_f) *)
   Format.eprintf "register allocation: may take some time (up to a few minutes, depending on the size of functions)@.";
-  let fundefs' = List.map h fundefs in
+  let fundefs = List.map h fundefs in
   Format.eprintf "allocating register in main pocedure@.";
-  let e' = g (Liveness.NonTail []) e in
-  Prog(fundefs', e')
+  let e = g (Liveness.NonTail []) e in
+  Prog(fundefs, e)
