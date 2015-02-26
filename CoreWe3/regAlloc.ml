@@ -1,5 +1,16 @@
 open Asm
 
+let rec get_args yts rs frs = 
+  match yts with
+  | [] -> []
+  | (y, t)::yts ->
+     match t with
+     | Type.Unit -> get_args yts rs frs
+     | Type.Float -> 
+	(new_t (move_reg (y, t) (List.hd frs)))::(get_args yts rs (List.tl frs))
+     | _ -> 
+	(new_t (move_reg (y, t) (List.hd rs)))::(get_args yts (List.tl rs) frs)
+
 let rec mk_igraph mps igs = function  (* 干渉グラフ *)
   | [] -> igs
   | e::es ->
@@ -179,7 +190,7 @@ let rec g tl e =
 
 let h ({ name = Id.L(x); args = yts; body = e; ret = t }) =
   Format.eprintf "allocating register in %s@." x;
-  let e' = g (Liveness.Tail (ret_reg t, t)) e in
+  let e' = g (Liveness.Tail (ret_reg t, t)) ((get_args yts reglist freglist)@e) in
   { name = Id.L(x); args = yts; body = e'; ret = t }
 
 let f (Prog(fundefs, e)) = (* プログラム全体のレジスタ割り当て (caml2html: regalloc_f) *)
