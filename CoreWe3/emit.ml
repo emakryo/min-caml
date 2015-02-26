@@ -26,9 +26,12 @@ external getsgl : float -> int32 = "getsgl"
 (* let stacksize () = List.length !stackmap *)
 
 let reg r = 
-  if is_reg r 
-  then String.sub r 1 (String.length r - 1)
-  else r 
+  if is_reg r then 
+    let p = r.[1] in
+    let n = int_of_string (String.sub r 2 (String.length r - 2)) in
+    Format.sprintf "%c%d" p n
+  else 
+    r 
 
 (* (\* 関数呼び出しのために引数を並べ替える (register shuffling) *\) *)
 (* let rec shuffle sw xys =  *)
@@ -47,7 +50,7 @@ let reg r =
 let rec rm_nop = function
   | [] -> []
   | e::es -> (rm_nop' e) @ (rm_nop es)
-and rm_nop'(i, e, b) = 
+and rm_nop' (i, e, b) = 
   match e with
   | Nop -> []
   | Mr((x, _), y) | FMr((x, _), y) when x == y  -> []

@@ -58,8 +58,8 @@ let new_t e = (new_id (), e, false)
 
 let get_inst (i, e, b) = e
 
-let reg_of_int i = "%r" ^ (string_of_int i)
-let freg_of_int i = "%f" ^ (string_of_int i)
+let reg_of_int i = "%r" ^ (Format.sprintf "%02d" i)
+let freg_of_int i = "%f" ^ (Format.sprintf "%02d" i)
 
 let regs = Array.init (32-5) (fun i -> reg_of_int (i + 3));; (*r3-r29*)
 let fregs = Array.init (32-1) (fun i -> freg_of_int (i + 1))
