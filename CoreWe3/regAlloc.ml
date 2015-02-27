@@ -246,7 +246,7 @@ and allocate' regenv (i, e, b) =
   (i, e', b)
 
 let rec g env tl e = 
-  let env = M.add reg_zero Type.Int env in
+  let env = M.add freg_zero Type.Float (M.add reg_zero Type.Int env) in
   let mps = Liveness.calc_live_main tl e in
   let e = prepare_for_call mps env e in
   let mps = Liveness.calc_live_main tl e in
@@ -269,7 +269,7 @@ let rec g env tl e =
 let h ({ name = Id.L(x); args = yts; fargs = zts; body = e; ret = t }) =
   Format.eprintf "allocating register in %s@." x;
   let env = M.add_list zts (M.add_list yts M.empty) in
-  let e = (get_args reglist freglist yts) @ e in
+  let e = (get_args reglist freglist (yts @ zts)) @ e in
   let (regenv, e) = g env (Liveness.Tail (ret_reg t, t)) e in
   let yts = List.map (fun (y, t) -> (M.find y regenv, t)) yts in
   let zts = List.map (fun (z, t) -> (M.find z regenv, t)) zts in
