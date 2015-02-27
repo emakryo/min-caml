@@ -127,12 +127,6 @@ let rec mk_mgraph mps mgs = function (* 転送命令グラフ *)
 	  let usets = Liveness.use_set e in
 	  let dsets = Liveness.def_set e in
 	  tuple2_map3 UG.add_prod_edges dsets usets mgs
-       (* | Call((x, t), _, yts, zts) -> *)
-       (* 	  let (mgi, mgf) = tuple2_map3 add_move_edges mgs (reglist, freglist) (List.map fst yts, List.map fst zts) in *)
-       (* 	  (match t with *)
-       (* 	   | Type.Unit -> (mgi, mgf) *)
-       (* 	   | Type.Float -> (mgi, UG.add_edge (x, ret_reg t) mgf) *)
-       (* 	   | _ -> (UG.add_edge (x, ret_reg t) mgi, mgf)) *)
        | _  -> mgs in
      mk_mgraph mps mgs es
 

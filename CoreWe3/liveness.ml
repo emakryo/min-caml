@@ -100,8 +100,8 @@ let rec emit_livemap mps = function
 
 let calc_live_main tl e =
   let rec calc_live_iter mps tl e n =
-    (* Format.eprintf "iteration %d...@." n; *)
     let mps' = calc_live mps tl e in
+    (* Format.eprintf "iteration %d...@." n; *)
     (* emit_livemap mps' e; *)
     if mps = mps' then
       mps
