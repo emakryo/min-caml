@@ -4,39 +4,6 @@ open Asm
 
 external getsgl : float -> int32 = "getsgl"  
 
-let rec set_args yts rs frs = 
-  match yts with
-  | [] -> []
-  | (y, t)::yts ->
-     match t with
-     | Type.Unit -> set_args yts rs frs
-     | Type.Float -> 
-	(move_reg (List.hd frs, t) y)::(set_args yts rs (List.tl frs))
-     | _ -> 
-	(move_reg (List.hd rs, t) y)::(set_args yts (List.tl rs) frs)
-
-let rec get_args yts rs frs = 
-  match yts with
-  | [] -> []
-  | (y, t)::yts ->
-     match t with
-     | Type.Unit -> get_args yts rs frs
-     | Type.Float -> 
-	(move_reg (y, t) (List.hd frs))::(get_args yts rs (List.tl frs))
-     | _ -> 
-	(move_reg (y, t) (List.hd rs))::(get_args yts (List.tl rs) frs)
-
-let rec map_args yts rs frs = 
-  match yts with
-  | [] -> []
-  | (y, t)::yts ->
-     match t with
-     | Type.Unit -> map_args yts rs frs
-     | Type.Float -> 
-	(List.hd frs, t)::(map_args yts rs (List.tl frs))
-     | _ -> 
-	(List.hd rs, t)::(map_args yts (List.tl rs) frs)
-
 let rec g env dest e = (* 式の仮想マシンコード生成 *)
   let e' = g' env dest e in
   List.map new_t e'
