@@ -19,7 +19,7 @@ and g' env dest (r, e) = (* 式の仮想マシンコード生成 *)
     | Closure.Lsr(x, y) -> [Shr(dest, x, V(y))]
     | Closure.Lor(x, y) -> [Or(dest, x, y)]
     | Closure.Land(x, y) -> [And(dest, x, y)]
-    | Closure.FNeg(x) -> [FSub(dest, reg_fzero, x)]
+    | Closure.FNeg(x) -> [FSub(dest, freg_zero, x)]
     | Closure.FInv(x) -> [FInv(dest, x)]
     | Closure.FAdd(x, y) -> [FAdd(dest, x, y)]
     | Closure.FSub(x, y) -> [FSub(dest, x, y)]
