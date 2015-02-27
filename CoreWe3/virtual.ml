@@ -47,15 +47,15 @@ and g' env dest (r, e) = (* 式の仮想マシンコード生成 *)
        let e1' = g' env (x, t) e1 in
        let e2' = g' (M.add x t env) dest e2 in
        e1' @ e2'
-    | Closure.Var (x) ->
-       [move_reg dest x]
+    | Closure.Var (x) -> [move_reg dest x]
     | Closure.MakeCls ((x, t), {Closure.entry = l; Closure.actual_fv = ys}, e2) ->
        failwith "Sorry, closure is not supported yet..."
     | Closure.AppCls (x, ys) ->
        failwith "Sorry, closure is not supported yet..."
     | Closure.AppDir (Id.L(l), ys) ->
        let yts = List.map (fun y -> (y, M.find y env)) ys in
-       [Call(dest, Id.L(l), yts)]
+       let (yts, zts) = partition_by_type yts in
+       [Call(dest, Id.L(l), yts, zts)]
     | Closure.Tuple (xs) -> (* 組の生成 *)
        let (tup, ty) = dest in
        let xts = List.map (fun x -> (x, M.find x env)) xs in
@@ -129,8 +129,9 @@ let h { Closure.name = (Id.L(x), t); Closure.args = yts;
   let env = M.add x t (M.add_list yts (M.add_list zts M.empty)) in
   match t with
   | Type.Fun (_, t_ret) ->
+     let (yts, zts) = partition_by_type yts in
      let bdy = g env (ret_reg t_ret, t_ret) e in
-     {name = Id.L(x); args = yts; body = bdy; ret = t_ret}
+     {name = Id.L(x); args = yts; fargs = zts; body = bdy; ret = t_ret}
   | _ -> assert false
 
 (* プログラム全体の仮想マシンコード生成 *)

@@ -29,7 +29,7 @@ and inst = (* 一つ一つの命令に対応する式 *)
   | FLi of dest * float
   | If of dest * cond * (Id.t * id_or_imm) * t list (*then*) * t list (*else*) 
   | IfF of dest * cond * (Id.t * Id.t) * t list * t list
-  | Call of dest * Id.l * (Id.t * Type.t) list
+  | Call of dest * Id.l * dest list (*args*) * dest list (*fargs*)
   | LoadLabel of dest * Id.l
   | Mr of dest * Id.t
   | FMr of dest * Id.t
@@ -38,7 +38,7 @@ and inst = (* 一つ一つの命令に対応する式 *)
   | FSave of Id.t * Id.t (* レジスタ変数の値をスタック変数へ保存 *)
   | FRestore of dest * Id.t (* スタック変数から値を復元 *)
 type fundef =
-    { name : Id.l; args : (Id.t * Type.t) list; body : t list; ret : Type.t }
+    { name : Id.l; args : (Id.t * Type.t) list; fargs : (Id.t * Type.t) list; body : t list; ret : Type.t }
 type prog = Prog of fundef list * t list
 
 let cond_of_string = function
@@ -77,7 +77,7 @@ let get_dests e =
   match get_inst e with
   | Nop | St(_) | FSt(_)| Save(_) | FSave(_) ->
      []
-  | Ld(xt, _, _) | FLd(xt, _, _) | IToF(xt, _) | FToI(xt, _) | Neg(xt, _) | Add(xt, _, _) | Sub(xt, _, _) | And(xt, _, _) | Or(xt, _, _) | Li(xt, _) | Shl(xt, _, _) | Shr(xt, _, _) | FAdd(xt, _, _) | FSub(xt, _, _) | FMul(xt, _, _) | FInv(xt, _) | FAbs(xt, _) | Sqrt(xt, _) | FLi(xt, _)  | If(xt, _, _, _, _) | IfF(xt, _, _, _, _) | Call(xt, _, _) | LoadLabel(xt, _) | Mr(xt, _) | FMr(xt, _) | Restore(xt, _) | FRestore(xt, _) ->
+  | Ld(xt, _, _) | FLd(xt, _, _) | IToF(xt, _) | FToI(xt, _) | Neg(xt, _) | Add(xt, _, _) | Sub(xt, _, _) | And(xt, _, _) | Or(xt, _, _) | Li(xt, _) | Shl(xt, _, _) | Shr(xt, _, _) | FAdd(xt, _, _) | FSub(xt, _, _) | FMul(xt, _, _) | FInv(xt, _) | FAbs(xt, _) | Sqrt(xt, _) | FLi(xt, _)  | If(xt, _, _, _, _) | IfF(xt, _, _, _, _) | Call(xt, _, _, _) | LoadLabel(xt, _) | Mr(xt, _) | FMr(xt, _) | Restore(xt, _) | FRestore(xt, _) ->
      [xt]
 
 let reg_of_int i = "%r" ^ (Format.sprintf "%02d" i)
@@ -129,8 +129,8 @@ let rec fv_exp = function
      x :: (fv_id_or_imm y') @ (remove_and_uniq S.empty (fv e_then @ fv e_else))
   | IfF(_, _, (x, y), e_then, e_else) -> 
      [x; y] @ (remove_and_uniq S.empty (fv e_then @ fv e_else))
-  | Call (_, _, xts) -> 
-     List.map fst xts
+  | Call (_, _, yts, zts) -> 
+     (List.map fst yts) @ (List.map fst zts)
 and fv = function 
   | [] -> []
   | (_, e, _)::e_rest -> (fv_exp e)@(fv e_rest)

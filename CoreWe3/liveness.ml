@@ -16,16 +16,14 @@ let use_set e = (*各命令で使用される変数*)
      (S.singleton y, S.singleton x)
   | Add(_, x, y') | Shl(_, x, y')| Shr(_, x, y') | If(_, _, (x, y'), _, _) ->
      (S.of_list (x::fv_id_or_imm y'), S.empty)
-  | Call (_, _, xts) ->
-     let xtss = List.partition (fun (x, t) -> Type.isn't_float t) xts in
-     let xss = tuple2_map (List.map fst) xtss in
-     tuple2_map S.of_list xss
+  | Call (_, _, yts, zts) ->
+     (S.of_list (List.map fst yts), S.of_list (List.map fst zts))
 
 let def_set e = (*各命令で定義される変数*)
   match get_inst e with
   | Nop | St(_) | FSt(_) | If(_) | IfF(_) | Save(_) | FSave(_) ->
      (S.empty, S.empty)
-  | Ld(xt, _, _) | FLd(xt, _, _) | IToF(xt, _) | FToI(xt, _) | Neg(xt, _) | Add(xt, _, _) | Sub(xt, _, _) | And(xt, _, _) | Or(xt, _, _) | Li(xt, _) | Shl(xt, _, _) | Shr(xt, _, _) | FAdd(xt, _, _) | FSub(xt, _, _) | FMul(xt, _, _) | FInv(xt, _) | FAbs(xt, _) | Sqrt(xt, _) | FLi(xt, _) | Call(xt, _, _) | LoadLabel(xt, _) | Mr(xt, _) | FMr(xt, _) | Restore(xt, _) | FRestore(xt, _) ->
+  | Ld(xt, _, _) | FLd(xt, _, _) | IToF(xt, _) | FToI(xt, _) | Neg(xt, _) | Add(xt, _, _) | Sub(xt, _, _) | And(xt, _, _) | Or(xt, _, _) | Li(xt, _) | Shl(xt, _, _) | Shr(xt, _, _) | FAdd(xt, _, _) | FSub(xt, _, _) | FMul(xt, _, _) | FInv(xt, _) | FAbs(xt, _) | Sqrt(xt, _) | FLi(xt, _) | Call(xt, _, _, _) | LoadLabel(xt, _) | Mr(xt, _) | FMr(xt, _) | Restore(xt, _) | FRestore(xt, _) ->
      if Type.isn't_float (snd xt) then
        (S.singleton (fst xt), S.empty)
      else
@@ -102,7 +100,7 @@ let rec emit_livemap mps = function
 
 let calc_live_main tl e =
   let rec calc_live_iter mps tl e n =
-    Format.eprintf "iteration %d...@." n;
+    (* Format.eprintf "iteration %d...@." n; *)
     let mps' = calc_live mps tl e in
     (* emit_livemap mps' e; *)
     if mps = mps' then

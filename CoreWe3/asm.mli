@@ -1,4 +1,3 @@
-
 type id_or_imm = V of Id.t | C of int
 and dest = Id.t * Type.t
 and cond = Eq | LE | LT 
@@ -28,7 +27,7 @@ and inst = (* 一つ一つの命令に対応する式 *)
   | FLi of dest * float
   | If of dest * cond * (Id.t * id_or_imm) * t list (*then*) * t list (*else*) 
   | IfF of dest * cond * (Id.t * Id.t) * t list * t list
-  | Call of dest * Id.l * (Id.t * Type.t) list
+  | Call of dest * Id.l * dest list (*args*) * dest list (*fargs*)
   | LoadLabel of dest * Id.l
   | Mr of dest * Id.t
   | FMr of dest * Id.t
@@ -37,7 +36,7 @@ and inst = (* 一つ一つの命令に対応する式 *)
   | FSave of Id.t * Id.t (* レジスタ変数の値をスタック変数へ保存 *)
   | FRestore of dest * Id.t (* スタック変数から値を復元 *)
 type fundef =
-    { name : Id.l; args : (Id.t * Type.t) list; body : t list; ret : Type.t }
+    { name : Id.l; args : (Id.t * Type.t) list; fargs : (Id.t * Type.t) list; body : t list; ret : Type.t }
 type prog = Prog of fundef list * t list
 
 val cond_of_string : cond -> string

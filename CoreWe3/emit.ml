@@ -13,6 +13,7 @@ let reg r =
     r 
 
 let rec rm_nop = function
+  (* | e -> e *)
   | [] -> []
   | e::es -> (rm_nop' e) @ (rm_nop es)
 and rm_nop' (i, e, b) = 
@@ -125,10 +126,10 @@ and g' oc (tail, (i, e, b)) =  (* 各命令のアセンブリ生成 *)
        g'_tail_if oc e1 e2 bc
      else
        g'_non_tail_if oc e1 e2 bc
-  | (true, Call((x, t), Id.L(l), ys)) -> (* 末尾呼び出し *)
-     Printf.fprintf oc "\t%sJ\t:%s\n" at l
-  | (false, Call((x, t), Id.L(l), ys)) -> (*TODO: implement stack operation*)
-     Printf.fprintf oc "\t%sJSUB\t:%s\n" at l
+  | (true, Call((x, t), Id.L(l), yts, zts)) -> (* 末尾呼び出し *)
+     Printf.fprintf oc "\t%sJ\t:%s\t\t#%s := %s(%s)\n" at l (reg x) (reg l) (String.concat ", " (List.map (fun yt -> reg (fst yt)) yts))
+  | (false, Call((x, t), Id.L(l), yts, zts)) -> (*TODO: implement stack operation*)
+     Printf.fprintf oc "\t%sJSUB\t:%s\t\t#%s := %s(%s)\n" at l (reg x) (reg l) (String.concat ", " (List.map (fun yt -> reg (fst yt)) yts));
 and g'_tail_if oc e1 e2 bc = 
   let b_then = Id.genid (bc ^ "_then") in
   Printf.fprintf oc "\t%s\t:%s\n" bc b_then;
@@ -143,7 +144,7 @@ and g'_non_tail_if oc e1 e2 bc =
   Printf.fprintf oc "\tJ\t:%s\n" b_cont;
   Printf.fprintf oc ":%s\n" b_then;
   g oc (false, e1);
-  Printf.fprintf oc ":%s\n" b_cont
+  Printf.fprintf oc ":%s\n" b_cont  
 
 let h oc { name = Id.L(x); args = _; body = e; ret = _ } =
   Printf.fprintf oc ":%s\n" x;

@@ -1,28 +1,33 @@
 open Asm
 
-let rec set_args yts rs frs = 
-  match yts with
+let rec get_args rs frs = function
   | [] -> []
   | (y, t)::yts ->
      match t with
-     | Type.Unit -> set_args yts rs frs
+     | Type.Unit -> get_args rs frs yts
      | Type.Float -> 
-	(new_t (move_reg (List.hd frs, t) y))::(set_args yts rs (List.tl frs))
+	(new_t (move_reg (y, t) (List.hd frs)))::(get_args rs (List.tl frs) yts)
      | _ -> 
-	(new_t (move_reg (List.hd rs, t) y))::(set_args yts (List.tl rs) frs)
+	(new_t (move_reg (y, t) (List.hd rs)))::(get_args (List.tl rs) frs yts)
 
-let rec get_args yts rs frs = 
-  match yts with
+let rec set_args rs frs = function
   | [] -> []
   | (y, t)::yts ->
      match t with
-     | Type.Unit -> get_args yts rs frs
+     | Type.Unit -> set_args rs frs yts
      | Type.Float -> 
-	(new_t (move_reg (y, t) (List.hd frs)))::(get_args yts rs (List.tl frs))
+	(new_t (move_reg (List.hd frs, t) y))::(set_args rs (List.tl frs) yts)
      | _ -> 
-	(new_t (move_reg (y, t) (List.hd rs)))::(get_args yts (List.tl rs) frs)
+	(new_t (move_reg (List.hd rs, t) y))::(set_args (List.tl rs) frs yts)
 
-let prepare_for_call mps es = (* ´Ø¿ô¸Æ¤Ó½Ð¤·¤ò¤Þ¤¿¤°ÊÑ¿ô¤Ë¤Ä¤¤¤Æ¡¢save/restore¤òÁÞÆþ¤¹¤ë*)
+let rec map_args rs = function
+  | [] -> []
+  | (y, t)::yts ->
+     match t with
+     | Type.Unit -> map_args rs yts
+     | _ -> (List.hd rs, t)::(map_args (List.tl rs) yts)
+
+let prepare_for_call mps env es = (* ´Ø¿ô¸Æ¤Ó½Ð¤·¤ò¤Þ¤¿¤°ÊÑ¿ô¤Ë¤Ä¤¤¤Æ¡¢save/restore¤òÁÞÆþ¤¹¤ë*)
   let senv = ref M.empty in
   let rec prepare_for_call_aux mps env = function
     | [] -> []
@@ -41,7 +46,7 @@ let prepare_for_call mps es = (* ´Ø¿ô¸Æ¤Ó½Ð¤·¤ò¤Þ¤¿¤°ÊÑ¿ô¤Ë¤Ä¤¤¤Æ¡¢save/restore¤
        let (rstri, rstrf) = tuple2_map3 (fun f -> S.fold (folder f)) fs usets ([], []) in
        let (savei, savef) =
 	 match e with
-	 | Call(xt, f, yts) ->
+	 | Call(xt, f, ys, zs) ->
 	    let liveouts = tuple2_map (Liveness.get_liveout (i, e, b)) mps in
 	    let dsets = Liveness.def_set (i, e, b) in
 	    let livethroughs = tuple2_map2 S.diff liveouts dsets in
@@ -56,17 +61,22 @@ let prepare_for_call mps es = (* ´Ø¿ô¸Æ¤Ó½Ð¤·¤ò¤Þ¤¿¤°ÊÑ¿ô¤Ë¤Ä¤¤¤Æ¡¢save/restore¤
 	    let fs = ((fun x svar -> Save(x, svar)), (fun x svar -> FSave(x, svar))) in
 	    tuple2_map3 (fun f -> S.fold (folder f)) fs livethroughs ([], [])
 	 | e -> ([], []) in
-       let e =
+       let elist =
 	 match e with
 	 | If(xt, cond, cmp, e_then, e_else) ->
 	    let (e_then, e_else) = prepare_for_call_if mps env (e_else, e_then) in
-	    If(xt, cond, cmp, e_then, e_else)
+	    [i, If(xt, cond, cmp, e_then, e_else), b]
 	 | IfF(xt, cond, cmp, e_then, e_else) ->
 	    let (e_then, e_else) = prepare_for_call_if mps env (e_else, e_then) in
-	    IfF(xt, cond, cmp, e_then, e_else)
-	 | e -> e in
+	    [i, IfF(xt, cond, cmp, e_then, e_else), b]
+	 | Call((x, t), f, yts, zts) ->
+	    let sargs = set_args reglist freglist (yts @ zts) in
+	    let gargs = get_args reglist freglist [x, t] in
+	    let (rts, frts) = tuple2_map2 map_args (reglist, freglist) (yts, zts) in
+	    sargs @ [i, Call((ret_reg t, t), f, rts, frts), b] @ gargs
+	 | e -> [i, e, b] in
        let env = ext_env env (i, e, b) in
-       savei @ savef @ rstri @ rstrf @ [i, e, b] @ (prepare_for_call_aux mps env es)
+       savei @ savef @ rstri @ rstrf @ elist @ (prepare_for_call_aux mps env es)
   and prepare_for_call_if mps env (e_else, e_then) =
     let senv_back = !senv in
     let e_then = prepare_for_call_aux mps env e_then in
@@ -79,7 +89,7 @@ let prepare_for_call mps es = (* ´Ø¿ô¸Æ¤Ó½Ð¤·¤ò¤Þ¤¿¤°ÊÑ¿ô¤Ë¤Ä¤¤¤Æ¡¢save/restore¤
 		      M.add x (sv, f_then || f_else) se
 		    else se) !senv M.empty;
     (e_then, e_else) in
-  prepare_for_call_aux mps M.empty es
+  prepare_for_call_aux mps env es
 
 let rec mk_igraph mps igs = function  (* ´³¾Ä¥°¥é¥Õ *)
   | [] -> igs
@@ -99,16 +109,9 @@ let rec mk_igraph mps igs = function  (* ´³¾Ä¥°¥é¥Õ *)
      let igs = tuple2_map3 UG.add_prod_edges dsets isets igs in
      mk_igraph mps igs es
 
-let rec add_move_edges yts rs frs (mgi, mgf) =
-  match yts with
-  | [] -> (mgi, mgf)
-  | (y, t)::yts ->
-     match t with
-     | Type.Unit -> add_move_edges yts rs frs (mgi, mgf)
-     | Type.Float -> 
-	add_move_edges yts rs (List.tl frs) (mgi, UG.add_edge (y, List.hd frs) mgf)
-     | _ -> 
-	add_move_edges yts (List.tl rs) frs (UG.add_edge (y, List.hd rs) mgi, mgf)
+let rec add_move_edges mg rs = function
+  | [] -> mg
+  | y::ys -> add_move_edges (UG.add_edge (y, List.hd rs) mg) (List.tl rs) ys
 
 let rec mk_mgraph mps mgs = function (* Å¾Á÷Ì¿Îá¥°¥é¥Õ *)
   | [] -> mgs
@@ -124,9 +127,12 @@ let rec mk_mgraph mps mgs = function (* Å¾Á÷Ì¿Îá¥°¥é¥Õ *)
 	  let usets = Liveness.use_set e in
 	  let dsets = Liveness.def_set e in
 	  tuple2_map3 UG.add_prod_edges dsets usets mgs
-       | Call(xt, _, yts) ->
-	  let mgs = add_move_edges yts reglist freglist mgs in
-	  add_move_edges [xt] reglist freglist mgs
+       (* | Call((x, t), _, yts, zts) -> *)
+       (* 	  let (mgi, mgf) = tuple2_map3 add_move_edges mgs (reglist, freglist) (List.map fst yts, List.map fst zts) in *)
+       (* 	  (match t with *)
+       (* 	   | Type.Unit -> (mgi, mgf) *)
+       (* 	   | Type.Float -> (mgi, UG.add_edge (x, ret_reg t) mgf) *)
+       (* 	   | _ -> (UG.add_edge (x, ret_reg t) mgi, mgf)) *)
        | _  -> mgs in
      mk_mgraph mps mgs es
 
@@ -228,7 +234,7 @@ and allocate' regenv (i, e, b) =
     | If((x, t), cond, (y, V(z)), e_then, e_else) -> If((regfind x regenv, t), cond, (regfind y regenv, V(regfind z regenv)), allocate regenv e_then, allocate regenv e_else)
     | If((x, t), cond, (y, C(i)), e_then, e_else) -> If((regfind x regenv, t), cond, (regfind y regenv, C(i)), allocate regenv e_then, allocate regenv e_else)
     | IfF((x, t), cond, (y, z), e_then, e_else) -> IfF((regfind x regenv, t), cond, (regfind y regenv, regfind z regenv), allocate regenv e_then, allocate regenv e_else)
-    | Call((x, t), f, yts) -> Call((regfind x regenv, t), f, List.map (fun (y, t) -> (regfind y regenv, t)) yts)
+    | Call((x, t), f, yts, zts) -> Call((regfind x regenv, t), f, List.map (fun (y, t) -> (regfind y regenv, t)) yts, List.map (fun (z, t) -> (regfind z regenv, t)) zts)
     | LoadLabel((x, t), l) -> LoadLabel((regfind x regenv, t), l)
     | Mr((x, t), y) -> Mr((regfind x regenv, t), regfind y regenv)
     | FMr((x, t), y) -> FMr((regfind x regenv, t), regfind y regenv)
@@ -239,9 +245,10 @@ and allocate' regenv (i, e, b) =
   in
   (i, e', b)
 
-let rec g tl e = 
+let rec g env tl e = 
+  let env = M.add reg_zero Type.Int env in
   let mps = Liveness.calc_live_main tl e in
-  let e = prepare_for_call mps e in
+  let e = prepare_for_call mps env e in
   let mps = Liveness.calc_live_main tl e in
   let igs = mk_igraph mps (UG.new_graph (), UG.new_graph ()) e in
   let mgs = mk_mgraph mps (UG.new_graph (), UG.new_graph ()) e in
@@ -249,26 +256,28 @@ let rec g tl e =
   let (regenvi, regenvf) = tuple2_map4 select mgs (regset, fregset) (init_regenv M.empty e, M.empty) igstks in
   let regenv = M.fold (fun x r env -> M.add x r env) regenvi regenvf in
   let e = allocate regenv e in
-  Format.eprintf "igraph ==================@.";
-  UG.pp_graph (fst igs);
-  UG.pp_graph (snd igs);
-  Format.eprintf "mgraph ==================@.";
-  UG.pp_graph (fst mgs);
-  UG.pp_graph (snd mgs);
-  Format.eprintf "regenv ==================@.";
-  M.iter (fun x r -> Format.eprintf "%s -> %s@." x r) regenv;
+  (* Format.eprintf "igraph ==================@."; *)
+  (* UG.pp_graph (fst igs); *)
+  (* UG.pp_graph (snd igs); *)
+  (* Format.eprintf "mgraph ==================@."; *)
+  (* UG.pp_graph (fst mgs); *)
+  (* UG.pp_graph (snd mgs); *)
+  (* Format.eprintf "regenv ==================@."; *)
+  (* M.iter (fun x r -> Format.eprintf "%s -> %s@." x r) regenv; *)
   (regenv, e)
 
-let h ({ name = Id.L(x); args = yts; body = e; ret = t }) =
+let h ({ name = Id.L(x); args = yts; fargs = zts; body = e; ret = t }) =
   Format.eprintf "allocating register in %s@." x;
-  let e = (get_args yts reglist freglist) @ e in
-  let (regenv, e) = g (Liveness.Tail (ret_reg t, t)) e in
+  let env = M.add_list zts (M.add_list yts M.empty) in
+  let e = (get_args reglist freglist yts) @ e in
+  let (regenv, e) = g env (Liveness.Tail (ret_reg t, t)) e in
   let yts = List.map (fun (y, t) -> (M.find y regenv, t)) yts in
-  { name = Id.L(x); args = yts; body = e; ret = t }
+  let zts = List.map (fun (z, t) -> (M.find z regenv, t)) zts in
+  { name = Id.L(x); args = yts; fargs = zts; body = e; ret = t }
 
 let f (Prog(fundefs, e)) = (* ¥×¥í¥°¥é¥àÁ´ÂÎ¤Î¥ì¥¸¥¹¥¿³ä¤êÅö¤Æ (caml2html: regalloc_f) *)
   Format.eprintf "register allocation: may take some time (up to a few minutes, depending on the size of functions)@.";
   let fundefs = List.map h fundefs in
   Format.eprintf "allocating register in main pocedure@.";
-  let (_, e) = g (Liveness.NonTail []) e in
+  let (_, e) = g M.empty (Liveness.NonTail []) e in
   Prog(fundefs, e)
