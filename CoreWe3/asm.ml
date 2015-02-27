@@ -46,6 +46,20 @@ let cond_of_string = function
   | LE -> "LE"
   | LT -> "LT"
 
+let foldr_by_type fi fl xts acc =
+  List.fold_right (fun (x, t) acc -> 
+		   match t with
+		   | Type.Unit -> acc
+		   | Type.Float -> fl (x, t) acc
+		   | _ -> fi (x, t) acc) xts acc
+let foldr_tup_by_type f xts accs =
+  foldr_by_type 
+    (fun xt (acci, accf) -> (f xt acci, accf)) 
+    (fun xt (acci, accf) -> (acci, f xt accf))
+    xts accs
+let partition_by_type xts =
+  foldr_tup_by_type (fun xt xts -> xt::xts) xts ([], [])
+
 let tuple2_map f (x, y) = (f x, f y)
 let tuple2_map2 f (x1, y1) (x2, y2) = (f x1 x2, f y1 y2)
 let tuple2_map3 f (x1, y1) (x2, y2) (x3, y3) = (f x1 x2 x3, f y1 y2 y3)

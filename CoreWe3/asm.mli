@@ -42,6 +42,10 @@ type prog = Prog of fundef list * t list
 
 val cond_of_string : cond -> string
 
+val foldr_by_type : (dest -> 'b -> 'b) -> (dest -> 'b -> 'b) -> dest list -> 'b -> 'b
+val foldr_tup_by_type : (dest -> 'b -> 'b) -> dest list -> 'b * 'b -> 'b * 'b
+val partition_by_type :  dest list -> dest list * dest list
+
 val tuple2_map : ('a -> 'b) -> 'a * 'a -> 'b * 'b 
 val tuple2_map2 : ('a -> 'b -> 'c) -> 'a * 'a -> 'b * 'b -> 'c * 'c
 val tuple2_map3 : ('a -> 'b -> 'c -> 'd) -> 'a * 'a -> 'b * 'b -> 'c * 'c -> 'd * 'd
