@@ -4,27 +4,6 @@ external gethi : float -> int32 = "gethi"
 external getlo : float -> int32 = "getlo"
 external getsgl : float -> int32 = "getsgl"
 
-(* let stackset = ref S.empty (\* すでに Save された変数の集合 *\) *)
-(* let stackmap = ref [] (\* Save された変数のスタックにおける位置 *\) *)
-(* let save x =  *)
-(*   stackset := S.add x !stackset; *)
-(*   if not (List.mem x !stackmap) then *)
-(*     stackmap := !stackmap @ [x] *)
-(* let savef x =  *)
-(*   stackset := S.add x !stackset; *)
-(*   if not (List.mem x !stackmap) then *)
-(*     (let pad =  *)
-(*        if List.length !stackmap mod 2 = 0 then [] else [Id.gentmp Type.Int] in *)
-(*      stackmap := !stackmap @ pad @ [x; x]) *)
-(* let locate x =  *)
-(*   let rec loc = function  *)
-(*     | [] -> [] *)
-(*     | y :: zs when x = y -> 0 :: List.map succ (loc zs) *)
-(*     | y :: zs -> List.map succ (loc zs) in *)
-(*   loc !stackmap *)
-(* let offset x = 1 * List.hd (locate x) *)
-(* let stacksize () = List.length !stackmap *)
-
 let reg r = 
   if is_reg r then 
     let p = r.[1] in
@@ -32,20 +11,6 @@ let reg r =
     Format.sprintf "%c%d" p n
   else 
     r 
-
-(* (\* 関数呼び出しのために引数を並べ替える (register shuffling) *\) *)
-(* let rec shuffle sw xys =  *)
-(*   (\* remove identical moves *\) *)
-(*   let (_, xys) = List.partition (fun (x, y) -> x = y) xys in *)
-(*     (\* find acyclic moves *\) *)
-(*     match List.partition (fun (_, y) -> List.mem_assoc y xys) xys with *)
-(*       | ([], []) -> [] *)
-(*       | ((x, y) :: xys, []) -> (\* no acyclic moves; resolve a cyclic move *\) *)
-(* 	  (y, sw) :: (x, y) ::  *)
-(* 	    shuffle sw (List.map (function  *)
-(* 				    | (y', z) when y = y' -> (sw, z) *)
-(* 				    | yz -> yz) xys) *)
-(*       | (xys, acyc) -> acyc @ shuffle sw xys *)
 
 let rec rm_nop = function
   | [] -> []
