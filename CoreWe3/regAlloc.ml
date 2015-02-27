@@ -1,5 +1,16 @@
 open Asm
 
+let rec set_args yts rs frs = 
+  match yts with
+  | [] -> []
+  | (y, t)::yts ->
+     match t with
+     | Type.Unit -> set_args yts rs frs
+     | Type.Float -> 
+	(new_t (move_reg (List.hd frs, t) y))::(set_args yts rs (List.tl frs))
+     | _ -> 
+	(new_t (move_reg (List.hd rs, t) y))::(set_args yts (List.tl rs) frs)
+
 let rec get_args yts rs frs = 
   match yts with
   | [] -> []
@@ -10,6 +21,65 @@ let rec get_args yts rs frs =
 	(new_t (move_reg (y, t) (List.hd frs)))::(get_args yts rs (List.tl frs))
      | _ -> 
 	(new_t (move_reg (y, t) (List.hd rs)))::(get_args yts (List.tl rs) frs)
+
+let prepare_for_call mps es = (* 関数呼び出しをまたぐ変数について、save/restoreを挿入する*)
+  let senv = ref M.empty in
+  let rec prepare_for_call_aux mps env = function
+    | [] -> []
+    | (i, e, b)::es ->
+       let usets = Liveness.use_set (i, e, b) in
+       let folder f x acc = (* すでにsaveされている && 最後の関数呼び出しからrestoreされたことがない ならflagをfalseにしてrestoreする。*)
+	 if M.mem x !senv then 
+	   let (svar, flag) = M.find x !senv in
+	   if flag then 
+	     (senv := M.add x (svar, false) !senv; 
+	      (new_t (f x svar))::acc)
+	   else acc 
+	 else acc in
+       let fs = ((fun x svar -> Restore((x, M.find x env), svar)),
+		 (fun x svar -> FRestore((x, M.find x env), svar))) in
+       let (rstri, rstrf) = tuple2_map3 (fun f -> S.fold (folder f)) fs usets ([], []) in
+       let (savei, savef) =
+	 match e with
+	 | Call(xt, f, yts) ->
+	    let liveouts = tuple2_map (Liveness.get_liveout (i, e, b)) mps in
+	    let dsets = Liveness.def_set (i, e, b) in
+	    let livethroughs = tuple2_map2 S.diff liveouts dsets in
+	    let folder f x acc = (* すでにsaveしたことのあるものはsaveせずに、フラグだけ立てる。saveしたことのないものはsaveする。*)
+	      if M.mem x !senv then 
+		(let (svar, _) = M.find x !senv in 
+		 senv := M.add x (svar, true) !senv; acc)
+	      else 
+		(let svar = Id.genid "stk" in
+		 senv := M.add x (svar, true) !senv;
+		 (new_t (f x svar))::acc) in
+	    let fs = ((fun x svar -> Save(x, svar)), (fun x svar -> FSave(x, svar))) in
+	    tuple2_map3 (fun f -> S.fold (folder f)) fs livethroughs ([], [])
+	 | e -> ([], []) in
+       let e =
+	 match e with
+	 | If(xt, cond, cmp, e_then, e_else) ->
+	    let (e_then, e_else) = prepare_for_call_if mps env (e_else, e_then) in
+	    If(xt, cond, cmp, e_then, e_else)
+	 | IfF(xt, cond, cmp, e_then, e_else) ->
+	    let (e_then, e_else) = prepare_for_call_if mps env (e_else, e_then) in
+	    IfF(xt, cond, cmp, e_then, e_else)
+	 | e -> e in
+       let env = ext_env env (i, e, b) in
+       savei @ savef @ rstri @ rstrf @ [i, e, b] @ (prepare_for_call_aux mps env es)
+  and prepare_for_call_if mps env (e_else, e_then) =
+    let senv_back = !senv in
+    let e_then = prepare_for_call_aux mps env e_then in
+    let senv_then = !senv in
+    senv := senv_back;
+    let e_else = prepare_for_call_aux mps env e_else in
+    senv := M.fold (fun x (sv, f_else) se -> 
+		    if M.mem x senv_then then
+		      let (sv, f_then) = M.find x senv_then in 
+		      M.add x (sv, f_then || f_else) se
+		    else se) !senv M.empty;
+    (e_then, e_else) in
+  prepare_for_call_aux mps M.empty es
 
 let rec mk_igraph mps igs = function  (* 干渉グラフ *)
   | [] -> igs
@@ -124,9 +194,7 @@ let rec select mg rset regenv = function
      let ig = UG.add_adj x adj_x ig in
      select mg rset regenv (ig, stk)
 
-(* let rec spill_for_call  *)
-
-let rec allocate regenv = function
+let rec allocate regenv = function (* 変数名をレジスタで置き換える *)
   | [] -> []
   | e::es -> (allocate' regenv e)::(allocate regenv es)
 and allocate' regenv (i, e, b) =
@@ -173,6 +241,8 @@ and allocate' regenv (i, e, b) =
 
 let rec g tl e = 
   let mps = Liveness.calc_live_main tl e in
+  let e = prepare_for_call mps e in
+  let mps = Liveness.calc_live_main tl e in
   let igs = mk_igraph mps (UG.new_graph (), UG.new_graph ()) e in
   let mgs = mk_mgraph mps (UG.new_graph (), UG.new_graph ()) e in
   let igstks = tuple2_map3 simplify (Array.length regs, Array.length fregs) igs ([], []) in
@@ -187,17 +257,18 @@ let rec g tl e =
   UG.pp_graph (snd mgs);
   Format.eprintf "regenv ==================@.";
   M.iter (fun x r -> Format.eprintf "%s -> %s@." x r) regenv;
-  e
+  (regenv, e)
 
 let h ({ name = Id.L(x); args = yts; body = e; ret = t }) =
   Format.eprintf "allocating register in %s@." x;
   let e = (get_args yts reglist freglist) @ e in
-  let e = g (Liveness.Tail (ret_reg t, t)) e in
+  let (regenv, e) = g (Liveness.Tail (ret_reg t, t)) e in
+  let yts = List.map (fun (y, t) -> (M.find y regenv, t)) yts in
   { name = Id.L(x); args = yts; body = e; ret = t }
 
 let f (Prog(fundefs, e)) = (* プログラム全体のレジスタ割り当て (caml2html: regalloc_f) *)
   Format.eprintf "register allocation: may take some time (up to a few minutes, depending on the size of functions)@.";
   let fundefs = List.map h fundefs in
   Format.eprintf "allocating register in main pocedure@.";
-  let e = g (Liveness.NonTail []) e in
+  let (_, e) = g (Liveness.NonTail []) e in
   Prog(fundefs, e)
