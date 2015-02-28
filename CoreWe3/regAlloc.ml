@@ -131,7 +131,7 @@ exception Spill of Id.t
 let regmem x regenv = is_reg x || M.mem x regenv
 let regfind x regenv = if is_reg x then x else M.find x regenv
 
-let rec simplify k ig stk =
+let rec simplify spl k ig stk =
   let non_regs = S.filter (fun x -> not (is_reg x)) (UG.nodes ig) in
   if S.is_empty non_regs then
     (ig, stk)
@@ -145,7 +145,7 @@ let rec simplify k ig stk =
 	(* 		let d = M.find y cst in *)
 	(* 		if d < c then (y, d) else (x, c)) *)
 	(* 	       non_regs xc in *)
-	let x = S.min_elt non_regs in
+	let x = S.min_elt (S.diff non_regs spl) in
 	let adj_x = UG.adj x ig in
 	(UG.rm_node x ig, (x, adj_x)::stk)
       else
@@ -153,7 +153,7 @@ let rec simplify k ig stk =
 		let adj_x = UG.adj x ig in
 		(UG.rm_node x ig, (x, adj_x)::stk)) 
 	       low_degs (ig, stk) in
-      simplify k ig stk
+      simplify spl k ig stk
 
 let rec init_regenv regenv = function
   | [] -> regenv
@@ -189,6 +189,46 @@ let rec select mg rset regenv = function
 	   M.add x r regenv in
      let ig = UG.add_adj x adj_x ig in
      select mg rset regenv (ig, stk)
+
+let mk_rstr x t sv =
+  match t with 
+  | Type.Unit -> Nop
+  | Type.Float -> FRestore((x, t), sv)
+  | _ -> Restore((x, t), sv)
+
+let mk_save x t sv =
+  match t with 
+  | Type.Unit -> Nop
+  | Type.Float -> FSave(x, sv)
+  | _ -> Save(x, sv)
+	     
+let rec insert_spill x sinfo = function 
+  | [] -> []
+  | (i, e, b)::es -> 
+     let rstr = (*save命令以外でxが使用されていたら、直前にresroteを挿入*)
+       let (usei, usef) = Liveness.use_set (i, e, b) in
+       if S.mem x (S.union usei usef) then
+	 match e, sinfo with 
+	 | (Save(_) | FSave(_)), _ -> []
+	 | _, None -> failwith (x^" is used before definiton?")
+	 | _, Some(sv, t) -> [new_t (mk_rstr x t sv)]
+       else [] in
+     let (save, sinfo) = (* xが定義されていて、save済みでない時のみsaveする *)
+       match get_dests (i, e, b), sinfo with
+       | (y, t)::_ , None when x = y -> 
+	  let sv = Id.genid "stk" in
+	  ([new_t (mk_save x t sv)], Some(sv, t))
+       | _, _ -> ([], sinfo) in
+     let el = 
+       match e with
+       | Save(y, _) | FSave(y, _) | Restore((y, _), _) | FRestore((y, _), _) when x = y -> 
+          []
+       | If(xt, cond, cmp, e_then, e_else) ->
+	  [i, If(xt, cond, cmp, insert_spill x sinfo e_then, insert_spill x sinfo e_else), b]
+       | IfF(xt, cond, cmp, e_then, e_else) ->
+	  [i, IfF(xt, cond, cmp, insert_spill x sinfo e_then, insert_spill x sinfo e_else), b]
+       | e -> [i, e, b] in
+     rstr @ el @ save @ (insert_spill x sinfo es)
 
 let rec allocate regenv = function (* 変数名をレジスタで置き換える *)
   | [] -> []
@@ -239,30 +279,38 @@ let rec g env tl e =
   let env = M.add reg_hp Type.Int (M.add freg_zero Type.Float (M.add reg_zero Type.Int env)) in
   let mps = Liveness.calc_live_main tl e in
   let e = prepare_for_call mps env e in
-  let mps = Liveness.calc_live_main tl e in
-  let igs = mk_igraph mps (UG.new_graph (), UG.new_graph ()) e in
-  let mgs = mk_mgraph mps (UG.new_graph (), UG.new_graph ()) e in
-  let igstks = tuple2_map3 simplify (Array.length regs, Array.length fregs) igs ([], []) in
-  let (regenvi, regenvf) = tuple2_map4 select mgs (regset, fregset) (init_regenv M.empty e, M.empty) igstks in
-  let regenv = M.fold (fun x r env -> M.add x r env) regenvi regenvf in
-  let e = allocate regenv e in
-  (* Format.eprintf "igraph ==================@."; *)
-  (* UG.pp_graph (fst igs); *)
-  (* UG.pp_graph (snd igs); *)
-  (* Format.eprintf "mgraph ==================@."; *)
-  (* UG.pp_graph (fst mgs); *)
-  (* UG.pp_graph (snd mgs); *)
-  (* Format.eprintf "regenv ==================@."; *)
-  (* M.iter (fun x r -> Format.eprintf "%s -> %s@." x r) regenv; *)
+  let (regenv, e) = g' tl e S.empty in
   (regenv, e)
+and g' tl e spl = 
+  try
+    let mps = Liveness.calc_live_main tl e in
+    let igs = mk_igraph mps (UG.new_graph (), UG.new_graph ()) e in
+    let mgs = mk_mgraph mps (UG.new_graph (), UG.new_graph ()) e in
+    let igstks = tuple2_map3 (simplify spl) (Array.length regs, Array.length fregs) igs ([], []) in
+    let (regenvi, regenvf) = tuple2_map4 select mgs (regset, fregset) (init_regenv M.empty e, M.empty) igstks in
+    let regenv = M.fold (fun x r env -> M.add x r env) regenvi regenvf in
+    let e = allocate regenv e in
+    (* Format.eprintf "igraph ==================@."; *)
+    (* UG.pp_graph (fst igs); *)
+    (* UG.pp_graph (snd igs); *)
+    (* Format.eprintf "mgraph ==================@."; *)
+    (* UG.pp_graph (fst mgs); *)
+    (* UG.pp_graph (snd mgs); *)
+    Format.eprintf "regenv ==================@.";
+    M.iter (fun x r -> Format.eprintf "%s -> %s@." x r) regenv;
+    (regenv, e)
+  with Spill(x) ->
+    Format.eprintf "spill %s@." x;
+    let e = insert_spill x None e in
+    g' tl e (S.add x spl)
 
 let h ({ name = Id.L(x); args = yts; fargs = zts; body = e; ret = t }) =
   Format.eprintf "allocating register in %s@." x;
   let env = M.add_list zts (M.add_list yts M.empty) in
   let e = (get_args reglist freglist (yts @ zts)) @ e in
-  let (regenv, e) = g env (Liveness.Tail (ret_reg t, t)) e in
-  let yts = List.map (fun (y, t) -> (M.find y regenv, t)) yts in
-  let zts = List.map (fun (z, t) -> (M.find z regenv, t)) zts in
+  (* let (regenv, e) = g env (Liveness.Tail (ret_reg t, t)) e in *)
+  (* let yts = List.map (fun (y, t) -> (M.find y regenv, t)) yts in *)
+  (* let zts = List.map (fun (z, t) -> (M.find z regenv, t)) zts in *)
   { name = Id.L(x); args = yts; fargs = zts; body = e; ret = t }
 
 let f (Prog(fundefs, e)) = (* プログラム全体のレジスタ割り当て (caml2html: regalloc_f) *)
