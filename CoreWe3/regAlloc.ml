@@ -109,10 +109,6 @@ let rec mk_igraph mps igs = function  (* ´³¾Ä¥°¥é¥Õ *)
      let igs = tuple2_map3 UG.add_prod_edges dsets isets igs in
      mk_igraph mps igs es
 
-let rec add_move_edges mg rs = function
-  | [] -> mg
-  | y::ys -> add_move_edges (UG.add_edge (y, List.hd rs) mg) (List.tl rs) ys
-
 let rec mk_mgraph mps mgs = function (* Å¾Á÷Ì¿Îá¥°¥é¥Õ *)
   | [] -> mgs
   | e::es ->
