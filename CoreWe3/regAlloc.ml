@@ -296,8 +296,8 @@ and g' tl e spl =
     (* Format.eprintf "mgraph ==================@."; *)
     (* UG.pp_graph (fst mgs); *)
     (* UG.pp_graph (snd mgs); *)
-    Format.eprintf "regenv ==================@.";
-    M.iter (fun x r -> Format.eprintf "%s -> %s@." x r) regenv;
+    (* Format.eprintf "regenv ==================@."; *)
+    (* M.iter (fun x r -> Format.eprintf "%s -> %s@." x r) regenv; *)
     (regenv, e)
   with Spill(x) ->
     Format.eprintf "spill %s@." x;
@@ -308,9 +308,9 @@ let h ({ name = Id.L(x); args = yts; fargs = zts; body = e; ret = t }) =
   Format.eprintf "allocating register in %s@." x;
   let env = M.add_list zts (M.add_list yts M.empty) in
   let e = (get_args reglist freglist (yts @ zts)) @ e in
-  (* let (regenv, e) = g env (Liveness.Tail (ret_reg t, t)) e in *)
-  (* let yts = List.map (fun (y, t) -> (M.find y regenv, t)) yts in *)
-  (* let zts = List.map (fun (z, t) -> (M.find z regenv, t)) zts in *)
+  let (regenv, e) = g env (Liveness.Tail (ret_reg t, t)) e in
+  let yts = List.map (fun (y, t) -> (M.find y regenv, t)) yts in
+  let zts = List.map (fun (z, t) -> (M.find z regenv, t)) zts in
   { name = Id.L(x); args = yts; fargs = zts; body = e; ret = t }
 
 let f (Prog(fundefs, e)) = (* プログラム全体のレジスタ割り当て (caml2html: regalloc_f) *)
