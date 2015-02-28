@@ -136,19 +136,19 @@ let rec simplify k ig stk =
   if S.is_empty non_regs then
     (ig, stk)
   else
-    let low_degs = S.filter (fun x -> UG.deg x ig < k) non_regs in
-    if S.is_empty low_degs then
-      (* let xc = let x = S.min_elt non_regs in (x, M.find x cst) in *)
-      (* let (x, _) =  *)
-      (* 	S.fold (fun y (x, c) ->  *)
-      (* 		let d = M.find y cst in *)
-      (* 		if d < c then (y, d) else (x, c)) *)
-      (* 	       non_regs xc in *)
-      let x = S.min_elt non_regs in
-      let adj_x = UG.adj x ig in
-      (UG.rm_node x ig, (x, adj_x)::stk)
-    else
-      let (ig, stk) = 
+    let (ig, stk) = 
+      let low_degs = S.filter (fun x -> UG.deg x ig < k) non_regs in
+      if S.is_empty low_degs then
+	(* let xc = let x = S.min_elt non_regs in (x, M.find x cst) in *)
+	(* let (x, _) =  *)
+	(* 	S.fold (fun y (x, c) ->  *)
+	(* 		let d = M.find y cst in *)
+	(* 		if d < c then (y, d) else (x, c)) *)
+	(* 	       non_regs xc in *)
+	let x = S.min_elt non_regs in
+	let adj_x = UG.adj x ig in
+	(UG.rm_node x ig, (x, adj_x)::stk)
+      else
 	S.fold (fun x (ig, stk) -> 
 		let adj_x = UG.adj x ig in
 		(UG.rm_node x ig, (x, adj_x)::stk)) 
@@ -236,7 +236,7 @@ and allocate' regenv (i, e, b) =
   (i, e', b)
 
 let rec g env tl e = 
-  let env = M.add freg_zero Type.Float (M.add reg_zero Type.Int env) in
+  let env = M.add reg_hp Type.Int (M.add freg_zero Type.Float (M.add reg_zero Type.Int env)) in
   let mps = Liveness.calc_live_main tl e in
   let e = prepare_for_call mps env e in
   let mps = Liveness.calc_live_main tl e in
