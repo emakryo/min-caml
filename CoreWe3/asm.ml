@@ -83,12 +83,6 @@ let get_dests e =
 let reg_of_int i = "%r" ^ (Format.sprintf "%02d" i)
 let freg_of_int i = "%f" ^ (Format.sprintf "%02d" i)
 
-let regs = Array.init (32-5) (fun i -> reg_of_int (i + 3));; (*r3-r29*)
-let fregs = Array.init (32-1) (fun i -> freg_of_int (i + 1))
-let reglist = Array.to_list regs
-let freglist = Array.to_list fregs
-let regset = S.of_list reglist
-let fregset = S.of_list freglist
 let reg_zero = reg_of_int 0
 let reg_hp = reg_of_int 1
 let reg_sp = reg_of_int 2
@@ -96,13 +90,32 @@ let reg_cond = reg_of_int 30
 let reg_link = reg_of_int 31
 let freg_zero = freg_of_int 0
 let hp_default = 0x00000
-let sp_default = 0x777ff
+let sp_default = 0xfdfff
+
+let allregs = Array.init 32 (fun i -> reg_of_int i)
+let allfregs = Array.init 32 (fun i -> freg_of_int i)
+let constregs = ref [(0, reg_zero)]
+let constfregs = ref [(0.0, freg_zero)]
+let regs () = Array.sub allregs 3 (32 - 2 - 2 - (List.length !constregs))
+let fregs () = Array.sub allfregs 1 (32 - (List.length !constfregs))
+let reglist () = Array.to_list (regs ())
+let freglist () = Array.to_list (fregs ())
+let regset () = S.of_list (reglist ())
+let fregset () = S.of_list (freglist ())
+
+let add_constreg x = 
+  Format.eprintf "constreg %d@." x;
+  let i = 30 - (List.length !constregs) in
+  constregs := (x, reg_of_int i)::(!constregs)  
+let add_constfreg x = 
+  let i = 32 - (List.length !constfregs) in
+  constfregs := (x, freg_of_int i)::(!constfregs)
 
 let is_reg x = x.[0] = '%'
 let ret_reg = function
-  | Type.Float -> fregs.(0)
+  | Type.Float -> (fregs ()).(0)
   | Type.Unit -> reg_zero
-  | _ -> regs.(0)
+  | _ -> (regs ()).(0)
 
 let move_reg (x, t) y = 
   match t with

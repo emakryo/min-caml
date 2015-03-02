@@ -61,12 +61,6 @@ val get_dests : t -> dest list
 val reg_of_int : int -> string
 val freg_of_int : int -> string
 
-val regs : Id.t array
-val fregs : Id.t array
-val reglist : Id.t list
-val freglist : Id.t list
-val regset : S.t
-val fregset : S.t
 val reg_zero : Id.t
 val reg_hp : Id.t
 val reg_sp : Id.t
@@ -75,6 +69,19 @@ val reg_link : Id.t
 val freg_zero : Id.t
 val hp_default : int
 val sp_default : int
+val constregs : (int * string) list ref
+val constfregs : (float * string) list ref
+val allregs : Id.t array
+val allfregs : Id.t array
+val regs : unit -> Id.t array
+val fregs : unit -> Id.t array
+val reglist : unit -> Id.t list
+val freglist : unit -> Id.t list
+val regset : unit -> S.t
+val fregset : unit -> S.t
+
+val add_constreg : int -> unit
+val add_constfreg : float -> unit
 
 val is_reg : string -> bool
 val ret_reg : Type.t -> string

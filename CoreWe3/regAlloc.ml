@@ -70,9 +70,9 @@ let prepare_for_call mps env es = (* 関数呼び出しをまたぐ変数について、save/rest
 	    let (e_then, e_else) = prepare_for_call_if mps env (e_else, e_then) in
 	    [i, IfF(xt, cond, cmp, e_then, e_else), b]
 	 | Call((x, t), f, yts, zts) ->
-	    let sargs = set_args reglist freglist (yts @ zts) in
-	    let gargs = get_args reglist freglist [x, t] in
-	    let (rts, frts) = tuple2_map2 map_args (reglist, freglist) (yts, zts) in
+	    let sargs = set_args (reglist()) (freglist()) (yts @ zts) in
+	    let gargs = get_args (reglist()) (freglist()) [x, t] in
+	    let (rts, frts) = tuple2_map2 map_args (reglist(), freglist()) (yts, zts) in
 	    sargs @ [i, Call((ret_reg t, t), f, rts, frts), b] @ gargs
 	 | e -> [i, e, b] in
        let env = ext_env env (i, e, b) in
@@ -276,7 +276,8 @@ and allocate' regenv (i, e, b) =
   (i, e', b)
 
 let rec g env tl e = 
-  let env = M.add reg_hp Type.Int (M.add freg_zero Type.Float (M.add reg_zero Type.Int env)) in
+  let env = Array.fold_left (fun env r -> M.add r Type.Int env) env allregs in
+  let env = Array.fold_left (fun env r -> M.add r Type.Float env) env allfregs in
   let mps = Liveness.calc_live_main tl e in
   let e = prepare_for_call mps env e in
   let (regenv, e) = g' tl e S.empty in
@@ -286,8 +287,8 @@ and g' tl e spl =
     let mps = Liveness.calc_live_main tl e in
     let igs = mk_igraph mps (UG.new_graph (), UG.new_graph ()) e in
     let mgs = mk_mgraph mps (UG.new_graph (), UG.new_graph ()) e in
-    let igstks = tuple2_map3 (simplify spl) (Array.length regs, Array.length fregs) igs ([], []) in
-    let (regenvi, regenvf) = tuple2_map4 select mgs (regset, fregset) (init_regenv M.empty e, M.empty) igstks in
+    let igstks = tuple2_map3 (simplify spl) (Array.length (regs()), Array.length (fregs())) igs ([], []) in
+    let (regenvi, regenvf) = tuple2_map4 select mgs (regset(), fregset()) (init_regenv M.empty e, M.empty) igstks in
     let regenv = M.fold (fun x r env -> M.add x r env) regenvi regenvf in
     let e = allocate regenv e in
     (* Format.eprintf "igraph ==================@."; *)
@@ -307,7 +308,7 @@ and g' tl e spl =
 let h ({ name = Id.L(x); args = yts; fargs = zts; body = e; ret = t }) =
   Format.eprintf "allocating register in %s@." x;
   let env = M.add_list zts (M.add_list yts M.empty) in
-  let e = (get_args reglist freglist (yts @ zts)) @ e in
+  let e = (get_args (reglist()) (freglist()) (yts @ zts)) @ e in
   let (regenv, e) = g env (Liveness.Tail (ret_reg t, t)) e in
   let yts = List.map (fun (y, t) -> (M.find y regenv, t)) yts in
   let zts = List.map (fun (z, t) -> (M.find z regenv, t)) zts in
