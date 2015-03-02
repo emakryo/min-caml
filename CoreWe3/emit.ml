@@ -117,7 +117,7 @@ and g' oc sfrm (tail, (i, e, b)) =  (* 各命令のアセンブリ生成 *)
   | (false, FAdd((x, t), y, z)) -> 
      Printf.fprintf oc "\t%sFADD\t%s\t%s\t%s\n" at (reg x) (reg y) (reg z)
   | (false, FSub((x, t), y, z)) -> 
-     Printf.fprintf oc "\t%sFSub\t%s\t%s\t%s\n" at (reg x) (reg y) (reg z)
+     Printf.fprintf oc "\t%sFSUB\t%s\t%s\t%s\n" at (reg x) (reg y) (reg z)
   | (false, FMul((x, t), y, z)) -> 
      Printf.fprintf oc "\t%sFMUL\t%s\t%s\t%s\n" at (reg x) (reg y) (reg z)
   | (false, FInv((x, t), y)) -> 
@@ -133,9 +133,9 @@ and g' oc sfrm (tail, (i, e, b)) =  (* 各命令のアセンブリ生成 *)
   | (false, Restore((x, t), sv)) ->
      Printf.fprintf oc "\t%sLD\t%s\t%s\t%d\t#Restore\n" at (reg x) (reg reg_sp) (M.find sv sfrm.map)
   | (false, FSave(x, sv)) -> 
-     Printf.fprintf oc "\t%sFST\t%s\t%s\t%d\t#Save\n" at (reg x) (reg reg_sp) (M.find sv sfrm.map)
+     Printf.fprintf oc "\t%sFST\t%s\t%s\t%d\t#FSave\n" at (reg x) (reg reg_sp) (M.find sv sfrm.map)
   | (false, FRestore((x, t), sv)) -> 
-     Printf.fprintf oc "\t%sFLD\t%s\t%s\t%d\t#Restore\n" at (reg x) (reg reg_sp) (M.find sv sfrm.map)
+     Printf.fprintf oc "\t%sFLD\t%s\t%s\t%d\t#FRestore\n" at (reg x) (reg reg_sp) (M.find sv sfrm.map)
   | (true, (Nop | Mr _ | FMr _ | Ld _ | St _ | FLd _ | FSt _ | Li _ | FLi _ | IToF _ | FToI _ | Neg _ | Add _ | Sub _ | And _ | Or _ | Shl _ | Shr _ | FAdd _ | FSub _ | FMul _ | FInv _ | FAbs _ | Sqrt _ (* | IAsF _ | FAsI _  *)| LoadLabel _ | Save _ | Restore _ | FSave _ | FRestore _ as e)) ->
      g' oc sfrm (false, (i, e, b));
      rm_stk oc sfrm;

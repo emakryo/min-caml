@@ -270,8 +270,8 @@ and allocate' regenv (i, e, b) =
     | FMr((x, t), y) -> FMr((regfind x regenv, t), regfind y regenv)
     | Save(x, s) -> Save(regfind x regenv, s)
     | Restore((x, t), s) -> Restore((regfind x regenv, t), s)
-    | FSave(x, s) -> Save(regfind x regenv, s)
-    | FRestore((x, t), s) -> Restore((regfind x regenv, t), s)
+    | FSave(x, s) -> FSave(regfind x regenv, s)
+    | FRestore((x, t), s) -> FRestore((regfind x regenv, t), s)
   in
   (i, e', b)
 
