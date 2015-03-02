@@ -30,20 +30,20 @@ let mk_stk oc e top =
   let (call, sset) = gather_stkset (not top) (false, S.empty) e in
   let save_rl = call && not top in
   let (_, map) =
-    S.fold (fun sv (i, senv) -> (i - 1, M.add sv i senv)) sset (-1, M.empty) in
+    S.fold (fun sv (i, senv) -> (i + 1, M.add sv i senv)) sset (1, M.empty) in
   let size = (M.cardinal map) + if call && not top then 1 else 0 in
   let sfrm = { map = map; size = size; save_rl = save_rl} in
   (if sfrm.size > 0 then
-     Printf.fprintf oc "\tADDI\t%s\t%s\t%d\t#make stack frame\n" (reg reg_sp) (reg reg_sp) sfrm.size);
+     Printf.fprintf oc "\tADDI\t%s\t%s\t%d\t#make stack frame\n" (reg reg_sp) (reg reg_sp) (-sfrm.size));
   (if sfrm.save_rl then
-     Printf.fprintf oc "\tST\t%s\t%s\t%d\t#save link register\n" (reg reg_link) (reg reg_sp) (-sfrm.size));
+     Printf.fprintf oc "\tST\t%s\t%s\t%d\t#save link register\n" (reg reg_link) (reg reg_sp) (sfrm.size));
   sfrm
 
 let rm_stk oc sfrm =
   (if sfrm.save_rl then
-     Printf.fprintf oc "\tLD\t%s\t%s\t%d\t#restore link register\n" (reg reg_link) (reg reg_sp) (-sfrm.size));
+     Printf.fprintf oc "\tLD\t%s\t%s\t%d\t#restore link register\n" (reg reg_link) (reg reg_sp) sfrm.size);
   (if sfrm.size > 0 then
-     Printf.fprintf oc "\tADDI\t%s\t%s\t%d\t#delete stack frame\n" (reg reg_sp) (reg reg_sp) (-sfrm.size))
+     Printf.fprintf oc "\tADDI\t%s\t%s\t%d\t#delete stack frame\n" (reg reg_sp) (reg reg_sp) sfrm.size)
 	   
 let rec rm_nop = function
   (* | e -> e *)
@@ -89,7 +89,7 @@ and g' oc sfrm (tail, (i, e, b)) =  (* 各命令のアセンブリ生成 *)
   | (false, Li((x, t), i)) -> 
      Printf.fprintf oc "\t%sLDI\t%s\t%ld\n" at (reg x) i
   | (false, FLi((x, t), d)) -> 
-     Printf.fprintf oc "\t%sFLDI\t%s\t0x%lx\t#%f\n" at (reg x) (getsgl d) d
+     Printf.fprintf oc "\t%sVFLDI\t%s\t%e\t#0x%lx\n" at (reg x) d (getsgl d)
   | (false, IToF((x, t), y)) -> 
      Printf.fprintf oc "\t%sITOF\t%s\t%s\n" at (reg x) (reg y)
   | (false, FToI((x, t), y)) -> 
@@ -186,7 +186,6 @@ let h oc { name = Id.L(x); args = _; body = e; ret = _ } =
 let f oc (Prog(fundefs, e))  =
   Format.eprintf "generating assembly...@.";
   List.iter (fun fundef -> h oc fundef) fundefs;
-  Format.eprintf "generating assembly...@.";  
   Printf.fprintf oc ":_min_caml_start # main entry point\n";
   let e = rm_nop e in
   let sfrm = mk_stk oc e true in
