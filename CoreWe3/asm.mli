@@ -69,8 +69,10 @@ val reg_link : Id.t
 val freg_zero : Id.t
 val hp_default : int
 val sp_default : int
-val constregs : (int * string) list ref
-val constfregs : (float * string) list ref
+
+val special_regs : Id.t list
+val constregs : (int * Id.t) list ref
+val constfregs : (float * Id.t) list ref
 val allregs : Id.t array
 val allfregs : Id.t array
 val regs : unit -> Id.t array

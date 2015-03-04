@@ -92,6 +92,8 @@ let freg_zero = freg_of_int 0
 let hp_default = 0x00000
 let sp_default = 0xfdfff
 
+
+let special_regs = [reg_hp; reg_sp; reg_cond; reg_link]
 let allregs = Array.init 32 (fun i -> reg_of_int i)
 let allfregs = Array.init 32 (fun i -> freg_of_int i)
 let constregs = ref [(0, reg_zero)]

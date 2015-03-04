@@ -276,8 +276,9 @@ and allocate' regenv (i, e, b) =
   (i, e', b)
 
 let rec g env tl e = 
-  let env = Array.fold_left (fun env r -> M.add r Type.Int env) env allregs in
-  let env = Array.fold_left (fun env r -> M.add r Type.Float env) env allfregs in
+  let env = List.fold_left (fun env r -> M.add r Type.Int env) env special_regs in
+  let env = List.fold_left (fun env (_, r) -> M.add r Type.Int env) env !constregs in
+  let env = List.fold_left (fun env (_, r) -> M.add r Type.Float env) env !constfregs in
   let mps = Liveness.calc_live_main tl e in
   let e = prepare_for_call mps env e in
   let (regenv, e) = g' tl e S.empty in
