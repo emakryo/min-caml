@@ -153,4 +153,4 @@ let ext_env env e = M.add_list (get_dests e) env
 let imm_max = 0x7fff
 let imm_min = 0x8000
 
-let io_addr = 0xFFFFF
+let io_addr = -1

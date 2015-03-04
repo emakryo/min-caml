@@ -104,13 +104,13 @@ and g' env dest (r, e) = (* 式の仮想マシンコード生成 *)
     | Closure.Read -> 
        let (x, t) = dest in
        (match t with
-	| Type.Int -> [Ld(dest, reg_zero, -1)]
-	| Type.Float -> [FLd(dest, reg_zero, -1)]
+	| Type.Int -> [Ld(dest, reg_zero, io_addr)]
+	| Type.Float -> [FLd(dest, reg_zero, io_addr)]
 	| _ -> failwith "read supported only for int and float.")
     | Closure.Write(x) -> 
        (match M.find x env with
-	| Type.Int -> [St(x, reg_zero, -1)]
-	| Type.Float -> [FSt(x, reg_zero, -1)]
+	| Type.Int -> [St(x, reg_zero, io_addr)]
+	| Type.Float -> [FSt(x, reg_zero, io_addr)]
 	| _ -> failwith "write supported only for int and float.")
     | Closure.Fasi(x) ->
        let tmp = Id.genid "stk" in
