@@ -49,7 +49,8 @@ let prepare_for_call mps env es = (* 関数呼び出しをまたぐ変数について、save/rest
 	 | Call(xt, f, ys, zs) ->
 	    let liveouts = tuple2_map (Liveness.get_liveout (i, e, b)) mps in
 	    let dsets = Liveness.def_set (i, e, b) in
-	    let livethroughs = tuple2_map2 S.diff liveouts dsets in
+	    let (livethroughi, livethroughf) = tuple2_map2 S.diff liveouts dsets in
+	    let livethroughs = (S.diff livethroughi (S.of_list special_regs), livethroughf) in
 	    let folder f x acc = (* すでにsaveしたことのあるものはsaveせずに、フラグだけ立てる。saveしたことのないものはsaveする。*)
 	      if M.mem x !senv then 
 		(let (svar, _) = M.find x !senv in 
