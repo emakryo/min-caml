@@ -44,20 +44,6 @@ let rm_stk oc sfrm =
      Printf.fprintf oc "\tLD\t%s\t%s\t%d\t#restore link register\n" (reg reg_link) (reg reg_sp) sfrm.size);
   (if sfrm.size > 0 then
      Printf.fprintf oc "\tADDI\t%s\t%s\t%d\t#delete stack frame\n" (reg reg_sp) (reg reg_sp) sfrm.size)
-	   
-let rec rm_nop = function
-  (* | e -> e *)
-  | [] -> []
-  | e::es -> (rm_nop' e) @ (rm_nop es)
-and rm_nop' (i, e, b) = 
-  match e with
-  | Nop -> []
-  | Mr((x, _), y) | FMr((x, _), y) when x == y  -> []
-  | If(dest, cnd, cmp, e_then, e_else) -> 
-     [(i, If(dest, cnd, cmp, rm_nop e_then, rm_nop e_else), b)]
-  | IfF(dest, cnd, cmp, e_then, e_else) -> 
-     [(i, IfF(dest, cnd, cmp, rm_nop e_then, rm_nop e_else), b)]
-  | _ -> [(i, e, b)]
 
 let rec g oc sfrm = function (* 命令列のアセンブリ生成 *)
   | (false, []) -> ()
@@ -179,7 +165,6 @@ and g'_non_tail_if oc sfrm e1 e2 bc =
 
 let h oc { name = Id.L(x); args = _; body = e; ret = _ } =
   Printf.fprintf oc ":%s\n" x;
-  let e = rm_nop e in
   let sfrm = mk_stk oc e false in
   g oc sfrm (true, e)
 
@@ -189,7 +174,6 @@ let f oc (Prog(fundefs, e))  =
   Printf.fprintf oc ":_min_caml_start # main entry point\n";
   List.iter (fun (x, r) -> if r <> reg_zero then Printf.fprintf oc "\tLDI\t%s\t%d\n"(reg r) x) !constregs;
   List.iter (fun (x, r) -> if r <> freg_zero then Printf.fprintf oc "\tVFLDI\t%s\t%e\n" (reg r) x) !constfregs;
-  let e = rm_nop e in
   let sfrm = mk_stk oc e true in
   g oc sfrm (false, e);
   Printf.fprintf oc "\tJ\t0\t#halt\n" 
