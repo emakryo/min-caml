@@ -380,7 +380,7 @@ let rec g env (r, e) = (* K正規化ルーチン本体 (caml2html: knormal_g) *)
 		(fun x -> (r, Itof (x)), Type.Float)
   | Syntax.Fabs (e) -> 
      insert_let (g env e)
-		(fun x -> (r, Fasi (x)), Type.Float)
+		(fun x -> (r, Fabs (x)), Type.Float)
   | Syntax.Sqrt (e) -> 
      insert_let (g env e)
 		(fun x -> (r, Iasf (x)), Type.Float)
