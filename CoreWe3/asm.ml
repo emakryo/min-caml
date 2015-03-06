@@ -152,7 +152,6 @@ and fv = function
 
 let ext_env env e = M.add_list (get_dests e) env
 
-let imm_max = 0x7fff
-let imm_min = 0x8000
+let imm_max = 32768
 
 let io_addr = -1

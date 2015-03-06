@@ -95,6 +95,5 @@ val fv : t list -> Id.t list
 val ext_env : Type.t M.t -> t -> Type.t M.t
 
 val imm_max : int
-val imm_min : int
 
 val io_addr : int
