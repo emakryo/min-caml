@@ -114,5 +114,5 @@ let h { name = l; args = yts; fargs = zts; body = e; ret = t } =
 
 (* プログラム全体の 14 bit 即値最適化 *)
 let f (Prog(fundefs, e)) = 
-  (* (Prog(fundefs, e)) *)
-  Prog(List.map h fundefs, g (init_envs ()) e)
+  (Prog(fundefs, e))
+  (* Prog(List.map h fundefs, g (init_envs ()) e) *)
