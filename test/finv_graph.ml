@@ -23,7 +23,7 @@ let rec plot canvas =
     let ymin = -2.0 in
     let ymax = 2.0 in
     let x = (xmax -. xmin) /. w *. (float_of_int i) +. xmin in
-    let y = finv x in
+    let y = 1.0 /. x in
     int_of_float ((ymax -. y) /. (ymax -. ymin) *. h)
   in
   let rec plot_point canvas i = 
