@@ -163,8 +163,8 @@ and g'_non_tail_if oc sfrm e1 e2 bc =
   g oc sfrm (false, e1);
   Printf.fprintf oc ":%s\n" b_cont  
 
-let h oc { name = Id.L(x); args = _; body = e; ret = _ } =
-  Printf.fprintf oc ":%s\n" x;
+let h oc { name = Id.L(x); args = xts; fargs = yts; body = e; ret = t } =
+  Printf.fprintf oc ":%s\t\n" x;
   let sfrm = mk_stk oc e false in
   g oc sfrm (true, e)
 
