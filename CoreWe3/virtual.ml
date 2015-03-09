@@ -63,7 +63,7 @@ and g' env dest (r, e) = (* 式の仮想マシンコード生成 *)
 	 List.fold_left
 	   (fun (i, store) (x, t) ->
 	    match t with
-	    | Type.Unit -> (i, store)
+	    | Type.Unit -> (i + 1, store)
 	    | Type.Float -> (i + 1, (FSt(x, tup, i))::store)
 	    | _ -> (i + 1, (St(x, tup, i))::store))
 	   (0, []) 
@@ -75,10 +75,10 @@ and g' env dest (r, e) = (* 式の仮想マシンコード生成 *)
 	 List.fold_left
 	   (fun (i, load) (x, t) ->
 	    if not (S.mem x s) then 
-	      (i, load)
+	      (i + 1, load)
 	    else
 	      match t with
-	      | Type.Unit -> (i, load)
+	      | Type.Unit -> (i + 1, load)
 	      | Type.Float -> (i + 1, (FLd((x, t), y, i))::load)
 	      | _ -> (i + 1, (Ld((x, t), y, i))::load))
 	   (0, []) 
