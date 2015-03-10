@@ -29,6 +29,22 @@ let rec map_args rs = function
 
 let prepare_for_call mps env es = (* 関数呼び出しをまたぐ変数について、save/restoreを挿入する*)
   let senv = ref M.empty in
+  let insert_save e = 
+    let liveouts = tuple2_map (Liveness.get_liveout e) mps in
+    let dsets = Liveness.def_set e in
+    let (livethroughi, livethroughf) = tuple2_map2 S.diff liveouts dsets in
+    let non_livethroughs = (S.of_list ((List.map snd !constregs) @ special_regs), S.of_list (List.map snd !constfregs)) in
+    let livethroughs = tuple2_map2 S.diff (livethroughi , livethroughf) non_livethroughs in
+    let folder f x acc = (* すでにsaveしたことのあるものはsaveせずに、フラグだけ立てる。saveしたことのないものはsaveする。*)
+      if M.mem x !senv then 
+	(let (svar, _) = M.find x !senv in 
+	 senv := M.add x (svar, true) !senv; acc)
+      else 
+	(let svar = Id.genid "stk" in
+	 senv := M.add x (svar, true) !senv;
+	 (new_t (f x svar))::acc) in
+    let fs = ((fun x svar -> Save(x, svar)), (fun x svar -> FSave(x, svar))) in
+    tuple2_map3 (fun f -> S.fold (folder f)) fs livethroughs ([], []) in
   let rec prepare_for_call_aux mps env = function
     | [] -> []
     | (i, e, b)::es ->
@@ -46,21 +62,8 @@ let prepare_for_call mps env es = (* 関数呼び出しをまたぐ変数について、save/rest
        let (rstri, rstrf) = tuple2_map3 (fun f -> S.fold (folder f)) fs usets ([], []) in
        let (savei, savef) =
 	 match e with
-	 | Call(xt, f, ys, zs) ->
-	    let liveouts = tuple2_map (Liveness.get_liveout (i, e, b)) mps in
-	    let dsets = Liveness.def_set (i, e, b) in
-	    let (livethroughi, livethroughf) = tuple2_map2 S.diff liveouts dsets in
-	    let livethroughs = (S.diff livethroughi (S.of_list special_regs), livethroughf) in
-	    let folder f x acc = (* すでにsaveしたことのあるものはsaveせずに、フラグだけ立てる。saveしたことのないものはsaveする。*)
-	      if M.mem x !senv then 
-		(let (svar, _) = M.find x !senv in 
-		 senv := M.add x (svar, true) !senv; acc)
-	      else 
-		(let svar = Id.genid "stk" in
-		 senv := M.add x (svar, true) !senv;
-		 (new_t (f x svar))::acc) in
-	    let fs = ((fun x svar -> Save(x, svar)), (fun x svar -> FSave(x, svar))) in
-	    tuple2_map3 (fun f -> S.fold (folder f)) fs livethroughs ([], [])
+	 | Call(_) | If(_) | IfF(_) ->
+	    insert_save (i, e, b)
 	 | e -> ([], []) in
        let elist =
 	 match e with
@@ -84,11 +87,12 @@ let prepare_for_call mps env es = (* 関数呼び出しをまたぐ変数について、save/rest
     let senv_then = !senv in
     senv := senv_back;
     let e_else = prepare_for_call_aux mps env e_else in
-    senv := M.fold (fun x (sv, f_else) se -> 
+    let senv_else = !senv in
+    senv := M.fold (fun x (sv, flag1) se -> 
 		    if M.mem x senv_then then
-		      let (sv, f_then) = M.find x senv_then in 
-		      M.add x (sv, f_then || f_else) se
-		    else se) !senv M.empty;
+		      let (sv, flag2) = M.find x senv_then in
+		      M.add x (sv, flag1 || flag2) se
+		    else se) senv_else M.empty;
     (e_then, e_else) in
   prepare_for_call_aux mps env es
 
@@ -202,7 +206,7 @@ let mk_save x t sv =
   | Type.Unit -> Nop
   | Type.Float -> FSave(x, sv)
   | _ -> Save(x, sv)
-	     
+
 let rec insert_spill x sinfo = function 
   | [] -> []
   | (i, e, b)::es -> 
