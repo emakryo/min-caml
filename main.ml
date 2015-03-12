@@ -22,9 +22,9 @@ let lexbuf outchan l = (* バッファをコンパイルしてチャンネルへ出力する (caml2htm
   Id.counter := 0;
   Typing.extenv := M.empty;
   Emit.f outchan
-	 (Trim.f 
-	    (Simm.f
-	       (RegAlloc.f
+	 (RegAlloc.f
+	    (Trim.f 
+	       (Simm.f
 		  (Virtual.f
 		     (Closure.f
 			(iter !limit
