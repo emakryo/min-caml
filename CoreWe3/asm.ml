@@ -134,7 +134,7 @@ let rec remove_and_uniq xs = function
 let fv_id_or_imm = function V (x) -> [x] | _ -> []
 let rec fv_exp = function
   | Nop | Li(_) | FLi(_) | LoadLabel(_) | Restore(_)| FRestore(_) -> []
-  | Ld(_, x, _) | FLd(_, x, _) | IToF(_, x) | FToI(_, x) (* | IAsF(_, x) | FAsI(_, x) *) | Neg(_, x)  | FInv(_, x) | FAbs(_, x) | Sqrt(_, x) | Mr(_, x) | Save(x, _) | FSave(x, _) | FMr(_, x) -> 
+  | Ld(_, x, _) | FLd(_, x, _) | IToF(_, x) | FToI(_, x) | Neg(_, x)  | FInv(_, x) | FAbs(_, x) | Sqrt(_, x) | Mr(_, x) | Save(x, _) | FSave(x, _) | FMr(_, x) -> 
      [x]
   | St(x, y, _) | FSt(x, y, _) | Sub(_, x, y) | And(_, x, y) | Or(_, x, y) | FAdd(_, x, y) | FSub(_, x, y) | FMul(_, x, y) -> 
      [x; y]  
@@ -148,7 +148,7 @@ let rec fv_exp = function
      (List.map fst yts) @ (List.map fst zts)
 and fv = function 
   | [] -> []
-  | (_, e, _)::e_rest -> (fv_exp e)@(fv e_rest)
+  | (_, e, _)::e_rest -> (fv_exp e) @ (fv e_rest)
 
 let ext_env env e = M.add_list (get_dests e) env
 
