@@ -62,7 +62,7 @@ let rec replace (envi, envf) = function
   	  If((x, t), cond, (constreg_find y envi, C(i)), replace (envi, envf) e_then, replace (envi, envf) e_else)
        | IfF((x, t), cond, (y, z), e_then, e_else) ->
   	  IfF((x, t), cond, (constfreg_find y envf, constfreg_find z envf), replace (envi, envf) e_then, replace (envi, envf) e_else)
-       | Call((x, t), f, yts, zts) -> Call((x, t), f, yts, zts)
+       | Call((x, t), f, yts, zts) -> Call((x, t), f, List.map (fun (y, t) -> (constreg_find y envi, t)) yts, List.map (fun (z, t) -> (constfreg_find z envf, t)) zts)
        | LoadLabel((x, t), l) -> LoadLabel((x, t), l)
        | Mr((x, t), y) when x = y -> Nop
        | Mr((x, t), y) when constreg_mem y envi -> Mr((x, t), constreg_find y envi)
