@@ -49,7 +49,7 @@ let mk_rstrs type_env stk_env (imm_envi, imm_envf) (i, e, b) =
     if M.mem x senv then (* saveºÑ *)
       let (x't, sv, flag) = M.find x senv in
       if flag then (* Í×restore *)
-	(M.add x (x't, sv, false) senv, (mk_rstr x't sv x)::rstrs)
+	(M.add x (x't, sv, false) senv, (new_t (mk_rstr x't sv x))::rstrs)
       else (senv, rstrs)
     else (senv, rstrs) in
   let (useti, usetf) = Liveness.use_set (i, e, b) in
