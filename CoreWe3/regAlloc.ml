@@ -55,74 +55,6 @@ let mk_rstrs type_env stk_env (imm_envi, imm_envf) (i, e, b) =
   let (useti, usetf) = Liveness.use_set (i, e, b) in
   S.fold folder (S.union useti usetf) (stk_env, [])
 
-let prepare_for_call mps env es = (* 関数呼び出しをまたぐ変数について、save/restoreを挿入する*)
-  let senv = ref M.empty in
-  let insert_save e = 
-    let liveouts = tuple2_map (Liveness.get_liveout e) mps in
-    let dsets = Liveness.def_set e in
-    let (livethroughi, livethroughf) = tuple2_map2 S.diff liveouts dsets in
-    let non_livethroughs = (S.of_list ((List.map snd !constregs) @ special_regs), S.of_list (List.map snd !constfregs)) in
-    let livethroughs = tuple2_map2 S.diff (livethroughi , livethroughf) non_livethroughs in
-    let folder f x acc = (* すでにsaveしたことのあるものはsaveせずに、フラグだけ立てる。saveしたことのないものはsaveする。*)
-      if M.mem x !senv then 
-	(let (svar, _) = M.find x !senv in 
-	 senv := M.add x (svar, true) !senv; acc)
-      else 
-	(let svar = Id.genid "stk" in
-	 senv := M.add x (svar, true) !senv;
-	 (new_t (f x svar))::acc) in
-    let fs = ((fun x svar -> Save(x, svar)), (fun x svar -> FSave(x, svar))) in
-    tuple2_map3 (fun f -> S.fold (folder f)) fs livethroughs ([], []) in
-  let rec prepare_for_call_aux mps env = function
-    | [] -> []
-    | (i, e, b)::es ->
-       let usets = Liveness.use_set (i, e, b) in
-       let folder f x acc = (* すでにsaveされている && 最後の関数呼び出しからrestoreされたことがない ならflagをfalseにしてrestoreする。*)
-	 if M.mem x !senv then 
-	   let (svar, flag) = M.find x !senv in
-	   if flag then 
-	     (senv := M.add x (svar, false) !senv; 
-	      (new_t (f x svar))::acc)
-	   else acc 
-	 else acc in
-       let fs = ((fun x svar -> Restore((x, M.find x env), svar)),
-		 (fun x svar -> FRestore((x, M.find x env), svar))) in
-       let (rstri, rstrf) = tuple2_map3 (fun f -> S.fold (folder f)) fs usets ([], []) in
-       let (savei, savef) =
-	 match e with
-	 | Call(_) | If(_) | IfF(_) ->
-	    insert_save (i, e, b)
-	 | e -> ([], []) in
-       let elist =
-	 match e with
-	 | If(xt, cond, cmp, e_then, e_else) ->
-	    let (e_then, e_else) = prepare_for_call_if mps env (e_else, e_then) in
-	    [i, If(xt, cond, cmp, e_then, e_else), b]
-	 | IfF(xt, cond, cmp, e_then, e_else) ->
-	    let (e_then, e_else) = prepare_for_call_if mps env (e_else, e_then) in
-	    [i, IfF(xt, cond, cmp, e_then, e_else), b]
-	 | Call((x, t), f, yts, zts) ->
-	    let sargs = set_args (reglist()) (freglist()) (yts @ zts) in
-	    let gargs = get_args (reglist()) (freglist()) [x, t] in
-	    let (rts, frts) = tuple2_map2 map_args (reglist(), freglist()) (yts, zts) in
-	    sargs @ [i, Call((ret_reg t, t), f, rts, frts), b] @ gargs
-	 | e -> [i, e, b] in
-       let env = ext_env env (i, e, b) in
-       savei @ savef @ rstri @ rstrf @ elist @ (prepare_for_call_aux mps env es)
-  and prepare_for_call_if mps env (e_else, e_then) =
-    let senv_back = !senv in
-    let e_then = prepare_for_call_aux mps env e_then in
-    let senv_then = !senv in
-    senv := senv_back;
-    let e_else = prepare_for_call_aux mps env e_else in
-    let senv_else = !senv in
-    senv := M.fold (fun x (sv, flag1) se -> 
-		    if M.mem x senv_then then
-		      let (sv, flag2) = M.find x senv_then in
-		      M.add x (sv, flag1 || flag2) se
-		    else se) senv_else M.empty;
-    (e_then, e_else) in
-  prepare_for_call_aux mps env es
 let mk_saves mps type_env stk_env (imm_envi, imm_envf) e =
   let folder x (senv, saves) = 
     if M.mem x senv then (* save済み *)
@@ -149,6 +81,91 @@ let mk_saves mps type_env stk_env (imm_envi, imm_envf) e =
   let (livethroughi, livethroughf) = tuple2_map2 S.diff (livethroughi , livethroughf) non_livethroughs in
   S.fold folder (S.union livethroughi livethroughf) (stk_env, [])
 
+let rec prepare_for_call mps type_env stk_env imm_envs es =
+  let rec call_exists = function
+    | [] -> false
+    | e::es ->
+       match get_inst e with
+       | Call(_) -> true
+       | If(_, _, _, e_then, e_else) | IfF(_, _, _, e_then, e_else) -> call_exists e_then || call_exists e_else
+       | _ -> call_exists es in
+  let stkfind x senv = if M.mem x senv then let ((x', _), _ ,_ ) = M.find x senv in x' else x in
+  let ext_imm_envs (envi, envf) = function
+    | Li((x, t), i32) -> (M.add x (Int32.to_int i32) envi, envf)
+    | Mr((x, t), y) when M.mem y envi -> (M.add x (M.find y envi) envi, envf)
+    | Save(x, s) when M.mem x envi -> (M.add s (M.find x envi) envi, envf)
+    | Restore((x, t), s) when M.mem s envi -> (M.add x (M.find s envi) envi, envf)
+    | FLi((x, t), f) -> (envi, M.add x f envf)
+    | FMr((x, t), y) when M.mem y envf -> (envi, M.add x (M.find y envf) envf)
+    | FSave(x, s) when M.mem x envf -> (envi, M.add s (M.find x envf) envf)
+    | FRestore((x, t), s) when M.mem s envf -> (envi, M.add x (M.find s envf) envf) 
+    | _ -> (envi, envf) in
+  let rename_rstrd senv = function
+    | Nop -> Nop
+    | Ld((x, t), y, i) -> Ld((x, t), stkfind y senv, i)
+    | St(x, y, i) -> St(stkfind x senv, stkfind y senv, i)
+    | FLd((x, t), y, i) -> FLd((x, t), stkfind y senv, i)
+    | FSt(x, y, i) -> FSt(stkfind x senv, stkfind y senv, i)
+    | IToF((x, t), y) -> IToF((x, t), stkfind y senv)
+    | FToI((x, t), y) -> FToI((x, t), stkfind y senv)
+    | Neg((x, t), y) -> Neg((x, t), stkfind y senv)
+    | Add((x, t), y, V(z)) -> Add((x, t), stkfind y senv, V(stkfind z senv))
+    | Add((x, t), y, C(i)) -> Add((x, t), stkfind y senv, C(i))
+    | Sub((x, t), y, z) -> Sub((x, t), stkfind y senv, stkfind z senv)
+    | And((x, t), y, z) -> And((x, t), stkfind y senv, stkfind z senv)
+    | Or((x, t), y, z) -> Or((x, t), stkfind y senv, stkfind z senv)
+    | Li((x, t), i) -> Li((x, t), i)
+    | Shl((x, t), y, V(z)) -> Shl((x, t), stkfind y senv, V(stkfind z senv))
+    | Shl((x, t), y, C(i)) -> Shl((x, t), stkfind y senv, C(i))
+    | Shr((x, t), y, V(z)) -> Shr((x, t), stkfind y senv, V(stkfind z senv))
+    | Shr((x, t), y, C(i)) -> Shr((x, t), stkfind y senv, C(i))
+    | FAdd((x, t), y, z) -> FAdd((x, t), stkfind y senv, stkfind z senv)
+    | FSub((x, t), y, z) -> FSub((x, t), stkfind y senv, stkfind z senv)
+    | FMul((x, t), y, z) -> FMul((x, t), stkfind y senv, stkfind z senv)
+    | FInv((x, t), y) -> FInv((x, t), stkfind y senv)
+    | FAbs((x, t), y) -> FAbs((x, t), stkfind y senv)
+    | Sqrt((x, t), y) -> Sqrt((x, t), stkfind y senv)
+    | FLi((x, t), f) -> FLi((x, t), f)
+    | If((x, t), cond, (y, V(z)), e_then, e_else) -> If((x, t), cond, (stkfind y senv, V(stkfind z senv)), e_then, e_else)
+    | If((x, t), cond, (y, C(i)), e_then, e_else) -> If((x, t), cond, (stkfind y senv, C(i)), e_then, e_else)
+    | IfF((x, t), cond, (y, z), e_then, e_else) -> IfF((x, t), cond, (stkfind y senv, stkfind z senv), e_then, e_else)
+    | Call((x, t), f, yts, zts) -> Call((x, t), f, List.map (fun (y, t) -> (stkfind y senv, t)) yts, List.map (fun (z, t) -> (stkfind z senv, t)) zts)
+    | LoadLabel((x, t), l) -> LoadLabel((x, t), l)
+    | Mr((x, t), y) -> Mr((x, t), stkfind y senv)
+    | FMr((x, t), y) -> FMr((x, t), stkfind y senv)
+    | Save(x, s) -> Save(stkfind x senv, s)
+    | Restore((x, t), s) -> Restore((x, t), s)
+    | FSave(x, s) -> FSave(stkfind x senv, s)
+    | FRestore((x, t), s) -> FRestore((x, t), s) in
+  match es with
+  | [] -> []
+  | (i, e, b)::es ->
+     let imm_envs = ext_imm_envs imm_envs e in
+     let (stk_env', rstrs) = mk_rstrs type_env stk_env imm_envs (i, e, b) in
+     let (stk_env, saves) =
+       if call_exists [i, e, b] then
+	 mk_saves mps type_env stk_env imm_envs (i, e, b)
+       else (stk_env, []) in
+     let elist = 
+       match rename_rstrd stk_env' e with
+       | If(xt, cond, cmp, e_then, e_else) ->
+	  let (e_then, e_else) = prepare_for_call_if mps type_env stk_env imm_envs (e_then, e_else) in
+	  [i, If(xt, cond, cmp, e_then, e_else), b]
+       | IfF(xt, cond, cmp, e_then, e_else) ->
+	  let (e_then, e_else) = prepare_for_call_if mps type_env stk_env imm_envs (e_then, e_else) in
+	  [i, IfF(xt, cond, cmp, e_then, e_else), b]
+       | Call((x, t), f, yts, zts) ->
+	  let sargs = set_args (reglist()) (freglist()) (yts @ zts) in
+	  let gargs = get_args (reglist()) (freglist()) [x, t] in
+	  let (rts, frts) = tuple2_map2 map_args (reglist(), freglist()) (yts, zts) in
+	  sargs @ [i, Call((ret_reg t, t), f, rts, frts), b] @ gargs
+       | e -> [i, e, b] in
+     let type_env = ext_env type_env (i, e, b) in
+     saves @ rstrs @ elist @ (prepare_for_call mps type_env stk_env imm_envs es)
+and prepare_for_call_if mps type_env stk_env imm_envs (e_then, e_else) =
+  let e_then = prepare_for_call mps type_env stk_env imm_envs e_then in
+  let e_else = prepare_for_call mps type_env stk_env imm_envs e_else in
+  (e_then, e_else)
 
 let rec mk_igraph mps igs = function  (* 干渉グラフ *)
   | [] -> igs
@@ -335,11 +352,14 @@ and allocate' regenv (i, e, b) =
   (i, e', b)
 
 let rec g env tl e = 
-  let env = List.fold_left (fun env r -> M.add r Type.Int env) env special_regs in
-  let env = List.fold_left (fun env (_, r) -> M.add r Type.Int env) env !constregs in
-  let env = List.fold_left (fun env (_, r) -> M.add r Type.Float env) env !constfregs in
+  let tenv = List.fold_left (fun env r -> M.add r Type.Int env) env special_regs in
+  let tenv = List.fold_left (fun env (_, r) -> M.add r Type.Int env) tenv !constregs in
+  let tenv = List.fold_left (fun env (_, r) -> M.add r Type.Float env) tenv !constfregs in
   let mps = Liveness.calc_live_main tl e in
-  let e = prepare_for_call mps env e in
+  let ienvs = 
+    let folder ienv (im, r) = M.add r im ienv in
+    (List.fold_left folder M.empty !constregs, List.fold_left folder M.empty !constfregs) in
+  let e = prepare_for_call mps tenv M.empty ienvs e in
   let (regenv, e) = g' tl e S.empty in
   (regenv, e)
 and g' tl e spl = 
