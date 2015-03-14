@@ -44,6 +44,7 @@ let rec replace (envi, envf) = function
        | Sub((x, t), y, z) -> Sub((x, t), constreg_find y envi, constreg_find z envi)
        | And((x, t), y, z) -> And((x, t), constreg_find y envi, constreg_find z envi)
        | Or((x, t), y, z) -> Or((x, t), constreg_find y envi, constreg_find z envi)
+       | Li((x, t), i) when List.mem_assoc (Int32.to_int i) !constregs -> Mr((x, t), List.assoc (Int32.to_int i) !constregs)
        | Li((x, t), i) -> Li((x, t), i)
        | Shl((x, t), y, V(z)) -> Shl((x, t), constreg_find y envi, imm_find z envi)
        | Shl((x, t), y, C(i)) -> Shl((x, t), constreg_find y envi, C(i))
@@ -55,6 +56,7 @@ let rec replace (envi, envf) = function
        | FInv((x, t), y) -> FInv((x, t), constfreg_find y envf)
        | FAbs((x, t), y) -> FAbs((x, t), constfreg_find y envf)
        | Sqrt((x, t), y) -> Sqrt((x, t), constfreg_find y envf)
+       | FLi((x, t), f) when List.mem_assoc f !constfregs -> FMr((x, t), List.assoc f !constfregs)
        | FLi((x, t), f) -> FLi((x, t), f)
        | If((x, t), cond, (y, V(z)), e_then, e_else) ->
   	  If((x, t), cond, (constreg_find y envi, imm_find z envi), replace (envi, envf) e_then, replace (envi, envf) e_else)
