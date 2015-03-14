@@ -123,6 +123,32 @@ let prepare_for_call mps env es = (* 関数呼び出しをまたぐ変数について、save/rest
 		    else se) senv_else M.empty;
     (e_then, e_else) in
   prepare_for_call_aux mps env es
+let mk_saves mps type_env stk_env (imm_envi, imm_envf) e =
+  let folder x (senv, saves) = 
+    if M.mem x senv then (* save済み *)
+      let ((x', t), sv, flag) = M.find x senv in
+      (M.add x ((Id.genid x, t), sv, true) senv, saves) (* saveせず、renameしてflag立てる *)
+    else (* 未save *)
+      let t = M.find x type_env in
+      let sv = Id.genid "stk" in
+      let x' = Id.genid x in
+      match t with
+      | Type.Unit -> (senv, saves)
+      | Type.Float -> 
+	 let senv = M.add x ((x', t), sv, true) senv in
+	 if M.mem x imm_envf then (senv, saves) (* 定数なら、環境だけ拡張 *)
+	 else (senv, (new_t (FSave(x, sv)))::saves)
+      | _ -> 
+	 let senv = M.add x ((x', t), sv, true) senv in
+	 if M.mem x imm_envi then (senv, saves) (* 定数なら、環境だけ拡張 *)
+	 else (senv, (new_t (Save(x, sv)))::saves) in
+  let liveouts = tuple2_map (Liveness.get_liveout e) mps in
+  let dsets = Liveness.def_set e in
+  let (livethroughi, livethroughf) = tuple2_map2 S.diff liveouts dsets in
+  let non_livethroughs = (S.of_list ((List.map snd !constregs) @ special_regs), S.of_list (List.map snd !constfregs)) in
+  let (livethroughi, livethroughf) = tuple2_map2 S.diff (livethroughi , livethroughf) non_livethroughs in
+  S.fold folder (S.union livethroughi livethroughf) (stk_env, [])
+
 
 let rec mk_igraph mps igs = function  (* 干渉グラフ *)
   | [] -> igs
