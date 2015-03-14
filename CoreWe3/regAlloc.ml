@@ -27,6 +27,34 @@ let rec map_args rs = function
      | Type.Unit -> map_args rs yts
      | _ -> (List.hd rs, t)::(map_args (List.tl rs) yts)
 
+let mk_rstrs type_env stk_env (imm_envi, imm_envf) (i, e, b) =
+  let mk_rstr x't sv x =
+    match snd x't with
+    | Type.Unit -> Nop
+    | Type.Float -> 
+       if M.mem x imm_envf then (* 定数 *)
+	 let f = M.find x imm_envf in
+	 if List.mem_assoc f !constfregs then (* 定数レジスタ *)
+	   FMr(x't, List.assoc f !constfregs)
+	 else FLi(x't, f)
+       else FRestore(x't, sv)
+    | _ -> 
+       if M.mem x imm_envi then (* 定数 *)
+	 let i = M.find x imm_envi in
+	 if List.mem_assoc i !constregs then (* 定数レジスタ *)
+	   Mr(x't, List.assoc i !constregs)
+	 else Li(x't, Int32.of_int i)
+       else Restore(x't, sv) in
+  let folder x (senv, rstrs) =
+    if M.mem x senv then (* save済 *)
+      let (x't, sv, flag) = M.find x senv in
+      if flag then (* 要restore *)
+	(M.add x (x't, sv, false) senv, (mk_rstr x't sv x)::rstrs)
+      else (senv, rstrs)
+    else (senv, rstrs) in
+  let (useti, usetf) = Liveness.use_set (i, e, b) in
+  S.fold folder (S.union useti usetf) (stk_env, [])
+
 let prepare_for_call mps env es = (* 関数呼び出しをまたぐ変数について、save/restoreを挿入する*)
   let senv = ref M.empty in
   let insert_save e = 
