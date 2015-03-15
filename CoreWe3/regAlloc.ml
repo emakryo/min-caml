@@ -55,7 +55,7 @@ let mk_rstrs stk_env (i, e, b) =
   let (useti, usetf) = Liveness.use_set (i, e, b) in
   S.fold folder (S.union useti usetf) (stk_env, [])
 
-let mk_saves mps type_env stk_env (imm_envi, imm_envf) e =
+let mk_saves mps type_env stk_env (imm_envi, imm_envf) e es =
   let folder x (senv, saves) = 
     if M.mem x senv then (* saveºÑ¤ß *)
       let ((x', t), sv, flag) = M.find x senv in
@@ -77,10 +77,10 @@ let mk_saves mps type_env stk_env (imm_envi, imm_envf) e =
 	 else 
 	   let v = Id.genid "stk" in
 	   (M.add x ((x', t), Sv(v), true) senv, (new_t (Save(x, v)))::saves) in
-  let liveouts = tuple2_map (Liveness.get_liveout e) mps in
-  let dsets = Liveness.def_set e in
-  let (livethroughi, livethroughf) = tuple2_map (S.filter (fun x -> not (is_reg x))) (tuple2_map2 S.diff liveouts dsets) in
-  S.fold folder (S.union livethroughi livethroughf) (stk_env, [])
+  let (liveini, liveinf) = Liveness.livein_of_ts mps es in
+  let dsets = S.of_list (List.map fst (get_dests e)) in
+  let livethrough = (S.filter (fun x -> not (is_reg x))) (S.diff (S.union liveini liveinf) dsets) in
+  S.fold folder livethrough (stk_env, [])
 
 let rec prepare_for_call mps type_env stk_env imm_envs es =
   let rec call_exists = function
@@ -145,7 +145,7 @@ let rec prepare_for_call mps type_env stk_env imm_envs es =
      let (stk_env', rstrs) = mk_rstrs stk_env (i, e, b) in
      let (stk_env, saves) =
        if call_exists [i, e, b] then
-	 mk_saves mps type_env stk_env imm_envs (i, e, b)
+	 mk_saves mps type_env stk_env imm_envs (i, e, b) es
        else (stk_env, []) in
      let elist = 
        match rename_rstrd stk_env' e with
