@@ -75,7 +75,7 @@ and g' oc sfrm (tail, (i, e, b)) =  (* 各命令のアセンブリ生成 *)
   | (false, Li((x, t), i)) -> 
      Printf.fprintf oc "\t%sLDI\t%s\t%ld\n" at (reg x) i
   | (false, FLi((x, t), d)) -> 
-     Printf.fprintf oc "\t%sVFLDI\t%s\t%e\t#0x%lx\n" at (reg x) d (getsgl d)
+     Printf.fprintf oc "\t%sVFLDI\t%s\t0x%lx\t#%e\n" at (reg x) (getsgl d) d
   | (false, IToF((x, t), y)) -> 
      Printf.fprintf oc "\t%sITOF\t%s\t%s\n" at (reg x) (reg y)
   | (false, FToI((x, t), y)) -> 
