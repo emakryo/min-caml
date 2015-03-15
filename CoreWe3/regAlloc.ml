@@ -27,24 +27,24 @@ let rec map_args rs = function
      | Type.Unit -> map_args rs yts
      | _ -> (List.hd rs, t)::(map_args (List.tl rs) yts)
 
-let mk_rstrs type_env stk_env (imm_envi, imm_envf) (i, e, b) =
+type svar = Si of int | Sf of float | Sv of Id.t
+
+let mk_rstrs stk_env (i, e, b) =
   let mk_rstr x't sv x =
-    match snd x't with
-    | Type.Unit -> Nop
-    | Type.Float -> 
-       if M.mem x imm_envf then (* 定数 *)
-	 let f = M.find x imm_envf in
-	 if List.mem_assoc f !constfregs then (* 定数レジスタ *)
-	   FMr(x't, List.assoc f !constfregs)
-	 else FLi(x't, f)
-       else FRestore(x't, sv)
-    | _ -> 
-       if M.mem x imm_envi then (* 定数 *)
-	 let i = M.find x imm_envi in
-	 if List.mem_assoc i !constregs then (* 定数レジスタ *)
-	   Mr(x't, List.assoc i !constregs)
-	 else Li(x't, Int32.of_int i)
-       else Restore(x't, sv) in
+    match sv with
+    | Si(i) -> 
+       if List.mem_assoc i !constregs then (* 定数レジスタ *)
+	 Mr(x't, List.assoc i !constregs)
+       else Li(x't, Int32.of_int i)
+    | Sf(f) -> 
+       if List.mem_assoc f !constfregs then (* 定数レジスタ *)
+	 FMr(x't, List.assoc f !constfregs)
+       else FLi(x't, f)
+    | Sv(v) -> 
+       match snd x't with
+       | Type.Unit -> Nop
+       | Type.Float -> FRestore(x't, v)
+       | _ -> Restore(x't, v) in
   let folder x (senv, rstrs) =
     if M.mem x senv then (* save済 *)
       let (x't, sv, flag) = M.find x senv in
@@ -61,19 +61,22 @@ let mk_saves mps type_env stk_env (imm_envi, imm_envf) e =
       let ((x', t), sv, flag) = M.find x senv in
       (M.add x ((Id.genid x, t), sv, true) senv, saves) (* saveせず、renameしてflag立てる *)
     else (* 未save *)
-      let t = M.find x type_env in
-      let sv = Id.genid "stk" in
+      let t = M.find x type_env in      
       let x' = Id.genid x in
       match t with
       | Type.Unit -> (senv, saves)
       | Type.Float -> 
-	 let senv = M.add x ((x', t), sv, true) senv in
-	 if M.mem x imm_envf then (senv, saves) (* 定数なら、環境だけ拡張 *)
-	 else (senv, (new_t (FSave(x, sv)))::saves)
+	 if M.mem x imm_envf then  (* 定数 *)
+	   (M.add x ((x', t), Sf(M.find x imm_envf), true) senv, saves) (* 環境の拡張のみ *)
+	 else 
+	   let v = Id.genid "stk" in
+	   (M.add x ((x', t), Sv(v), true) senv, (new_t (FSave(x, v)))::saves)
       | _ -> 
-	 let senv = M.add x ((x', t), sv, true) senv in
-	 if M.mem x imm_envi then (senv, saves) (* 定数なら、環境だけ拡張 *)
-	 else (senv, (new_t (Save(x, sv)))::saves) in
+	 if M.mem x imm_envi then  (* 定数 *)
+	   (M.add x ((x', t), Si(M.find x imm_envi), true) senv, saves) (* 環境の拡張のみ *)
+	 else 
+	   let v = Id.genid "stk" in
+	   (M.add x ((x', t), Sv(v), true) senv, (new_t (Save(x, v)))::saves) in
   let liveouts = tuple2_map (Liveness.get_liveout e) mps in
   let dsets = Liveness.def_set e in
   let (livethroughi, livethroughf) = tuple2_map2 S.diff liveouts dsets in
@@ -141,7 +144,7 @@ let rec prepare_for_call mps type_env stk_env imm_envs es =
   | [] -> []
   | (i, e, b)::es ->
      let imm_envs = ext_imm_envs imm_envs e in
-     let (stk_env', rstrs) = mk_rstrs type_env stk_env imm_envs (i, e, b) in
+     let (stk_env', rstrs) = mk_rstrs stk_env (i, e, b) in
      let (stk_env, saves) =
        if call_exists [i, e, b] then
 	 mk_saves mps type_env stk_env imm_envs (i, e, b)
