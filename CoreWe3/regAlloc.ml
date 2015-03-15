@@ -79,9 +79,7 @@ let mk_saves mps type_env stk_env (imm_envi, imm_envf) e =
 	   (M.add x ((x', t), Sv(v), true) senv, (new_t (Save(x, v)))::saves) in
   let liveouts = tuple2_map (Liveness.get_liveout e) mps in
   let dsets = Liveness.def_set e in
-  let (livethroughi, livethroughf) = tuple2_map2 S.diff liveouts dsets in
-  let non_livethroughs = (S.of_list ((List.map snd !constregs) @ special_regs), S.of_list (List.map snd !constfregs)) in
-  let (livethroughi, livethroughf) = tuple2_map2 S.diff (livethroughi , livethroughf) non_livethroughs in
+  let (livethroughi, livethroughf) = tuple2_map (S.filter (fun x -> not (is_reg x))) (tuple2_map2 S.diff liveouts dsets) in
   S.fold folder (S.union livethroughi livethroughf) (stk_env, [])
 
 let rec prepare_for_call mps type_env stk_env imm_envs es =
