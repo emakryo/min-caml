@@ -117,6 +117,14 @@ rule token = parse
     { ITOF(get_range lexbuf)}
 | "int_of_float"
     { FTOI(get_range lexbuf)}
+| "fless"
+    {FLESS(get_range lexbuf)}
+| "fiszero"
+    {FISZ(get_range lexbuf)}
+| "fispos"
+    {FISP(get_range lexbuf)}
+| "fisneg"
+    {FISN(get_range lexbuf)}
 | eof
     { EOF }
 | lower (digit|lower|upper|'_')* (* 他の「予約語」より後でないといけない *)

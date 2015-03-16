@@ -50,6 +50,10 @@ let ex_range head tail ast = ((fst head, snd tail), ast)
 %token <Id.range>SQRT
 %token <Id.range>FTOI
 %token <Id.range>ITOF
+%token <Id.range>FLESS
+%token <Id.range>FISZ
+%token <Id.range>FISP
+%token <Id.range>FISN
 %token EOF
 
 /* 優先順位とassociativityの定義（低い方から高い方へ） (caml2html: parser_prior) */
@@ -204,6 +208,24 @@ exp: /* 一般の式 (caml2html: parser_exp) */
 | SQRT exp
     %prec prec_app
     { ex_range $1 (get_range $2) (Sqrt $2)}
+| FLESS simple_exp simple_exp
+    %prec prec_app
+    { let le = ex_range $1 (get_range $3) (LE ($3, $2)) in
+      ex_range $1 (get_range $3) (Not (le))}
+| FISZ exp
+    %prec prec_app
+    { let zero = ex_range $1 (get_range $2) (Float (0.0)) in
+      ex_range $1 (get_range $2) (Eq($2, zero))}
+| FISP exp
+    %prec prec_app
+    { let zero = ex_range $1 (get_range $2) (Float (0.0)) in
+      let le = ex_range $1 (get_range $2) (LE($2, zero)) in
+      ex_range $1 (get_range $2) (Not(le))}
+| FISN exp
+    %prec prec_app
+    { let zero = ex_range $1 (get_range $2) (Float (0.0)) in
+      let le = ex_range $1 (get_range $2) (LE(zero, $2)) in
+      ex_range $1 (get_range $2) (Not(le))}
 | error
     { failwith
 	(Printf.sprintf "parse error near characters %d-%d"
