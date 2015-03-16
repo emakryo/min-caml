@@ -363,6 +363,8 @@ let rec g env tl e =
     let folder ienv (im, r) = M.add r im ienv in
     (List.fold_left folder M.empty !constregs, List.fold_left folder M.empty !constfregs) in
   let e = prepare_for_call mps tenv M.empty ienvs e in
+  let mps = Liveness.calc_live_main tl e in
+  let e = Simm.remove mps e in
   let (regenv, e) = g' tl e S.empty in
   (regenv, e)
 and g' tl e spl = 
