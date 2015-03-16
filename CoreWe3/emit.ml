@@ -115,13 +115,13 @@ and g' oc sfrm (tail, (i, e, b)) =  (* 各命令のアセンブリ生成 *)
   | (false, LoadLabel((x, t), Id.L(l))) -> 
      Printf.fprintf oc "\t%sLDI\t%s\t.%s\n" at (reg x) l
   | (false, Save(x, sv)) ->
-     Printf.fprintf oc "\t%sST\t%s\t%s\t%d\t#Save\n" at (reg x) (reg reg_sp) (M.find sv sfrm.map)
+     Printf.fprintf oc "\t%sST\t%s\t%s\t%d\t#Save %s\n" at (reg x) (reg reg_sp) (M.find sv sfrm.map) sv
   | (false, Restore((x, t), sv)) ->
-     Printf.fprintf oc "\t%sLD\t%s\t%s\t%d\t#Restore\n" at (reg x) (reg reg_sp) (M.find sv sfrm.map)
+     Printf.fprintf oc "\t%sLD\t%s\t%s\t%d\t#Restore %s\n" at (reg x) (reg reg_sp) (M.find sv sfrm.map) sv
   | (false, FSave(x, sv)) -> 
-     Printf.fprintf oc "\t%sFST\t%s\t%s\t%d\t#FSave\n" at (reg x) (reg reg_sp) (M.find sv sfrm.map)
+     Printf.fprintf oc "\t%sFST\t%s\t%s\t%d\t#FSave %s\n" at (reg x) (reg reg_sp) (M.find sv sfrm.map) sv
   | (false, FRestore((x, t), sv)) -> 
-     Printf.fprintf oc "\t%sFLD\t%s\t%s\t%d\t#FRestore\n" at (reg x) (reg reg_sp) (M.find sv sfrm.map)
+     Printf.fprintf oc "\t%sFLD\t%s\t%s\t%d\t#FRestore %s\n" at (reg x) (reg reg_sp) (M.find sv sfrm.map) sv
   | (true, (Nop | Mr _ | FMr _ | Ld _ | St _ | FLd _ | FSt _ | Li _ | FLi _ | IToF _ | FToI _ | Neg _ | Add _ | Sub _ | And _ | Or _ | Shl _ | Shr _ | FAdd _ | FSub _ | FMul _ | FInv _ | FAbs _ | Sqrt _ (* | IAsF _ | FAsI _  *)| LoadLabel _ | Save _ | Restore _ | FSave _ | FRestore _ as e)) ->
      g' oc sfrm (false, (i, e, b));
      rm_stk oc sfrm;
