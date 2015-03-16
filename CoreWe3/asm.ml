@@ -1,5 +1,7 @@
 (* CoreWe3 assembly with a few virtual instructions *)
 
+external getflt : int32 -> float = "getflt"
+
 type id_or_imm = V of Id.t | C of int
 and dest = Id.t * Type.t
 and cond = Eq | LE | LT 
@@ -109,9 +111,12 @@ let add_constreg x =
   let i = 30 - (List.length !constregs) in
   constregs := (x, reg_of_int i)::(!constregs)  
 let add_constfreg x = 
+  Format.eprintf "constreg %e@." x;
   let i = 32 - (List.length !constfregs) in
   constfregs := (x, freg_of_int i)::(!constfregs)
-
+let add_constfreg_hex x = 
+  add_constfreg (getflt x)
+  
 let is_reg x = x.[0] = '%'
 let ret_reg = function
   | Type.Float -> (fregs ()).(0)

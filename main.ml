@@ -54,7 +54,8 @@ let () = (* ここからコンパイラの実行が開始される (caml2html: main_entry) *)
      ("-iter", Arg.Int(fun i -> limit := i), "maximum number of optimizations iterated");
      ("-print", Arg.Unit(fun () -> verbose := true), "maximum number of optimizations iterated");
      ("-iconst", Arg.Int(fun x -> Asm.add_constreg x), "constant register");
-     ("-fconst", Arg.Float(fun x -> Asm.add_constfreg x), "constant floating-point register")]
+     ("-fconst", Arg.Float(fun x -> Asm.add_constfreg x), "constant floating-point register");
+     ("-fconst-hex", Arg.Rest(fun x -> Asm.add_constfreg_hex (Int32.of_string x)), "constant floating-point register by hex expression")]
     (fun s -> files := !files @ [s])
     ("Mitou Min-Caml Compiler (C) Eijiro Sumii\n" ^
        Printf.sprintf "usage: %s [-inline m] [-iter n] ...filenames without \".ml\"..." Sys.argv.(0));

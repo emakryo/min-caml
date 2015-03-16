@@ -84,6 +84,7 @@ val fregset : unit -> S.t
 
 val add_constreg : int -> unit
 val add_constfreg : float -> unit
+val add_constfreg_hex : int32 -> unit
 
 val is_reg : string -> bool
 val ret_reg : Type.t -> string

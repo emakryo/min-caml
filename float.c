@@ -29,3 +29,9 @@ value getsgl(value v) {
     f.f = Double_val(v);
     return copy_int32(f.i);
 }
+
+value getflt(value v) {
+    flt f;
+    f.i = Int32_val(v);
+    return copy_double(f.f);
+}
