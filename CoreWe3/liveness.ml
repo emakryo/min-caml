@@ -6,7 +6,7 @@ let use_set e = (*各命令で使用される変数*)
      (S.empty, S.empty)
   | Ld(_, x, _) | IToF(_, x) | Neg(_, x)  | Mr(_, x) | Save(x, _) | FLd(_, x, _) ->
      (S.singleton x, S.empty)
-  | FToI(_, x) | FInv(_, x) | FAbs(_, x) | Sqrt(_, x) | FMr(_, x) | FSave(x, _) ->
+  | FToI(_, x) | Floor(_, x) | FInv(_, x) | FAbs(_, x) | Sqrt(_, x) | FMr(_, x) | FSave(x, _) ->
      (S.empty, S.singleton x)
   | St(x, y, _) | Sub(_, x, y) | And(_, x, y) | Or(_, x, y) ->
      (S.of_list [x; y], S.empty)
@@ -23,7 +23,7 @@ let def_set e = (*各命令で定義される変数*)
   match get_inst e with
   | Nop | St(_) | FSt(_) | If(_) | IfF(_) | Save(_) | FSave(_) ->
      (S.empty, S.empty)
-  | Ld(xt, _, _) | FLd(xt, _, _) | IToF(xt, _) | FToI(xt, _) | Neg(xt, _) | Add(xt, _, _) | Sub(xt, _, _) | And(xt, _, _) | Or(xt, _, _) | Li(xt, _) | Shl(xt, _, _) | Shr(xt, _, _) | FAdd(xt, _, _) | FSub(xt, _, _) | FMul(xt, _, _) | FInv(xt, _) | FAbs(xt, _) | Sqrt(xt, _) | FLi(xt, _) | Call(xt, _, _, _) | LoadLabel(xt, _) | Mr(xt, _) | FMr(xt, _) | Restore(xt, _) | FRestore(xt, _) ->
+  | Ld(xt, _, _) | FLd(xt, _, _) | IToF(xt, _) | FToI(xt, _) | Floor(xt, _) | Neg(xt, _) | Add(xt, _, _) | Sub(xt, _, _) | And(xt, _, _) | Or(xt, _, _) | Li(xt, _) | Shl(xt, _, _) | Shr(xt, _, _) | FAdd(xt, _, _) | FSub(xt, _, _) | FMul(xt, _, _) | FInv(xt, _) | FAbs(xt, _) | Sqrt(xt, _) | FLi(xt, _) | Call(xt, _, _, _) | LoadLabel(xt, _) | Mr(xt, _) | FMr(xt, _) | Restore(xt, _) | FRestore(xt, _) ->
      if Type.isn't_float (snd xt) then
        (S.singleton (fst xt), S.empty)
      else

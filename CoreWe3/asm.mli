@@ -10,6 +10,7 @@ and inst = (* 一つ一つの命令に対応する式 *)
   | FSt of Id.t * Id.t * int
   | IToF of dest * Id.t
   | FToI of dest * Id.t
+  | Floor of dest * Id.t
   | Neg of dest * Id.t
   | Add of dest * Id.t * id_or_imm
   | Sub of dest * Id.t * Id.t

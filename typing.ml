@@ -60,6 +60,7 @@ let rec deref_term (r, t) =
     | Iasf(e) -> Iasf(deref_term e)
     | Ftoi(e) -> Ftoi(deref_term e)
     | Itof(e) -> Itof(deref_term e)
+    | Floor(e) -> Floor(deref_term e)
     | Fabs(e) -> Fabs(deref_term e)
     | Sqrt(e) -> Sqrt(deref_term e)
     | e -> e
@@ -188,6 +189,9 @@ let rec g env (r, e) = (* 型推論ルーチン (caml2html: typing_g) *)
        Type.Int
     | Itof(e) ->
        unify Type.Int (g env e) e;
+       Type.Float
+    | Floor(e) ->
+       unify Type.Float (g env e) e;
        Type.Float
     | Fabs(e) ->
        unify Type.Float (g env e) e;

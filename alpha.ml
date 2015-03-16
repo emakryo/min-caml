@@ -55,6 +55,7 @@ let rec g env (r, e) = (* α変換ルーチン本体 (caml2html: alpha_g) *)
     | Iasf(x) -> Iasf(find x env)
     | Ftoi(x) -> Ftoi(find x env)
     | Itof(x) -> Itof(find x env)
+    | Floor(x) -> Floor(find x env)
     | Fabs(x) -> Fabs(find x env)
     | Sqrt(x) -> Sqrt(find x env)
   in

@@ -9,7 +9,7 @@ module Em =
 
 let rec sanitize (r, e) = (*kNormal.astのみを比較できるように、rangeを無効化*)
   let e' = match e with
-    | Unit | Int(_) | Float(_) | Neg(_) | Add(_) | Sub(_) | Lsl(_) | Lsr(_)  | Lor(_) | Land(_) | FNeg(_) | FAdd(_) | FSub(_) | FMul(_) | FDiv(_) | FInv(_) |Var(_) | App(_) | Tuple(_) | Get(_) | Put(_) | ExtArray(_) | ExtTuple(_) | ExtFunApp(_) | Read | Write(_) | Fasi(_) | Iasf(_) | Ftoi(_) | Itof(_)  | Fabs(_) | Sqrt(_) -> e
+    | Unit | Int(_) | Float(_) | Neg(_) | Add(_) | Sub(_) | Lsl(_) | Lsr(_)  | Lor(_) | Land(_) | FNeg(_) | FAdd(_) | FSub(_) | FMul(_) | FDiv(_) | FInv(_) |Var(_) | App(_) | Tuple(_) | Get(_) | Put(_) | ExtArray(_) | ExtTuple(_) | ExtFunApp(_) | Read | Write(_) | Fasi(_) | Iasf(_) | Ftoi(_) | Itof(_) | Floor(_) | Fabs(_) | Sqrt(_) -> e
     | IfEq (n1, n2, t1, t2) -> IfEq (n1, n2, sanitize t1, sanitize t2)
     | IfLE (n1, n2, t1, t2) -> IfLE (n1, n2, sanitize t1, sanitize t2)
     | Let ((n, ty), t1, t2) -> Let ((n, ty), sanitize t1, sanitize t2)
@@ -26,7 +26,7 @@ let rec cost (r, e) =
 let rec eliminatable (r, e) = 
   match e with
   | Unit | App _ | Get _ | Put _ | ExtFunApp _ | Read | Write _ -> false
-  | Int _ | Float _ | Neg _ | Add _ | Sub _ | Lsl _ | Lsr _ | Lor _ | Land _ | FNeg _ | FAdd _ | FSub _ | FMul _ | FDiv _ | FInv _ | Var _ | Tuple _ | ExtArray _ | ExtTuple _ | Fasi _ | Iasf _ | Ftoi _ | Itof _ | Fabs _ | Sqrt _ -> true
+  | Int _ | Float _ | Neg _ | Add _ | Sub _ | Lsl _ | Lsr _ | Lor _ | Land _ | FNeg _ | FAdd _ | FSub _ | FMul _ | FDiv _ | FInv _ | Var _ | Tuple _ | ExtArray _ | ExtTuple _ | Fasi _ | Iasf _ | Ftoi _ | Itof _ | Floor _ | Fabs _ | Sqrt _ -> true
   | IfEq(_, _, e1, e2) | IfLE(_, _, e1, e2) -> eliminatable e1 && eliminatable e2
   | Let _ | LetRec _ | LetTuple _ -> false
 
@@ -39,7 +39,7 @@ let rec g env (r, e) = (*共通部分式除去*)
     with
       Not_found ->
       match e with
-      | Unit | Int(_) | Float(_) | Neg(_) | Add(_) | Sub(_) | Lsl(_) | Lsr(_) | Lor(_) | Land(_) | FNeg(_) | Var(_) | Tuple(_) | Get(_) | Put(_) | ExtArray(_) | ExtTuple(_) | Read | Write(_) | Fasi(_) | Iasf(_)  | Ftoi(_) | Itof(_)  | Fabs(_) | Sqrt(_) -> (false, e)
+      | Unit | Int(_) | Float(_) | Neg(_) | Add(_) | Sub(_) | Lsl(_) | Lsr(_) | Lor(_) | Land(_) | FNeg(_) | Var(_) | Tuple(_) | Get(_) | Put(_) | ExtArray(_) | ExtTuple(_) | Read | Write(_) | Fasi(_) | Iasf(_)  | Ftoi(_) | Itof(_) | Floor(_) | Fabs(_) | Sqrt(_) -> (false, e)
       | FAdd(_) | FSub(_) | FMul(_) | FDiv(_) | FInv(_) | App(_) | ExtFunApp(_) -> (true, e)
       | IfEq (n1, n2, t1, t2) ->
 	 let c1, t1' = g env t1 in

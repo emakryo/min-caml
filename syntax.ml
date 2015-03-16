@@ -37,6 +37,7 @@ and ast = (* MinCamlの構文を表現するデータ型 (caml2html: syntax_t) *)
   | Iasf of t
   | Ftoi of t
   | Itof of t
+  | Floor of t
   | Fabs of t
   | Sqrt of t
 and fundef = { name : Id.t * Type.t; args : (Id.t * Type.t) list; body : t }
@@ -125,6 +126,8 @@ let rec pp_t t =
        Format.sprintf "%sFtoi\t#%s\n%s" sps rng (pp_t' (d + 1) t)
     | Itof t -> 
        Format.sprintf "%sItof\t#%s\n%s" sps rng (pp_t' (d + 1) t)    
+    | Floor t -> 
+       Format.sprintf "%sFloor\t#%s\n%s" sps rng (pp_t' (d + 1) t)    
     | Fabs t -> 
        Format.sprintf "%sFabs\t#%s\n%s" sps rng (pp_t' (d + 1) t)
     | Sqrt t -> 

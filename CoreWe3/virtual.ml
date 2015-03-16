@@ -122,6 +122,8 @@ and g' env dest (r, e) = (* 式の仮想マシンコード生成 *)
        [FToI(dest, x)]
     | Closure.Itof(x) ->
        [IToF(dest, x)] 
+    | Closure.Floor(x) ->
+       [Floor(dest, x)]
 
 (* 関数の仮想マシンコード生成 *)
 let h { Closure.name = (Id.L(x), t); Closure.args = yts; 

@@ -36,6 +36,7 @@ and ast = (* クロージャ変換後の式 (caml2html: closure_t) *)
   | Iasf of Id.t
   | Ftoi of Id.t
   | Itof of Id.t
+  | Floor of Id.t
   | Fabs of Id.t
   | Sqrt of Id.t
 type fundef = { name : Id.l * Type.t;
@@ -110,6 +111,7 @@ let rec pp_t t d =
     | Iasf n -> Format.sprintf "iasf %s" (Id.pp_t n)
     | Ftoi n -> Format.sprintf "ftoi %s" (Id.pp_t n)
     | Itof n -> Format.sprintf "itof %s" (Id.pp_t n)
+    | Floor n -> Format.sprintf "floor %s" (Id.pp_t n)
     | Fabs n -> Format.sprintf "fabs %s" (Id.pp_t n)
     | Sqrt n -> Format.sprintf "sqrt %s" (Id.pp_t n)
   in
@@ -126,7 +128,7 @@ let rec pp_fundef { name = (Id.L(x), t); args = yts; formal_fv = zts; body = b }
 let rec fv (r, e) =
   match e with
   | Unit | Int(_) | Float(_) | ExtArray(_) | ExtTuple(_) | Read -> S.empty
-  | Neg(x) | FNeg(x) | FInv(x) | Write(x) | Fasi(x) | Iasf(x) | Ftoi(x) | Itof(x) | Fabs(x) | Sqrt(x) -> S.singleton x
+  | Neg(x) | FNeg(x) | FInv(x) | Write(x) | Fasi(x) | Iasf(x) | Ftoi(x) | Itof(x) | Floor(x) | Fabs(x) | Sqrt(x) -> S.singleton x
   | Add(x, y) | Sub(x, y) | Lsl(x, y) | Lsr(x, y) | Lor(x, y) | Land(x, y) | FAdd(x, y) | FSub(x, y) | FMul(x, y) | FDiv(x, y) | Get(x, y) -> S.of_list [x; y]
   | IfEq(x, y, e1, e2)| IfLE(x, y, e1, e2) -> S.add x (S.add y (S.union (fv e1) (fv e2)))
   | Let((x, t), e1, e2) -> S.union (fv e1) (S.remove x (fv e2))
@@ -209,6 +211,7 @@ let rec g env known (r, e) = (* クロージャ変換ルーチン本体 (caml2html: closure_g
     | KNormal.Iasf(x) -> Iasf(x)
     | KNormal.Ftoi(x) -> Ftoi(x)
     | KNormal.Itof(x) -> Itof(x)
+    | KNormal.Floor(x) -> Floor(x)
     | KNormal.Fabs(x) -> Fabs(x)
     | KNormal.Sqrt(x) -> Sqrt(x)
   in

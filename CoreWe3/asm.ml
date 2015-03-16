@@ -14,6 +14,7 @@ and inst = (* 一つ一つの命令に対応する式 *)
   | FSt of Id.t * Id.t * int
   | IToF of dest * Id.t
   | FToI of dest * Id.t
+  | Floor of dest * Id.t
   | Neg of dest * Id.t
   | Add of dest * Id.t * id_or_imm
   | Sub of dest * Id.t * Id.t
@@ -79,7 +80,7 @@ let get_dests e =
   match get_inst e with
   | Nop | St(_) | FSt(_)| Save(_) | FSave(_) ->
      []
-  | Ld(xt, _, _) | FLd(xt, _, _) | IToF(xt, _) | FToI(xt, _) | Neg(xt, _) | Add(xt, _, _) | Sub(xt, _, _) | And(xt, _, _) | Or(xt, _, _) | Li(xt, _) | Shl(xt, _, _) | Shr(xt, _, _) | FAdd(xt, _, _) | FSub(xt, _, _) | FMul(xt, _, _) | FInv(xt, _) | FAbs(xt, _) | Sqrt(xt, _) | FLi(xt, _)  | If(xt, _, _, _, _) | IfF(xt, _, _, _, _) | Call(xt, _, _, _) | LoadLabel(xt, _) | Mr(xt, _) | FMr(xt, _) | Restore(xt, _) | FRestore(xt, _) ->
+  | Ld(xt, _, _) | FLd(xt, _, _) | IToF(xt, _) | FToI(xt, _) | Floor(xt, _) | Neg(xt, _) | Add(xt, _, _) | Sub(xt, _, _) | And(xt, _, _) | Or(xt, _, _) | Li(xt, _) | Shl(xt, _, _) | Shr(xt, _, _) | FAdd(xt, _, _) | FSub(xt, _, _) | FMul(xt, _, _) | FInv(xt, _) | FAbs(xt, _) | Sqrt(xt, _) | FLi(xt, _)  | If(xt, _, _, _, _) | IfF(xt, _, _, _, _) | Call(xt, _, _, _) | LoadLabel(xt, _) | Mr(xt, _) | FMr(xt, _) | Restore(xt, _) | FRestore(xt, _) ->
      [xt]
 
 let reg_of_int i = "%r" ^ (Format.sprintf "%02d" i)
@@ -138,7 +139,7 @@ let rec remove_and_uniq xs = function
 let fv_id_or_imm = function V (x) -> [x] | _ -> []
 let rec fv_exp = function
   | Nop | Li(_) | FLi(_) | LoadLabel(_) | Restore(_)| FRestore(_) -> []
-  | Ld(_, x, _) | FLd(_, x, _) | IToF(_, x) | FToI(_, x) | Neg(_, x)  | FInv(_, x) | FAbs(_, x) | Sqrt(_, x) | Mr(_, x) | Save(x, _) | FSave(x, _) | FMr(_, x) -> 
+  | Ld(_, x, _) | FLd(_, x, _) | IToF(_, x) | FToI(_, x) | Floor(_, x) | Neg(_, x)  | FInv(_, x) | FAbs(_, x) | Sqrt(_, x) | Mr(_, x) | Save(x, _) | FSave(x, _) | FMr(_, x) -> 
      [x]
   | St(x, y, _) | FSt(x, y, _) | Sub(_, x, y) | And(_, x, y) | Or(_, x, y) | FAdd(_, x, y) | FSub(_, x, y) | FMul(_, x, y) -> 
      [x; y]  

@@ -117,6 +117,8 @@ rule token = parse
     { ITOF(get_range lexbuf)}
 | "int_of_float"
     { FTOI(get_range lexbuf)}
+| "floor"
+    { FLOOR(get_range lexbuf)}
 | "fless"
     {FLESS(get_range lexbuf)}
 | "fiszero"

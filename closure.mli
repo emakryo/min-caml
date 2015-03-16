@@ -1,6 +1,6 @@
 type closure = { entry : Id.l; actual_fv : Id.t list }
 type t = Id.range * ast
-and ast =
+and ast = (* クロージャ変換後の式 (caml2html: closure_t) *)
   | Unit
   | Int of int
   | Float of float
@@ -36,6 +36,7 @@ and ast =
   | Iasf of Id.t
   | Ftoi of Id.t
   | Itof of Id.t
+  | Floor of Id.t
   | Fabs of Id.t
   | Sqrt of Id.t
 type fundef = { name : Id.l * Type.t;

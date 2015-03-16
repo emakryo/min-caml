@@ -80,6 +80,8 @@ and g' oc sfrm (tail, (i, e, b)) =  (* 各命令のアセンブリ生成 *)
      Printf.fprintf oc "\t%sITOF\t%s\t%s\n" at (reg x) (reg y)
   | (false, FToI((x, t), y)) -> 
      Printf.fprintf oc "\t%sFTOI\t%s\t%s\n" at (reg x) (reg y)
+  | (false, Floor((x, t), y)) -> 
+     Printf.fprintf oc "\t%sFLOOR\t%s\t%s\n" at (reg x) (reg y)
   | (false, Neg((x, t), y)) -> 
      Printf.fprintf oc "\t%sSUB\t%s\t%s\t%s\t#Neg\n" at (reg x) (reg reg_zero) (reg y)
   | (false, Add((x, t), y, V(z))) -> 
@@ -122,7 +124,7 @@ and g' oc sfrm (tail, (i, e, b)) =  (* 各命令のアセンブリ生成 *)
      Printf.fprintf oc "\t%sFST\t%s\t%s\t%d\t#FSave %s\n" at (reg x) (reg reg_sp) (M.find sv sfrm.map) sv
   | (false, FRestore((x, t), sv)) -> 
      Printf.fprintf oc "\t%sFLD\t%s\t%s\t%d\t#FRestore %s\n" at (reg x) (reg reg_sp) (M.find sv sfrm.map) sv
-  | (true, (Nop | Mr _ | FMr _ | Ld _ | St _ | FLd _ | FSt _ | Li _ | FLi _ | IToF _ | FToI _ | Neg _ | Add _ | Sub _ | And _ | Or _ | Shl _ | Shr _ | FAdd _ | FSub _ | FMul _ | FInv _ | FAbs _ | Sqrt _ (* | IAsF _ | FAsI _  *)| LoadLabel _ | Save _ | Restore _ | FSave _ | FRestore _ as e)) ->
+  | (true, (Nop | Mr _ | FMr _ | Ld _ | St _ | FLd _ | FSt _ | Li _ | FLi _ | IToF _ | FToI _ | Floor _ | Neg _ | Add _ | Sub _ | And _ | Or _ | Shl _ | Shr _ | FAdd _ | FSub _ | FMul _ | FInv _ | FAbs _ | Sqrt _ (* | IAsF _ | FAsI _  *)| LoadLabel _ | Save _ | Restore _ | FSave _ | FRestore _ as e)) ->
      g' oc sfrm (false, (i, e, b));
      rm_stk oc sfrm;
      Printf.fprintf oc "\tRET\n"

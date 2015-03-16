@@ -50,6 +50,7 @@ let ex_range head tail ast = ((fst head, snd tail), ast)
 %token <Id.range>SQRT
 %token <Id.range>FTOI
 %token <Id.range>ITOF
+%token <Id.range>FLOOR
 %token <Id.range>FLESS
 %token <Id.range>FISZ
 %token <Id.range>FISP
@@ -202,6 +203,9 @@ exp: /* ∞Ï»Ã§Œº∞ (caml2html: parser_exp) */
 | ITOF exp
     %prec prec_app
     { ex_range $1 (get_range $2) (Itof $2)}
+| FLOOR exp
+    %prec prec_app
+    { ex_range $1 (get_range $2) (Floor $2)}
 | FABS exp
     %prec prec_app
     { ex_range $1 (get_range $2) (Fabs $2)}

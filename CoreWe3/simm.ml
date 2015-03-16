@@ -37,6 +37,7 @@ let rec replace (envi, envf) = function
        | FSt(x, y, i) -> FSt(constfreg_find x envf, constreg_find y envi, i)
        | IToF((x, t), y) -> IToF((x, t), constreg_find y envi)
        | FToI((x, t), y) -> FToI((x, t), constfreg_find y envf)
+       | Floor((x, t), y) -> Floor((x, t), constfreg_find y envf)
        | Neg((x, t), y) -> Neg((x, t), constreg_find y envi)
        | Add((x, t), y, V(z)) when M.mem z envi && M.find z envi = 0 -> Mr((x, t), y)
        | Add((x, t), y, V(z)) when M.mem y envi && M.find y envi = 0 -> Mr((x, t), z)
