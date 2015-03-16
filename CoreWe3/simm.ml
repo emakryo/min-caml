@@ -38,6 +38,8 @@ let rec replace (envi, envf) = function
        | IToF((x, t), y) -> IToF((x, t), constreg_find y envi)
        | FToI((x, t), y) -> FToI((x, t), constfreg_find y envf)
        | Neg((x, t), y) -> Neg((x, t), constreg_find y envi)
+       | Add((x, t), y, V(z)) when M.mem z envi && M.find z envi = 0 -> Mr((x, t), y)
+       | Add((x, t), y, V(z)) when M.mem y envi && M.find y envi = 0 -> Mr((x, t), z)
        | Add((x, t), y, V(z)) -> Add((x, t), constreg_find y envi, imm_find z envi)
        | Add((x, t), y, C(i)) -> Add((x, t), constreg_find y envi, C(i))
        | Sub((x, t), y, z) when imm_mem z envi -> Add((x, t), constreg_find y envi, C(-(M.find z envi)))
