@@ -59,7 +59,7 @@ let rec replace (envi, envf) = function
        | FInv((x, t), y) -> FInv((x, t), constfreg_find y envf)
        | FAbs((x, t), y) -> FAbs((x, t), constfreg_find y envf)
        | Sqrt((x, t), y) -> Sqrt((x, t), constfreg_find y envf)
-       | FLi((x, t), f) when List.mem_assoc f !constfregs -> FMr((x, t), List.assoc f !constfregs)
+       | FLi((x, t), f) when mem_assoc_constfreg f -> FMr((x, t), assoc_constfreg f)
        | FLi((x, t), f) -> FLi((x, t), f)
        | If((x, t), cond, (y, V(z)), e_then, e_else) ->
   	  If((x, t), cond, (constreg_find y envi, imm_find z envi), replace (envi, envf) e_then, replace (envi, envf) e_else)
@@ -91,7 +91,7 @@ let rec replace (envi, envf) = function
        | Mr((x, t), y) when M.mem y envi -> (M.add x (M.find y envi) envi, envf)
        | Save(x, s) when M.mem x envi -> (M.add s (M.find x envi) envi, envf)
        | Restore((x, t), s) when M.mem s envi -> (M.add x (M.find s envi) envi, envf)
-       | FLi((x, t), f) when List.mem_assoc f !constfregs -> (envi, M.add x (List.assoc f !constfregs) envf)
+       | FLi((x, t), f) when mem_assoc_constfreg f  -> (envi, M.add x (assoc_constfreg f) envf)
        | FMr((x, t), y) when M.mem y envf -> (envi, M.add x (M.find y envf) envf)
        | FSave(x, s) when M.mem x envf -> (envi, M.add s (M.find x envf) envf)
        | FRestore((x, t), s) when M.mem s envf -> (envi, M.add x (M.find s envf) envf)

@@ -3,6 +3,7 @@ open Asm
 external gethi : float -> int32 = "gethi"
 external getlo : float -> int32 = "getlo"
 external getsgl : float -> int32 = "getsgl"
+external getflt : int32 -> float = "getflt"
 
 let reg r = 
   if is_reg r then 
@@ -175,7 +176,7 @@ let f oc (Prog(fundefs, e))  =
   List.iter (fun fundef -> h oc fundef) fundefs;
   Printf.fprintf oc ":_min_caml_start # main entry point\n";
   List.iter (fun (x, r) -> if r <> reg_zero then Printf.fprintf oc "\tLDI\t%s\t%d\n"(reg r) x) !constregs;
-  List.iter (fun (x, r) -> if r <> freg_zero then Printf.fprintf oc "\tVFLDI\t%s\t%e\n" (reg r) x) !constfregs;
+  List.iter (fun (x, r) -> if r <> freg_zero then Printf.fprintf oc "\tVFLDI\t%s\t0x%lx\t#%e\n" (reg r) x (getflt x)) !constfregs;
   let sfrm = mk_stk oc e true in
   g oc sfrm (false, e);
   Printf.fprintf oc "\tJ\t0\t#halt\n" 

@@ -73,7 +73,7 @@ val sp_default : int
 
 val special_regs : Id.t list
 val constregs : (int * Id.t) list ref
-val constfregs : (float * Id.t) list ref
+val constfregs : (int32 * Id.t) list ref
 val allregs : Id.t array
 val allfregs : Id.t array
 val regs : unit -> Id.t array
@@ -83,9 +83,12 @@ val freglist : unit -> Id.t list
 val regset : unit -> S.t
 val fregset : unit -> S.t
 
+val assoc_constfreg : float -> string
+val mem_assoc_constfreg : float -> bool
+
 val add_constreg : int -> unit
-val add_constfreg : float -> unit
 val add_constfreg_hex : int32 -> unit
+val add_constfreg : float -> unit
 
 val is_reg : string -> bool
 val ret_reg : Type.t -> string

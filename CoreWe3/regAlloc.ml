@@ -1,3 +1,5 @@
+external getflt : int32 -> float = "getflt"
+
 open Asm
 
 let rec get_args rs frs = function
@@ -37,8 +39,8 @@ let mk_rstrs stk_env (i, e, b) =
 	 Mr(x't, List.assoc i !constregs)
        else Li(x't, Int32.of_int i)
     | Sf(f) -> 
-       if List.mem_assoc f !constfregs then (* 定数レジスタ *)
-	 FMr(x't, List.assoc f !constfregs)
+       if mem_assoc_constfreg f then (* 定数レジスタ *)
+	 FMr(x't, assoc_constfreg f)
        else FLi(x't, f)
     | Sv(v) -> 
        match snd x't with
@@ -360,8 +362,8 @@ let rec g env tl e =
   let tenv = List.fold_left (fun env (_, r) -> M.add r Type.Float env) tenv !constfregs in
   let mps = Liveness.calc_live_main tl e in
   let ienvs = 
-    let folder ienv (im, r) = M.add r im ienv in
-    (List.fold_left folder M.empty !constregs, List.fold_left folder M.empty !constfregs) in
+    (List.fold_left (fun ienv (i, r) -> M.add r i ienv) M.empty !constregs, 
+     List.fold_left (fun ienv (i, r) -> M.add r (getflt i) ienv) M.empty !constfregs) in
   let e = prepare_for_call mps tenv M.empty ienvs e in
   let mps = Liveness.calc_live_main tl e in
   let e = Simm.remove mps e in

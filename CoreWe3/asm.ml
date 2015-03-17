@@ -1,6 +1,7 @@
 (* CoreWe3 assembly with a few virtual instructions *)
 
 external getflt : int32 -> float = "getflt"
+external getsgl : float -> int32 = "getsgl"
 
 type id_or_imm = V of Id.t | C of int
 and dest = Id.t * Type.t
@@ -99,7 +100,7 @@ let special_regs = [reg_hp; reg_sp; reg_cond; reg_link]
 let allregs = Array.init 32 (fun i -> reg_of_int i)
 let allfregs = Array.init 32 (fun i -> freg_of_int i)
 let constregs = ref [(0, reg_zero)]
-let constfregs = ref [(0.0, freg_zero)]
+let constfregs = ref [(Int32.of_int 0, freg_zero)]
 let regs () = Array.sub allregs 3 (32 - 2 - 2 - (List.length !constregs))
 let fregs () = Array.sub allfregs 1 (32 - (List.length !constfregs))
 let reglist () = Array.to_list (regs ())
@@ -107,16 +108,19 @@ let freglist () = Array.to_list (fregs ())
 let regset () = S.of_list (reglist ())
 let fregset () = S.of_list (freglist ())
 
+let assoc_constfreg f = List.assoc (getsgl f) !constfregs
+let mem_assoc_constfreg f = List.mem_assoc (getsgl f) !constfregs
+
 let add_constreg x = 
   Format.eprintf "constreg %d@." x;
   let i = 30 - (List.length !constregs) in
   constregs := (x, reg_of_int i)::(!constregs)  
-let add_constfreg x = 
-  Format.eprintf "constreg %e@." x;
+let add_constfreg_hex x = 
+  Format.eprintf "constfreg %e@." (getflt x);
   let i = 32 - (List.length !constfregs) in
   constfregs := (x, freg_of_int i)::(!constfregs)
-let add_constfreg_hex x = 
-  add_constfreg (getflt x)
+let add_constfreg x = 
+  add_constfreg_hex (getsgl x)
   
 let is_reg x = x.[0] = '%'
 let ret_reg = function
