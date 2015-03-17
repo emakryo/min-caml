@@ -82,7 +82,7 @@ and g' oc sfrm (tail, (i, e, b)) =  (* 各命令のアセンブリ生成 *)
   | (false, FToI((x, t), y)) -> 
      Printf.fprintf oc "\t%sFTOI\t%s\t%s\n" at (reg x) (reg y)
   | (false, Floor((x, t), y)) -> 
-     Printf.fprintf oc "\t%sFLOOR\t%s\t%s\n" at (reg x) (reg y)
+     Printf.fprintf oc "\t%sFLR\t%s\t%s\n" at (reg x) (reg y)
   | (false, Neg((x, t), y)) -> 
      Printf.fprintf oc "\t%sSUB\t%s\t%s\t%s\t#Neg\n" at (reg x) (reg reg_zero) (reg y)
   | (false, Add((x, t), y, V(z))) -> 
